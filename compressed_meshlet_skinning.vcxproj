@@ -19,6 +19,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\crab.fbx" />
+    <None Include="assets\Jumping.fbx" />
+    <None Include="assets\jumping2.fbx" />
     <None Include="assets\JumpyArm.fbx" />
     <None Include="assets\TheCube.fbx" />
     <None Include="shaders\diffuse_shading_fixed_lightsource.frag" />

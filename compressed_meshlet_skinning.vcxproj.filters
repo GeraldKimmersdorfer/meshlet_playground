@@ -39,5 +39,11 @@
     <None Include="assets\TheCube.fbx">
       <Filter>assets</Filter>
     </None>
+    <None Include="assets\Jumping.fbx">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="assets\jumping2.fbx">
+      <Filter>assets</Filter>
+    </None>
   </ItemGroup>
 </Project>
