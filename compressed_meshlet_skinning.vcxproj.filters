@@ -33,5 +33,11 @@
     <None Include="shaders\diffuse_shading_fixed_lightsource.frag">
       <Filter>shaders</Filter>
     </None>
+    <None Include="assets\JumpyArm.fbx">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="assets\TheCube.fbx">
+      <Filter>assets</Filter>
+    </None>
   </ItemGroup>
 </Project>

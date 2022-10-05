@@ -183,7 +183,7 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		glm::mat4 globalTransform = glm::rotate(glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f)) * glm::scale(glm::vec3(1.f));
 		std::vector<avk::model> loadedModels;
 		// Load a model from file:
-		auto model = avk::model_t::load_from_file("assets/crab.fbx", aiProcess_Triangulate);
+		auto model = avk::model_t::load_from_file("assets/TheCube.fbx", aiProcess_Triangulate);
 
 		loadedModels.push_back(std::move(model));
 
@@ -195,8 +195,8 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		// Crab-specific animation config: (Needs to be adapted for other models)
 		const uint32_t cAnimationIndex = 0;
 		const uint32_t cStartTimeTicks = 0;
-		const uint32_t cEndTimeTicks   = 58;
-		const uint32_t cTicksPerSecond = 34;
+		const uint32_t cEndTimeTicks   = 60;
+		const uint32_t cTicksPerSecond = 30;
 
 		// Generate the meshlets for each loaded model.
 		for (size_t i = 0; i < loadedModels.size(); ++i) {
