@@ -154,11 +154,12 @@ void main()
  
 		// Set the vertex position:
 		gl_MeshVerticesNV[i].gl_Position = posCS;
+		//gl_MeshVerticesNV[i].gl_Position = ubo.mViewProjMatrix * transformationMatrix * posMshSp;
  
 		// Set the per vertex data for the fragment shader:
 		v_out[i].positionWS = posWS.xyz;
 		v_out[i].normalWS = mat3(transformationMatrix) * aniNrm;
-		v_out[i].texCoord = texelFetch(texCoordsBuffers[texelBufferIndex], int(vi)).st;
+		v_out[i].texCoord = texelFetch(texCoordsBuffers[texelBufferIndex], int(vi)).xy;
 		v_out[i].materialIndex = int(materialIndex);
 		v_out[i].color = meshletcolors[mshIdx % MAX_COLORS];
 	}

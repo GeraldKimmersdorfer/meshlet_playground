@@ -18,6 +18,7 @@
     <ClCompile Include="source\skinned_meshlets.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\Akai.fbx" />
     <None Include="assets\crab.fbx" />
     <None Include="assets\Jumping.fbx" />
     <None Include="assets\jumping2.fbx" />

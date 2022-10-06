@@ -45,5 +45,8 @@
     <None Include="assets\jumping2.fbx">
       <Filter>assets</Filter>
     </None>
+    <None Include="assets\Akai.fbx">
+      <Filter>assets</Filter>
+    </None>
   </ItemGroup>
 </Project>

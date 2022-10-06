@@ -84,6 +84,7 @@ void main()
 	int matIndex = v_in.materialIndex;
 
 	int diffuseTexIndex = matSsbo.materials[matIndex].mDiffuseTexIndex;
+	// vec2 texCoord = vec2(v_in.texCoord.x, -v_in.texCoord.y); // if we have to flip uvs
     vec3 color = texture(textures[diffuseTexIndex], v_in.texCoord).rgb;
 	
 	float ambient = 0.3;

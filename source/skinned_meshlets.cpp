@@ -183,7 +183,7 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		glm::mat4 globalTransform = glm::rotate(glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f)) * glm::scale(glm::vec3(1.f));
 		std::vector<avk::model> loadedModels;
 		// Load a model from file:
-		auto model = avk::model_t::load_from_file("assets/TheCube.fbx", aiProcess_Triangulate);
+		auto model = avk::model_t::load_from_file("assets/Akai.fbx", aiProcess_Triangulate | aiProcess_FlipUVs);	// Its necessary to flip the normals!
 
 		loadedModels.push_back(std::move(model));
 
