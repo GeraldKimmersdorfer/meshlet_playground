@@ -1,5 +1,7 @@
 #include <auto_vk_toolkit.hpp>
 #include <imgui.h>
+#include <stdio.h>
+#include <glm/gtx/string_cast.hpp>
 #include "../shaders/cpu_gpu_shared_config.h"
 
 #define USE_CACHE 1
@@ -257,6 +259,79 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 				// Get bone indices and weights too
 				drawCallData.mBoneIndices = avk::get_bone_indices_for_single_target_buffer(selection, meshIndicesInOrder);
 				drawCallData.mBoneWeights = avk::get_bone_weights(selection);
+
+				// =================================== STEP 1 ==================================================================================================
+				// We want to compress the bone indices per vertex. To do so we'll create a lookup table and just save one id for each vertex.
+				// Well pass the whole lookup table to the shader. This way we'll save some space as a lot of vertices usually are connected to the same bones.
+				// =============================================================================================================================================
+				// 
+				// Step 1a: Convert indices list to 16-bit. 32 bit is unnecessary
+				std::vector<glm::u16vec4> tmpReducedBoneIndices;
+				for (auto il : drawCallData.mBoneIndices) {
+					tmpReducedBoneIndices.push_back(il);
+				}
+
+				// Step 1b: Set Indices which are irrelevant to max 
+				for (int i = 0; i < tmpReducedBoneIndices.size(); i++) {
+					auto boneWeights = drawCallData.mBoneWeights[i];
+					for (int j = 0; j < 4; j++) {
+						if (boneWeights[j] == 0.0) {
+							tmpReducedBoneIndices[i][j] = 65535;	// 65535 = 2 ^ 16 - 1
+						}
+					}
+				}
+
+				// Step 1c: Sort the list lexigraphically
+				// To do this quickly i'll use an ugly hack: I interpret the vectors as one 64bit unsigned integer and sort according to those. It
+				// might be quick but not really scalable and it's also black objective c magic
+				std::sort(tmpReducedBoneIndices.begin(), tmpReducedBoneIndices.end(),
+					[](const glm::u16vec4& a, const glm::u16vec4& b) -> bool
+				{
+						return (*((glm::u64*)&(a.x))) < (*((glm::u64*)&(b.x)));
+				});
+
+				// Step 1d: Delete duplicates
+				tmpReducedBoneIndices.erase(std::unique(tmpReducedBoneIndices.begin(), tmpReducedBoneIndices.end()), tmpReducedBoneIndices.end());
+				
+				// Step 1e: Sort out even further as for example entries u16vec4(1, 2, 0, 65535) can be replaced
+				// by u16vec4(1, 2, 0, 3) as the last index is irrelevant anyway
+				// This step also deletes entries with just one bone index, as we will later write that index directly in
+				// the lookup index data for each vertex. (as oposed to write an index to this list which would also just be one index...)
+				for (int j = 0; j < tmpReducedBoneIndices.size(); j++) {
+					auto& bi1 = tmpReducedBoneIndices[j];
+					// check whether bi1 has an entry tats unimportant and on which position it is:
+					int uip = 3;
+					for (; uip >= 0; uip--) {
+						if (bi1[uip] < 65535) break;
+					}
+					if (uip <= 0) {
+						// This entry is either all 65535 (which shouldnt exist...) or just with one value. We don't need those in the list. (reason see above)
+						tmpReducedBoneIndices.erase(tmpReducedBoneIndices.begin() + j);
+						j--; // necessary as we delete the current entry...
+						continue;
+					}
+					if (uip < 3) {
+						// okay, it has unimportant entries starting at position uip
+						// Lets see whether we can find an entry that has up until uip the same structure.
+						// if yes we may delete this entry.
+						for (auto& bi2 : tmpReducedBoneIndices) {
+							if (bi1 == bi2) continue;
+							int i = 0;
+							for (; i <= uip; i++) {
+								if (bi1[i] != bi2[i]) break;
+							}
+							if (i == uip + 1) {
+								// bi2 replaces bi1, so we can delete bi2
+								tmpReducedBoneIndices.erase(tmpReducedBoneIndices.begin() + j);
+								j--; // necessary as we delete the current entry...
+								break;
+							}
+						}
+					}
+				}
+
+				for (auto& tmp : tmpReducedBoneIndices) std::cout << glm::to_string(tmp) << std::endl;
+
 
 				// create selection for the meshlets
 				auto meshletSelection = avk::make_models_and_mesh_indices_selection(curModel, meshIndex);
