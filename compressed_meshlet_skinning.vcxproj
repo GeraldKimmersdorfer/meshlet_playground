@@ -15,7 +15,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\skinned_meshlets.cpp" />
+    <ClCompile Include="source\compressed_rigged_meshlets.cpp" />
+    <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\rigged_model.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\Akai.fbx" />
@@ -33,13 +35,20 @@
       <Project>{602f842f-50c1-466d-8696-1707937d8ab9}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\compressed_rigged_meshlets.h" />
+    <ClInclude Include="source\compression\tmp.h" />
+    <ClInclude Include="source\config.h" />
+    <ClInclude Include="source\data_structs.h" />
+    <ClInclude Include="source\rigged_model.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{1bcb9c84-31d0-4df3-8f6f-03bd4823e401}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>compressedmeshletskinning</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>compressed_meshlet_skinning</ProjectName>
+    <ProjectName>compressed_rigged_meshlets</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Vulkan|x64'" Label="Configuration">

@@ -14,9 +14,18 @@
     <Filter Include="source">
       <UniqueIdentifier>{a10ba678-5ac4-477e-9a9b-343630b2c90a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\compression">
+      <UniqueIdentifier>{bf2e777e-f0cc-40e9-a322-1d9aee5bc59d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\skinned_meshlets.cpp">
+    <ClCompile Include="source\main.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\compressed_rigged_meshlets.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\rigged_model.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -48,5 +57,22 @@
     <None Include="assets\Akai.fbx">
       <Filter>assets</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\data_structs.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\config.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\compressed_rigged_meshlets.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\compression\tmp.h">
+      <Filter>source\compression</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rigged_model.h">
+      <Filter>source</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
