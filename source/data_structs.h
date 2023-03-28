@@ -59,7 +59,7 @@ struct animated_model_data
 	uint32_t mNumBoneMatrices;
 	size_t mBoneMatricesBufferIndex;
 	avk::animation mAnimation;
-
+	
 	[[nodiscard]] double start_sec() const { return mClip.mStartTicks / mClip.mTicksPerSecond; }
 	[[nodiscard]] double end_sec() const { return mClip.mEndTicks / mClip.mTicksPerSecond; }
 	[[nodiscard]] double duration_sec() const { return end_sec() - start_sec(); }

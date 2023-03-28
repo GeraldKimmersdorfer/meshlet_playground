@@ -70,7 +70,7 @@ void compressed_rigged_meshlets::initialize()
 		// Create a descriptor cache that helps us to conveniently create descriptor sets:
 		mDescriptorCache = avk::context().create_descriptor_cache();
 
-		glm::mat4 globalTransform = glm::scale(glm::vec3(1.0f)); // glm::rotate(glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f))* glm::scale(glm::vec3(1.f));
+		//glm::mat4 globalTransform = glm::scale(glm::vec3(1.0f)); // glm::rotate(glm::radians(180.f), glm::vec3(0.f, 1.f, 0.f))* glm::scale(glm::vec3(1.f));
 
 		std::vector<avk::model> loadedModels;
 		// Load a model from file:
@@ -125,7 +125,7 @@ void compressed_rigged_meshlets::initialize()
 				auto& drawCallData = dataForDrawCall.emplace_back();
 
 				drawCallData.mMaterialIndex = static_cast<int32_t>(matOffset);
-				drawCallData.mModelMatrix = globalTransform;
+				drawCallData.mModelMatrix = glm::scale(glm::vec3(1.0f / (i+1.0f))) * glm::translate(glm::vec3(1.0f * i, 0.0f, 0.0f));
 				drawCallData.mModelIndex = static_cast<uint32_t>(curEntry.mBoneMatricesBufferIndex);
 				// Find and assign the correct material (in the ~"global" allMatConfigs vector!)
 				for (auto pair : distinctMaterials) {
