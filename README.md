@@ -1,1 +1,0 @@
-# compressed_meshlet_skinning
