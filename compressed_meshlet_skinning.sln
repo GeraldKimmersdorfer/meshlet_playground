@@ -1,0 +1,72 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "compressed_meshlet_skinning", "compressed_meshlet_skinning.vcxproj", "{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "auto_vk_toolkit", "auto_vk_toolkit\visual_studio\auto_vk_toolkit\auto_vk_toolkit.vcxproj", "{602F842F-50C1-466D-8696-1707937D8AB9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meshoptimizer", "meshoptimizer\build\meshoptimizer.vcxproj", "{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_Vulkan|x64 = Debug_Vulkan|x64
+		Debug|x64 = Debug|x64
+		MinSizeRel|x64 = MinSizeRel|x64
+		Publish_Vulkan|x64 = Publish_Vulkan|x64
+		Release_Vulkan|x64 = Release_Vulkan|x64
+		Release|x64 = Release|x64
+		RelWithDebInfo|x64 = RelWithDebInfo|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Debug_Vulkan|x64.ActiveCfg = Debug_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Debug_Vulkan|x64.Build.0 = Debug_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Debug|x64.ActiveCfg = Debug_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Debug|x64.Build.0 = Debug_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.MinSizeRel|x64.ActiveCfg = Debug_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.MinSizeRel|x64.Build.0 = Debug_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Publish_Vulkan|x64.ActiveCfg = Publish_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Publish_Vulkan|x64.Build.0 = Publish_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Release_Vulkan|x64.ActiveCfg = Release_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Release_Vulkan|x64.Build.0 = Release_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Release|x64.ActiveCfg = Release_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.Release|x64.Build.0 = Release_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.RelWithDebInfo|x64.ActiveCfg = Release_Vulkan|x64
+		{84DDEBEF-7B65-4099-98B1-E876D72C1EFF}.RelWithDebInfo|x64.Build.0 = Release_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Debug_Vulkan|x64.ActiveCfg = Debug_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Debug_Vulkan|x64.Build.0 = Debug_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Debug|x64.ActiveCfg = Debug_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Debug|x64.Build.0 = Debug_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.MinSizeRel|x64.ActiveCfg = Debug_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.MinSizeRel|x64.Build.0 = Debug_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Publish_Vulkan|x64.ActiveCfg = Publish_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Publish_Vulkan|x64.Build.0 = Publish_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Release_Vulkan|x64.ActiveCfg = Release_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Release_Vulkan|x64.Build.0 = Release_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Release|x64.ActiveCfg = Release_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.Release|x64.Build.0 = Release_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.RelWithDebInfo|x64.ActiveCfg = Release_Vulkan|x64
+		{602F842F-50C1-466D-8696-1707937D8AB9}.RelWithDebInfo|x64.Build.0 = Release_Vulkan|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Debug_Vulkan|x64.ActiveCfg = Debug|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Debug_Vulkan|x64.Build.0 = Debug|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Debug|x64.ActiveCfg = Debug|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Debug|x64.Build.0 = Debug|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.MinSizeRel|x64.ActiveCfg = MinSizeRel|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.MinSizeRel|x64.Build.0 = MinSizeRel|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Publish_Vulkan|x64.ActiveCfg = RelWithDebInfo|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Publish_Vulkan|x64.Build.0 = RelWithDebInfo|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release_Vulkan|x64.ActiveCfg = RelWithDebInfo|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release_Vulkan|x64.Build.0 = RelWithDebInfo|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release|x64.ActiveCfg = Release|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release|x64.Build.0 = Release|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A805AEC0-5C70-46F7-AB1F-19E6F099BF11}
+	EndGlobalSection
+EndGlobal
