@@ -15,7 +15,7 @@
 #define USE_MESHOPTIMIZER 1
 #define USE_CACHE 0
 
-class static_meshlets_app : public avk::invokee
+class compressed_meshlets_app : public avk::invokee
 {
 	static constexpr size_t sNumVertices = 64;
 	static constexpr size_t sNumIndices = 378;
@@ -63,7 +63,7 @@ class static_meshlets_app : public avk::invokee
 	};
 
 public: // v== avk::invokee overrides which will be invoked by the framework ==v
-	static_meshlets_app(avk::queue& aQueue)
+	compressed_meshlets_app(avk::queue& aQueue)
 		: mQueue{ &aQueue }
 	{}
 
@@ -592,7 +592,7 @@ private: // v== Member variables ==v
 	avk::query_pool mPipelineStatsPool;
 	std::array<uint64_t, 3> mPipelineStats;
 
-}; // static_meshlets_app
+}; // compressed_meshlets_app
 
 int main() // <== Starting point ==
 {
@@ -615,7 +615,7 @@ int main() // <== Starting point ==
 		mainWnd->set_present_queue(singleQueue);
 
 		// Create an instance of our main avk::element which contains all the functionality:
-		auto app = static_meshlets_app(singleQueue);
+		auto app = compressed_meshlets_app(singleQueue);
 		// Create another element for drawing the UI with ImGui
 		auto ui = avk::imgui_manager(singleQueue);
 

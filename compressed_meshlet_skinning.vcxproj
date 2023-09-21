@@ -15,7 +15,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\static_meshlets.cpp" />
+    <ClCompile Include="source\compressed_meshlet_skinning.cpp" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
