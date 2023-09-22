@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\metaball.fbx" />
+    <None Include="assets\two_objects_in_one.fbx" />
     <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
       <FileType>Document</FileType>
     </None>

@@ -12,8 +12,56 @@
 #include "vk_convenience_functions.hpp"
 #include "../meshoptimizer/src/meshoptimizer.h"
 
+#define STARTUP_FILE "assets/two_objects_in_one.fbx"
 #define USE_MESHOPTIMIZER 1
 #define USE_CACHE 0
+
+enum PipelineType {
+	VERTEX_PIPELINE,
+	MESH_PIPELINE,
+	NVIDIA_MESH_PIPELINE
+};
+
+auto meshlet_division_meshoptimizer = [](const std::vector<glm::vec3>& tVertices, const std::vector<uint32_t>& aIndices, const avk::model_t& aModel, std::optional<avk::mesh_index_t> aMeshIndex, uint32_t aMaxVertices, uint32_t aMaxIndices) {
+	// definitions
+	size_t max_triangles = aMaxIndices / 3;
+	const float cone_weight = 0.0f;
+
+	// get the maximum number of meshlets that could be generated
+	size_t max_meshlets = meshopt_buildMeshletsBound(aIndices.size(), aMaxVertices, max_triangles);
+	std::vector<meshopt_Meshlet> meshlets(max_meshlets);
+	std::vector<unsigned int> meshlet_vertices(max_meshlets * aMaxVertices);
+	std::vector<unsigned char> meshlet_triangles(max_meshlets * max_triangles * 3);
+
+	// let meshoptimizer build the meshlets for us
+	size_t meshlet_count = meshopt_buildMeshlets(meshlets.data(), meshlet_vertices.data(), meshlet_triangles.data(),
+		aIndices.data(), aIndices.size(), &tVertices[0].x, tVertices.size(), sizeof(glm::vec3),
+		aMaxVertices, max_triangles, cone_weight);
+
+	// copy the data over to Auto-Vk-Toolkit's meshlet structure
+	std::vector<avk::meshlet> generatedMeshlets(meshlet_count);
+	generatedMeshlets.resize(meshlet_count);
+	generatedMeshlets.reserve(meshlet_count);
+	for (int k = 0; k < meshlet_count; k++) {
+		auto& m = meshlets[k];
+		auto& gm = generatedMeshlets[k];
+		gm.mIndexCount = m.triangle_count * 3;
+		gm.mVertexCount = m.vertex_count;
+		gm.mVertices.reserve(m.vertex_count);
+		gm.mVertices.resize(m.vertex_count);
+		gm.mIndices.reserve(gm.mIndexCount);
+		gm.mIndices.resize(gm.mIndexCount);
+		std::ranges::copy(meshlet_vertices.begin() + m.vertex_offset,
+			meshlet_vertices.begin() + m.vertex_offset + m.vertex_count,
+			gm.mVertices.begin());
+		std::ranges::copy(meshlet_triangles.begin() + m.triangle_offset,
+			meshlet_triangles.begin() + m.triangle_offset + gm.mIndexCount,
+			gm.mIndices.begin());
+	}
+
+	return generatedMeshlets;
+
+};
 
 class compressed_meshlets_app : public avk::invokee
 {
@@ -52,13 +100,17 @@ class compressed_meshlets_app : public avk::invokee
 		int32_t mMaterialIndex;
 	};
 
+	struct mesh_data {
+		glm::mat4 mTransformationMatrix;
+		uint32_t mMaterialIndex;
+	};
+
 	/** The meshlet we upload to the gpu with its additional data. */
 	struct alignas(16) meshlet
 	{
 		glm::mat4 mTransformationMatrix;
 		uint32_t mMaterialIndex;
-		uint32_t mTexelBufferIndex;	// equals the model buffer index?
-
+		uint32_t mTexelBufferIndex;	// equals the mesh buffer index?
 		avk::meshlet_gpu_data<sNumVertices, sNumIndices> mGeometry;
 	};
 
@@ -100,7 +152,7 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 				drawCall.mPositionsBuffer->fill(drawCallData.mPositions.data(), 0),
 				drawCall.mNormalsBuffer->fill(drawCallData.mNormals.data(), 0),
 				drawCall.mTexCoordsBuffer->fill(drawCallData.mTexCoords.data(), 0)
-			}, *mQueue)->wait_until_signalled();
+				}, *mQueue)->wait_until_signalled();
 
 			// add them to the texel buffers
 			mPositionBuffers.push_back(avk::context().create_buffer_view(drawCall.mPositionsBuffer));
@@ -109,147 +161,92 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		}
 	}
 
-	void initialize() override
-	{
-		// use helper functions to create ImGui elements
-		auto surfaceCap = avk::context().physical_device().getSurfaceCapabilitiesKHR(avk::context().main_window()->surface());
+	void load(const std::string& filename) {
+		avk::model model = std::move(avk::model_t::load_from_file(filename, aiProcess_Triangulate | aiProcess_PreTransformVertices));
+		std::vector<avk::material_config> allMatConfigs; // <-- Gather the material config from all models to be loaded
+		std::vector<loaded_data_for_draw_call> dataForDrawCall;
+		std::vector<meshlet> meshletsGeometry;
+		std::vector<mesh_data> meshData;
+
+		// get all the meshlet indices of the model
+		const auto meshIndicesInOrder = model->select_all_meshes();
+		auto distinctMaterials = model->distinct_material_configs();
+		const auto matOffset = allMatConfigs.size();
+		// add all the materials of the model
+		for (auto& pair : distinctMaterials) allMatConfigs.push_back(pair.first);
+
+		for (size_t mpos = 0; mpos < meshIndicesInOrder.size(); mpos++) {
+			auto meshIndex = meshIndicesInOrder[mpos];
+			std::string meshname = model->name_of_mesh(mpos);
+
+			auto texelBufferIndex = dataForDrawCall.size();
+			auto& drawCallData = dataForDrawCall.emplace_back();
+
+			drawCallData.mMaterialIndex = static_cast<int32_t>(matOffset);
+			drawCallData.mModelMatrix = model->transformation_matrix_for_mesh(meshIndex);
+			// Find and assign the correct material in the allMatConfigs vector
+			for (auto pair : distinctMaterials) {
+				if (std::end(pair.second) != std::ranges::find(pair.second, meshIndex)) break;
+				drawCallData.mMaterialIndex++;
+			}
+
+			auto selection = avk::make_model_references_and_mesh_indices_selection(model, meshIndex);
+			// Build meshlets:
+			std::tie(drawCallData.mPositions, drawCallData.mIndices) = avk::get_vertices_and_indices(selection);
+			drawCallData.mNormals = avk::get_normals(selection);
+			drawCallData.mTexCoords = avk::get_2d_texture_coordinates(selection, 0);	// ToDo: Get rid of texture coordinates
+
+			// create selection for the meshlets
+			auto meshletSelection = avk::make_models_and_mesh_indices_selection(model, meshIndex);
+
+#if USE_MESHOPTIMIZER
+			auto cpuMeshlets = avk::divide_into_meshlets(meshletSelection, meshlet_division_meshoptimizer, true, sNumVertices, sNumIndices - ((sNumIndices / 3) % 4) * 3);
+#else
+			auto cpuMeshlets = avk::divide_into_meshlets(meshletSelection, true, sNumVertices, sNumIndices);
+#endif
+#if USE_CACHE
+			avk::serializer serializer("direct_meshlets-" + meshname + "-" + std::to_string(mpos) + ".cache");
+			auto [gpuMeshlets, _] = avk::convert_for_gpu_usage_cached<avk::meshlet_gpu_data<sNumVertices, sNumIndices>>(serializer, cpuMeshlets);
+			serializer.flush();
+#else
+			auto [gpuMeshlets, _] = avk::convert_for_gpu_usage<avk::meshlet_gpu_data<sNumVertices, sNumIndices>>(cpuMeshlets);
+#endif
+
+			// fill our own meshlets with the loaded/generated data
+			for (size_t mshltidx = 0; mshltidx < gpuMeshlets.size(); ++mshltidx) {
+				auto& genMeshlet = gpuMeshlets[mshltidx];
+
+				auto& ml = meshletsGeometry.emplace_back(meshlet{});
+
+#pragma region start to assemble meshlet struct
+				ml.mTransformationMatrix = drawCallData.mModelMatrix;
+				ml.mMaterialIndex = drawCallData.mMaterialIndex;
+				ml.mTexelBufferIndex = static_cast<uint32_t>(texelBufferIndex);
+				ml.mGeometry = genMeshlet;
+#pragma endregion
+			}
+		} // end for (size_t mpos = 0; mpos < meshIndicesInOrder.size(); mpos++)
 
 		// Create a descriptor cache that helps us to conveniently create descriptor sets:
 		mDescriptorCache = avk::context().create_descriptor_cache();
-
-		glm::mat4 globalTransform = glm::translate(glm::vec3(0.f, -0.5f, -3.f)) * glm::scale(glm::vec3(1.f));
-		std::vector<avk::model> loadedModels;
-		// Load a model from file:
-		//auto model = avk::model_t::load_from_file("assets/cyberpunk.fbx", aiProcess_Triangulate | aiProcess_PreTransformVertices);
-		auto model = avk::model_t::load_from_file("assets/metaball.fbx", aiProcess_Triangulate | aiProcess_PreTransformVertices);
-		//auto model = avk::model_t::load_from_file("assets/stanford_bunny.obj", aiProcess_Triangulate | aiProcess_PreTransformVertices);
-
-		loadedModels.push_back(std::move(model));
-
-		std::vector<avk::material_config> allMatConfigs; // <-- Gather the material config from all models to be loaded
-		std::vector<std::vector<glm::mat4>> meshRootMatricesPerModel;
-		std::vector<loaded_data_for_draw_call> dataForDrawCall;
-		std::vector<meshlet> meshletsGeometry;
-
-		vk::PhysicalDeviceFeatures2 supportedExtFeatures;
-		auto meshShaderFeatures = vk::PhysicalDeviceMeshShaderFeaturesEXT{};
-		supportedExtFeatures.pNext = &meshShaderFeatures;
-		avk::context().physical_device().getFeatures2(&supportedExtFeatures);
-
-		// Generate the meshlets for each loaded model.
-		for (size_t i = 0; i < loadedModels.size(); ++i) {
-			auto& curModel = loadedModels[i];
-
-			// get all the meshlet indices of the model
-			const auto meshIndicesInOrder = curModel->select_all_meshes();
-
-			auto distinctMaterials = curModel->distinct_material_configs();
-			const auto matOffset = allMatConfigs.size();
-			// add all the materials of the model
-			for (auto& pair : distinctMaterials) {
-				allMatConfigs.push_back(pair.first);
-			}
-
-			// Generate meshlets for each submesh of the current loaded model. Load all it's data into the draw call for later use.
-			for (size_t mpos = 0; mpos < meshIndicesInOrder.size(); mpos++) {
-				auto meshIndex = meshIndicesInOrder[mpos];
-				std::string meshname = curModel->name_of_mesh(mpos);
-
-				auto texelBufferIndex = dataForDrawCall.size();
-				auto& drawCallData = dataForDrawCall.emplace_back();
-
-				drawCallData.mMaterialIndex = static_cast<int32_t>(matOffset);
-				drawCallData.mModelMatrix = globalTransform * curModel->transformation_matrix_for_mesh(meshIndex);
-				// Find and assign the correct material in the allMatConfigs vector
-				for (auto pair : distinctMaterials) {
-					if (std::end(pair.second) != std::ranges::find(pair.second, meshIndex)) {
-						break;
-					}
-					drawCallData.mMaterialIndex++;
-				}
-
-				auto selection = avk::make_model_references_and_mesh_indices_selection(curModel, meshIndex);
-				// Build meshlets:
-				std::tie(drawCallData.mPositions, drawCallData.mIndices) = avk::get_vertices_and_indices(selection);
-				drawCallData.mNormals = avk::get_normals(selection);
-				drawCallData.mTexCoords = avk::get_2d_texture_coordinates(selection, 0);
-
-				// create selection for the meshlets
-				auto meshletSelection = avk::make_models_and_mesh_indices_selection(curModel, meshIndex);
-
-#if USE_MESHOPTIMIZER
-				auto cpuMeshlets = avk::divide_into_meshlets(meshletSelection, [](const std::vector<glm::vec3>& tVertices, const std::vector<uint32_t>& aIndices,
-					const avk::model_t& aModel, std::optional<avk::mesh_index_t> aMeshIndex,
-					uint32_t aMaxVertices, uint32_t aMaxIndices) {
-						// definitions
-						size_t max_triangles = aMaxIndices / 3;
-						const float cone_weight = 0.0f;
-
-						// get the maximum number of meshlets that could be generated
-						size_t max_meshlets = meshopt_buildMeshletsBound(aIndices.size(), aMaxVertices, max_triangles);
-						std::vector<meshopt_Meshlet> meshlets(max_meshlets);
-						std::vector<unsigned int> meshlet_vertices(max_meshlets * aMaxVertices);
-						std::vector<unsigned char> meshlet_triangles(max_meshlets * max_triangles * 3);
-
-						// let meshoptimizer build the meshlets for us
-						size_t meshlet_count = meshopt_buildMeshlets(meshlets.data(), meshlet_vertices.data(), meshlet_triangles.data(),
-							aIndices.data(), aIndices.size(), &tVertices[0].x, tVertices.size(), sizeof(glm::vec3),
-							aMaxVertices, max_triangles, cone_weight);
-
-						// copy the data over to Auto-Vk-Toolkit's meshlet structure
-						std::vector<avk::meshlet> generatedMeshlets(meshlet_count);
-						generatedMeshlets.resize(meshlet_count);
-						generatedMeshlets.reserve(meshlet_count);
-						for (int k = 0; k < meshlet_count; k++) {
-							auto& m = meshlets[k];
-							auto& gm = generatedMeshlets[k];
-							gm.mIndexCount = m.triangle_count * 3;
-							gm.mVertexCount = m.vertex_count;
-							gm.mVertices.reserve(m.vertex_count);
-							gm.mVertices.resize(m.vertex_count);
-							gm.mIndices.reserve(gm.mIndexCount);
-							gm.mIndices.resize(gm.mIndexCount);
-							std::ranges::copy(meshlet_vertices.begin() + m.vertex_offset,
-								meshlet_vertices.begin() + m.vertex_offset + m.vertex_count,
-								gm.mVertices.begin());
-							std::ranges::copy(meshlet_triangles.begin() + m.triangle_offset,
-								meshlet_triangles.begin() + m.triangle_offset + gm.mIndexCount,
-								gm.mIndices.begin());
-						}
-
-						return generatedMeshlets;
-					}, true, sNumVertices, sNumIndices - ((sNumIndices / 3) % 4) * 3);
-#else
-				auto cpuMeshlets = avk::divide_into_meshlets(meshletSelection, true, sNumVertices, sNumIndices);
-#endif
-#if USE_CACHE
-				avk::serializer serializer("direct_meshlets-" + meshname + "-" + std::to_string(mpos) + ".cache");
-				auto [gpuMeshlets, _] = avk::convert_for_gpu_usage_cached<avk::meshlet_gpu_data<sNumVertices, sNumIndices>>(serializer, cpuMeshlets);
-				serializer.flush();
-#else
-				auto [gpuMeshlets, _] = avk::convert_for_gpu_usage<avk::meshlet_gpu_data<sNumVertices, sNumIndices>>(cpuMeshlets);
-#endif
-				
-
-				// fill our own meshlets with the loaded/generated data
-				for (size_t mshltidx = 0; mshltidx < gpuMeshlets.size(); ++mshltidx) {
-					auto& genMeshlet = gpuMeshlets[mshltidx];
-
-					auto& ml = meshletsGeometry.emplace_back(meshlet{});
-
-#pragma region start to assemble meshlet struct
-					ml.mTransformationMatrix = drawCallData.mModelMatrix;
-					ml.mMaterialIndex = drawCallData.mMaterialIndex;
-					ml.mTexelBufferIndex = static_cast<uint32_t>(texelBufferIndex);
-
-					ml.mGeometry = genMeshlet;
-#pragma endregion 
-				}
-			}
-		} // for (size_t i = 0; i < loadedModels.size(); ++i)
-
+		mPositionBuffers.clear(); mTexCoordsBuffers.clear(); mNormalBuffers.clear(); mImageSamplers.clear(); mViewProjBuffers.clear();
+		
 		// create all the buffers for our drawcall data
 		add_draw_calls(dataForDrawCall, mDrawCalls);
+
+		std::vector<mesh_data> meshBufferData;
+		for (int i = 0; i < mDrawCalls.size(); i++) {
+			meshBufferData.push_back(mesh_data{
+				.mTransformationMatrix = mDrawCalls[i].mModelMatrix,
+				.mMaterialIndex = static_cast<uint32_t>(mDrawCalls[i].mMaterialIndex)
+				});
+		}
+		// Fill Mesh Buffer and upload to GPU
+		mMeshBuffer = avk::context().create_buffer(
+			avk::memory_usage::device, {},
+			avk::storage_buffer_meta::create_from_data(meshBufferData)
+		);
+		avk::context().record_and_submit_with_fence({ mMeshBuffer->fill(meshBufferData.data(), 0), }, *mQueue)->wait_until_signalled();
 
 		// Put the meshlets that we have gathered into a buffer:
 		mMeshletsBuffer = avk::context().create_buffer(
@@ -263,7 +260,7 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		// suited for GPU-usage (proper alignment, and containing only the relevant data),
 		// also load all the referenced images from file and provide access to them
 		// via samplers; It all happens in `ak::convert_for_gpu_usage`:
-		auto [gpuMaterials, imageSamplers, matCommands] = avk::convert_for_gpu_usage<avk::material_gpu_data>(
+		auto [gpuMaterials, imageSamplers, matCommands] = avk::convert_for_gpu_usage<avk::material_gpu_data>(  // Todo no textures
 			allMatConfigs, false, false,
 			avk::image_usage::general_texture,
 			avk::filter_mode::trilinear
@@ -272,8 +269,9 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		avk::context().record_and_submit_with_fence({
 			mMeshletsBuffer->fill(meshletsGeometry.data(), 0),
 			matCommands
-		}, *mQueue)->wait_until_signalled();
+			}, *mQueue)->wait_until_signalled();
 
+		// ToDo doesnt need to be reset each load
 		// One for each concurrent frame
 		const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();
 		for (int i = 0; i < concurrentFrames; ++i) {
@@ -291,31 +289,15 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 
 		mImageSamplers = std::move(imageSamplers);
 
-		// Before creating a pipeline, let's query the VK_EXT_mesh_shader-specific device properties:
-		// Also, just out of curiosity, query the subgroup properties too:
-		vk::PhysicalDeviceMeshShaderPropertiesEXT meshShaderProps{};
-		vk::PhysicalDeviceSubgroupProperties subgroupProps;
-		vk::PhysicalDeviceProperties2 phProps2{};
-		phProps2.pNext = &meshShaderProps;
-		meshShaderProps.pNext = &subgroupProps;
-		avk::context().physical_device().getProperties2(&phProps2);
-		LOG_INFO(std::format("Max. preferred task threads is {}, mesh threads is {}, subgroup size is {}.",
-			meshShaderProps.maxPreferredTaskWorkGroupInvocations,
-			meshShaderProps.maxPreferredMeshWorkGroupInvocations,
-			subgroupProps.subgroupSize));
-		LOG_INFO(std::format("This device supports the following subgroup operations: {}", vk::to_string(subgroupProps.supportedOperations)));
-		LOG_INFO(std::format("This device supports subgroup operations in the following stages: {}", vk::to_string(subgroupProps.supportedStages)));
-		mTaskInvocationsExt = meshShaderProps.maxPreferredTaskWorkGroupInvocations;
-
 		// Create our graphics mesh pipeline with the required configuration:
-		auto createGraphicsMeshPipeline = [this](auto taskShader, auto meshShader, uint32_t taskInvocations, uint32_t meshInvocations) {			
+		auto createGraphicsMeshPipeline = [this](auto taskShader, auto meshShader, uint32_t taskInvocations, uint32_t meshInvocations) {
 			return avk::context().create_graphics_pipeline_for(
 				// Specify which shaders the pipeline consists of:
 				avk::task_shader(taskShader)
-					.set_specialization_constant(0, taskInvocations),
+				.set_specialization_constant(0, taskInvocations),
 				avk::mesh_shader(meshShader)
-					.set_specialization_constant(0, taskInvocations)
-					.set_specialization_constant(1, meshInvocations),
+				.set_specialization_constant(0, taskInvocations)
+				.set_specialization_constant(1, meshInvocations),
 				avk::fragment_shader("shaders/diffuse_shading_fixed_lightsource.frag"),
 				// Some further settings:
 				avk::cfg::front_face::define_front_faces_to_be_counter_clockwise(),
@@ -338,38 +320,25 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 				avk::descriptor_binding(4, 0, mMeshletsBuffer)
 			);
 		};
-		
-		mPipelineExt = createGraphicsMeshPipeline(
-			"shaders/meshlet.task", "shaders/meshlet.mesh", 
-			meshShaderProps.maxPreferredTaskWorkGroupInvocations, 
-			meshShaderProps.maxPreferredMeshWorkGroupInvocations
-		);
+
+		mPipelineExt = createGraphicsMeshPipeline("shaders/meshlet.task", "shaders/meshlet.mesh", mPropsMeshShader.maxPreferredTaskWorkGroupInvocations, mPropsMeshShader.maxPreferredMeshWorkGroupInvocations);
 		// we want to use an updater, so create one:
 		mUpdater.emplace();
 		mUpdater->on(avk::shader_files_changed_event(mPipelineExt.as_reference())).update(mPipelineExt);
 
-		if (avk::context().supports_mesh_shader_nv(avk::context().physical_device())) {
-			vk::PhysicalDeviceMeshShaderPropertiesNV meshShaderPropsNv{};
-			phProps2.pNext = &meshShaderPropsNv;
-			avk::context().physical_device().getProperties2(&phProps2);
-			mTaskInvocationsNv = meshShaderPropsNv.maxTaskWorkGroupInvocations;
-
-			mPipelineNv = createGraphicsMeshPipeline(
-				"shaders/meshlet.nv.task", "shaders/meshlet.nv.mesh",
-				meshShaderPropsNv.maxTaskWorkGroupInvocations,
-				meshShaderPropsNv.maxMeshWorkGroupInvocations
-			);
-
+		if (mNvPipelineSupport) {
+			mTaskInvocationsNv = mPropsMeshShaderNV.maxTaskWorkGroupInvocations;
+			mPipelineNv = createGraphicsMeshPipeline("shaders/meshlet.nv.task", "shaders/meshlet.nv.mesh", mPropsMeshShaderNV.maxTaskWorkGroupInvocations, mPropsMeshShaderNV.maxMeshWorkGroupInvocations);
 			mUpdater->on(avk::shader_files_changed_event(mPipelineNv.as_reference())).update(mPipelineNv);
-
-			mUseNvPipeline = false;
 		}
 
 		mUpdater->on(avk::swapchain_resized_event(avk::context().main_window())).invoke([this]() {
 			this->mQuakeCam.set_aspect_ratio(avk::context().main_window()->aspect_ratio());
-		});
+			});
 
-		// Add the camera to the composition (and let it handle the updates)
+	}
+
+	void initCamera() {
 		mOrbitCam.set_translation({ 0.0f, 0.0f, 0.0f });
 		mOrbitCam.set_pivot_distance(3.0f);
 		mQuakeCam.set_translation({ 0.0f, 0.0f, 5.0f });
@@ -378,75 +347,73 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		avk::current_composition()->add_element(mOrbitCam);
 		avk::current_composition()->add_element(mQuakeCam);
 		mQuakeCam.disable();
+	}
 
+	void initGUI() {
 		auto imguiManager = avk::current_composition()->element_by_type<avk::imgui_manager>();
 		if (nullptr != imguiManager) {
 			imguiManager->add_callback([
 				this, imguiManager,
-				timestampPeriod = std::invoke([]() {
+					timestampPeriod = std::invoke([]() {
 					// get timestamp period from physical device, could be different for other GPUs
 					auto props = avk::context().physical_device().getProperties();
 					return static_cast<double>(props.limits.timestampPeriod);
-				}),
-				lastFrameDurationMs = 0.0,
-				lastDrawMeshTasksDurationMs = 0.0
+						}),
+					lastFrameDurationMs = 0.0,
+					lastDrawMeshTasksDurationMs = 0.0
 			]() mutable {
-				ImGui::Begin("Info & Settings");
-				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
-				ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
-				ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
-				ImGui::Separator();
-				ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
-				lastFrameDurationMs = glm::mix(lastFrameDurationMs, mLastFrameDuration * 1e-6 * timestampPeriod, 0.05);
-				lastDrawMeshTasksDurationMs = glm::mix(lastDrawMeshTasksDurationMs, mLastDrawMeshTasksDuration * 1e-6 * timestampPeriod, 0.05);
-				ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "Frame time (timer queries): %.3lf ms", lastFrameDurationMs);
-				ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "drawMeshTasks took        : %.3lf ms", lastDrawMeshTasksDurationMs);
-				ImGui::Text(                                   "mPipelineStats[0]         : %llu", mPipelineStats[0]);
-				ImGui::Text(                                   "mPipelineStats[1]         : %llu", mPipelineStats[1]);
-				ImGui::Text(                                   "mPipelineStats[2]         : %llu", mPipelineStats[2]);
-
-				ImGui::Separator();
-				bool quakeCamEnabled = mQuakeCam.is_enabled();
-				if (ImGui::Checkbox("Enable Quake Camera", &quakeCamEnabled)) {
-					if (quakeCamEnabled) { // => should be enabled
-						mQuakeCam.set_matrix(mOrbitCam.matrix());
-						mQuakeCam.enable();
-						mOrbitCam.disable();
-					}
-				}
-				if (quakeCamEnabled) {
-					ImGui::TextColored(ImVec4(0.f, .6f, .8f, 1.f), "[F1] to exit Quake Camera navigation.");
-					if (avk::input().key_pressed(avk::key_code::f1)) {
-						mOrbitCam.set_matrix(mQuakeCam.matrix());
-						mOrbitCam.enable();
-						mQuakeCam.disable();
-					}
-				}
-				if (imguiManager->begin_wanting_to_occupy_mouse() && mOrbitCam.is_enabled()) {
-					mOrbitCam.disable();
-				}
-				if (imguiManager->end_wanting_to_occupy_mouse() && !mQuakeCam.is_enabled()) {
-					mOrbitCam.enable();
-				}
-				ImGui::Separator();
-
-				ImGui::Separator();
-				if (mUseNvPipeline.has_value()) {
-					int choice = mUseNvPipeline.value() ? 1 : 0;
-					ImGui::Combo("Pipeline", &choice, "VK_EXT_mesh_shader\0VK_NV_mesh_shader\0");
-					mUseNvPipeline = (choice == 1);
+					ImGui::Begin("Info & Settings");
+					ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
+					ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
+					ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 					ImGui::Separator();
-				}
+					ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
+					lastFrameDurationMs = glm::mix(lastFrameDurationMs, mLastFrameDuration * 1e-6 * timestampPeriod, 0.05);
+					lastDrawMeshTasksDurationMs = glm::mix(lastDrawMeshTasksDurationMs, mLastDrawMeshTasksDuration * 1e-6 * timestampPeriod, 0.05);
+					ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "Frame time (timer queries): %.3lf ms", lastFrameDurationMs);
+					ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "drawMeshTasks took        : %.3lf ms", lastDrawMeshTasksDurationMs);
+					ImGui::Text("mPipelineStats[0]         : %llu", mPipelineStats[0]);
+					ImGui::Text("mPipelineStats[1]         : %llu", mPipelineStats[1]);
+					ImGui::Text("mPipelineStats[2]         : %llu", mPipelineStats[2]);
 
-				// Select the range of meshlets to be rendered:
-				ImGui::Checkbox("Highlight meshlets", &mHighlightMeshlets);
-				ImGui::Text("Select meshlets to be rendered:");
-				ImGui::DragIntRange2("Visible range", &mShowMeshletsFrom, &mShowMeshletsTo, 1, 0, static_cast<int>(mNumMeshlets));
+					ImGui::Separator();
+					bool quakeCamEnabled = mQuakeCam.is_enabled();
+					if (ImGui::Checkbox("Enable Quake Camera", &quakeCamEnabled)) {
+						if (quakeCamEnabled) { // => should be enabled
+							mQuakeCam.set_matrix(mOrbitCam.matrix());
+							mQuakeCam.enable();
+							mOrbitCam.disable();
+						}
+					}
+					if (quakeCamEnabled) {
+						ImGui::TextColored(ImVec4(0.f, .6f, .8f, 1.f), "[F1] to exit Quake Camera navigation.");
+						if (avk::input().key_pressed(avk::key_code::f1)) {
+							mOrbitCam.set_matrix(mQuakeCam.matrix());
+							mOrbitCam.enable();
+							mQuakeCam.disable();
+						}
+					}
+					if (imguiManager->begin_wanting_to_occupy_mouse() && mOrbitCam.is_enabled()) mOrbitCam.disable();
+					if (imguiManager->end_wanting_to_occupy_mouse() && !mQuakeCam.is_enabled()) mOrbitCam.enable();
+					ImGui::Separator();
 
-				ImGui::End();
-			});
+					ImGui::Separator();
+					auto pipelineOptions = "Vertex\0Mesh Shader\0";
+					if (mNvPipelineSupport) pipelineOptions = "Vertex\0Mesh Shader\0Nvidia Mesh Shader";
+					ImGui::Combo("Pipeline", (int*)(void*)&mSelectedPipeline, pipelineOptions);
+					ImGui::Separator();
+
+					// Select the range of meshlets to be rendered:
+					ImGui::Checkbox("Highlight meshlets", &mHighlightMeshlets);
+					ImGui::Text("Select meshlets to be rendered:");
+					ImGui::DragIntRange2("Visible range", &mShowMeshletsFrom, &mShowMeshletsTo, 1, 0, static_cast<int>(mNumMeshlets));
+
+					ImGui::End();
+				});
 		}
+	}
 
+	void initGPUQueryPools() {
 		mTimestampPool = avk::context().create_query_pool_for_timestamp_queries(
 			static_cast<uint32_t>(avk::context().main_window()->number_of_frames_in_flight()) * 2
 		);
@@ -455,6 +422,29 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 			vk::QueryPipelineStatisticFlagBits::eFragmentShaderInvocations | vk::QueryPipelineStatisticFlagBits::eMeshShaderInvocationsEXT | vk::QueryPipelineStatisticFlagBits::eTaskShaderInvocationsEXT,
 			avk::context().main_window()->number_of_frames_in_flight()
 		);
+	}
+
+	void loadDeviceProperties() {
+		// ==== FETCH DEVICE PROPERTIES AND FEATURES ===
+		mNvPipelineSupport = avk::context().supports_mesh_shader_nv(avk::context().physical_device());
+		mFeatures2.pNext = &mFeaturesMeshShader; // get all in one swoop
+		avk::context().physical_device().getFeatures2(&mFeatures2);
+		mProps2.pNext = &mPropsMeshShader; mPropsMeshShader.pNext = &mPropsSubgroup;  // get all in one swoop
+		if (mNvPipelineSupport) mPropsSubgroup.pNext = &mPropsMeshShaderNV;
+		avk::context().physical_device().getProperties2(&mProps2);
+		LOG_INFO(std::format("Max. preferred task threads is {}, mesh threads is {}, subgroup size is {}.", mPropsMeshShader.maxPreferredTaskWorkGroupInvocations, mPropsMeshShader.maxPreferredMeshWorkGroupInvocations, mPropsSubgroup.subgroupSize));
+		LOG_INFO(std::format("This device supports the following subgroup operations: {}", vk::to_string(mPropsSubgroup.supportedOperations)));
+		LOG_INFO(std::format("This device supports subgroup operations in the following stages: {}", vk::to_string(mPropsSubgroup.supportedStages)));
+		mTaskInvocationsExt = mPropsMeshShader.maxPreferredTaskWorkGroupInvocations;
+	}
+
+	void initialize() override
+	{
+		this->loadDeviceProperties();
+		this->load(STARTUP_FILE);
+		this->initCamera();
+		this->initGUI();
+		this->initGPUQueryPools();
 	}
 
 	void update() override
@@ -481,14 +471,14 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 			? mQuakeCam.projection_and_view_matrix()
 			: mOrbitCam.projection_and_view_matrix();
 		auto emptyCmd = mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0);
-		
+
 		// Get a command pool to allocate command buffers from:
 		auto& commandPool = context().get_command_pool_for_single_use_command_buffers(*mQueue);
 
 		// The swap chain provides us with an "image available semaphore" for the current frame.
 		// Only after the swapchain image has become available, we may start rendering into it.
 		auto imageAvailableSemaphore = mainWnd->consume_current_image_available_semaphore();
-		
+
 		// Create a command buffer and render into the *current* swap chain image:
 		auto cmdBfr = commandPool->alloc_command_buffer(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
@@ -504,7 +494,7 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 
 			mPipelineStats = mPipelineStatsPool->get_results<uint64_t, 3>(inFlightIndex, 1, vk::QueryResultFlagBits::e64);
 		}
-		auto& pipeline = mUseNvPipeline.value_or(false) ? mPipelineNv : mPipelineExt;
+		auto& pipeline = mSelectedPipeline == MESH_PIPELINE ? mPipelineExt : mSelectedPipeline == NVIDIA_MESH_PIPELINE ? mPipelineNv : mPipelineExt; // ToDo: Select vertex pipeline
 		context().record({
 				mPipelineStatsPool->reset(inFlightIndex, 1),
 				mPipelineStatsPool->begin_query(inFlightIndex),
@@ -514,7 +504,7 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 				// Upload the updated bone matrices into the buffer for the current frame (considering that we have cConcurrentFrames-many concurrent frames):
 mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
 
-		        sync::global_memory_barrier(stage::all_commands >> stage::all_commands, access::memory_write >> access::memory_write | access::memory_read),
+				sync::global_memory_barrier(stage::all_commands >> stage::all_commands, access::memory_write >> access::memory_write | access::memory_read),
 
 				command::render_pass(pipeline->renderpass_reference(), context().main_window()->current_backbuffer_reference(), {
 					command::bind_pipeline(pipeline.as_reference()),
@@ -536,12 +526,16 @@ mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
 
 					// Draw all the meshlets with just one single draw call:
 					command::conditional(
-						[this]() { return mUseNvPipeline.value_or(false); }, 
-						[this]() { return command::draw_mesh_tasks_nv (div_ceil(mNumMeshlets, mTaskInvocationsNv ), 0);    },
-						[this]() { return command::draw_mesh_tasks_ext(div_ceil(mNumMeshlets, mTaskInvocationsExt), 1, 1); }
+						[this]() { return mSelectedPipeline == NVIDIA_MESH_PIPELINE; },
+						[this]() { return command::draw_mesh_tasks_nv(div_ceil(mNumMeshlets, mTaskInvocationsNv), 0); },
+						[this]() { return command::conditional(
+							[this]() { return mSelectedPipeline == MESH_PIPELINE; },
+							[this]() { return command::draw_mesh_tasks_ext(div_ceil(mNumMeshlets, mTaskInvocationsExt), 1, 1); },
+							[this]() { return command::draw_mesh_tasks_ext(div_ceil(mNumMeshlets, mTaskInvocationsExt), 1, 1); } // ToDo replace with vertex pipeline draw
+						); }
 					)
+					
 				}),
-
 				mTimestampPool->write_timestamp(firstQueryIndex + 1, stage::mesh_shader),
 				mPipelineStatsPool->end_query(inFlightIndex)
 			})
@@ -550,7 +544,7 @@ mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
 			// Do not start to render before the image has become available:
 			.waiting_for(imageAvailableSemaphore >> stage::color_attachment_output)
 			.submit();
-					
+
 		mainWnd->handle_lifetime(std::move(cmdBfr));
 	}
 
@@ -562,6 +556,7 @@ private: // v== Member variables ==v
 	std::vector<avk::buffer> mViewProjBuffers;
 	avk::buffer mMaterialBuffer;
 	avk::buffer mMeshletsBuffer;
+	avk::buffer mMeshBuffer;
 	std::vector<avk::image_sampler> mImageSamplers;
 
 	std::vector<data_for_draw_call> mDrawCalls;
@@ -571,7 +566,7 @@ private: // v== Member variables ==v
 	avk::orbit_camera mOrbitCam;
 	avk::quake_camera mQuakeCam;
 
-    uint32_t mNumMeshlets;
+	uint32_t mNumMeshlets;
 	uint32_t mTaskInvocationsExt;
 	uint32_t mTaskInvocationsNv;
 
@@ -580,9 +575,8 @@ private: // v== Member variables ==v
 	std::vector<avk::buffer_view> mNormalBuffers;
 
 	bool mHighlightMeshlets = true;
-	int  mShowMeshletsFrom  = 0;
-	int  mShowMeshletsTo    = 0;
-	std::optional<bool> mUseNvPipeline = {};
+	int  mShowMeshletsFrom = 0;
+	int  mShowMeshletsTo = 0;
 
 	avk::query_pool mTimestampPool;
 	uint64_t mLastTimestamp = 0;
@@ -591,6 +585,20 @@ private: // v== Member variables ==v
 
 	avk::query_pool mPipelineStatsPool;
 	std::array<uint64_t, 3> mPipelineStats;
+
+	PipelineType mSelectedPipeline = PipelineType::MESH_PIPELINE;
+
+	// VK PROPERTIES:
+	vk::PhysicalDeviceProperties2 mProps2;
+	vk::PhysicalDeviceMeshShaderPropertiesEXT mPropsMeshShader;
+	vk::PhysicalDeviceMeshShaderPropertiesNV mPropsMeshShaderNV;
+	vk::PhysicalDeviceSubgroupProperties mPropsSubgroup;
+	bool mNvPipelineSupport = false;
+
+	// VK FEATURES:
+	vk::PhysicalDeviceFeatures2 mFeatures2;
+	vk::PhysicalDeviceMeshShaderFeaturesEXT mFeaturesMeshShader;
+	
 
 }; // compressed_meshlets_app
 
@@ -605,7 +613,7 @@ int main() // <== Starting point ==
 		mainWnd->enable_resizing(true);
 		mainWnd->set_additional_back_buffer_attachments({
 			avk::attachment::declare(vk::Format::eD32Sfloat, avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
-		});
+			});
 		mainWnd->set_presentaton_mode(avk::presentation_mode::mailbox);
 		mainWnd->set_number_of_concurrent_frames(3u);
 		mainWnd->open();
@@ -660,7 +668,7 @@ int main() // <== Starting point ==
 				// Sync (wait for fences and so) per window BEFORE executing render callbacks
 				avk::context().execute_for_each_window([](avk::window* wnd) {
 					wnd->sync_before_render();
-				});
+					});
 
 				// Call all the render() callbacks:
 				invoker.invoke_renders(aToBeInvoked);
@@ -668,10 +676,10 @@ int main() // <== Starting point ==
 				// Render per window:
 				avk::context().execute_for_each_window([](avk::window* wnd) {
 					wnd->render_frame();
-				});
+					});
 			}
 		); // This is a blocking call, which loops until avk::current_composition()->stop(); has been called (see update())
-	
+
 		result = EXIT_SUCCESS;
 	}
 	catch (avk::logic_error&) {}

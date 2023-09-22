@@ -37,6 +37,9 @@
     <None Include="assets\metaball.fbx">
       <Filter>assets</Filter>
     </None>
+    <None Include="assets\two_objects_in_one.fbx">
+      <Filter>assets</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\compressed_meshlet_skinning.cpp" />
