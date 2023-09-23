@@ -35,18 +35,17 @@ struct extended_meshlet
 	meshlet mGeometry;
 };
 
-struct model_data
+struct primitive_data
 {
 	mat4 mModelMatrix;
 	uint mMaterialIndex;
-	ivec3 padding;
 };
 
 layout(set = 3, binding = 0) uniform  samplerBuffer positionBuffers[];
 layout(set = 3, binding = 2) uniform  samplerBuffer normalBuffers[];
 layout(set = 3, binding = 3) uniform  samplerBuffer texCoordsBuffers[];
-layout(set = 4, binding = 0) buffer MeshletsBuffer { extended_meshlet mValues[]; } meshletsBuffer;
-layout(set = 4, binding = 1) buffer ModelBuffer { model_data model[]; };
+layout(set = 4, binding = 0) buffer MeshletsBuffer { extended_meshlet meshlets[]; };
+layout(set = 4, binding = 1) buffer PrimitiveBuffer { primitive_data primitives[]; };
 
 //////////////////////////////////////////////////////////////////////
 // Mesh shader output block:
@@ -81,18 +80,19 @@ void main()
 	uint invocationId = gl_LocalInvocationID.x;
 
 	// Get all the meshlet data:
-	uint vertexCount          = uint(meshletsBuffer.mValues[meshletIndex].mGeometry.mVertexCount);
-	uint triangleCount        = uint(meshletsBuffer.mValues[meshletIndex].mGeometry.mTriangleCount);
-	uint materialIndex        = meshletsBuffer.mValues[meshletIndex].mMaterialIndex;
-	mat4 transformationMatrix = meshletsBuffer.mValues[meshletIndex].mTransformationMatrix;
+	uint vertexCount          = uint(meshlets[meshletIndex].mGeometry.mVertexCount);
+	uint triangleCount        = uint(meshlets[meshletIndex].mGeometry.mTriangleCount);
+	uint modelIndex = meshlets[meshletIndex].mTexelBufferIndex;
+	uint materialIndex        = primitives[modelIndex].mMaterialIndex;
+	mat4 transformationMatrix = primitives[modelIndex].mModelMatrix;
 
-	uint texelBufferIndex     = meshletsBuffer.mValues[meshletIndex].mTexelBufferIndex;
+	uint texelBufferIndex     = meshlets[meshletIndex].mTexelBufferIndex;
 	
 	// Step by NUM_MESH_SHADER_INVOCATIONS as we have that many threads but potentially more vertices to calculate:
 	for (uint i = invocationId; i < vertexCount; i += NUM_MESH_SHADER_INVOCATIONS)
 	{
 		// Get the vertex index:
-		uint vi = meshletsBuffer.mValues[meshletIndex].mGeometry.mVertices[i];
+		uint vi = meshlets[meshletIndex].mGeometry.mVertices[i];
 		// Get vertex data from the appropriate texel buffers and vertex indices:
 		vec4 posMshSp = vec4(texelFetch(positionBuffers[texelBufferIndex], int(vi)).xyz, 1.0);
 		vec3 nrmMshSp = texelFetch(normalBuffers[texelBufferIndex], int(vi)).xyz;
@@ -127,9 +127,9 @@ void main()
 	{
 		// Write the indices for the vertices:
 		gl_PrimitiveTriangleIndicesEXT[i] = uvec3(
-			meshletsBuffer.mValues[meshletIndex].mGeometry.mIndices[i * 3 + 0],
-			meshletsBuffer.mValues[meshletIndex].mGeometry.mIndices[i * 3 + 1],
-			meshletsBuffer.mValues[meshletIndex].mGeometry.mIndices[i * 3 + 2]
+			meshlets[meshletIndex].mGeometry.mIndices[i * 3 + 0],
+			meshlets[meshletIndex].mGeometry.mIndices[i * 3 + 1],
+			meshlets[meshletIndex].mGeometry.mIndices[i * 3 + 2]
 		);
 	}
 }

@@ -11,6 +11,8 @@
 #include "quake_camera.hpp"
 #include "vk_convenience_functions.hpp"
 #include "../meshoptimizer/src/meshoptimizer.h"
+#include "../ImGuiFileDialog/ImGuiFileDialog.h"
+
 
 #define STARTUP_FILE "assets/two_objects_in_one.fbx"
 #define USE_MESHOPTIMIZER 1
@@ -100,9 +102,10 @@ class compressed_meshlets_app : public avk::invokee
 		int32_t mMaterialIndex;
 	};
 
-	struct mesh_data {
+	struct primitive_data {
 		glm::mat4 mTransformationMatrix;
 		uint32_t mMaterialIndex;
+		glm::vec3 padding;
 	};
 
 	/** The meshlet we upload to the gpu with its additional data. */
@@ -166,7 +169,6 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		std::vector<avk::material_config> allMatConfigs; // <-- Gather the material config from all models to be loaded
 		std::vector<loaded_data_for_draw_call> dataForDrawCall;
 		std::vector<meshlet> meshletsGeometry;
-		std::vector<mesh_data> meshData;
 
 		// get all the meshlet indices of the model
 		const auto meshIndicesInOrder = model->select_all_meshes();
@@ -234,19 +236,20 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		// create all the buffers for our drawcall data
 		add_draw_calls(dataForDrawCall, mDrawCalls);
 
-		std::vector<mesh_data> meshBufferData;
+		std::vector<primitive_data> primitiveData;
 		for (int i = 0; i < mDrawCalls.size(); i++) {
-			meshBufferData.push_back(mesh_data{
+			primitiveData.push_back(primitive_data{
 				.mTransformationMatrix = mDrawCalls[i].mModelMatrix,
-				.mMaterialIndex = static_cast<uint32_t>(mDrawCalls[i].mMaterialIndex)
+				.mMaterialIndex = static_cast<uint32_t>(mDrawCalls[i].mMaterialIndex),
+				.padding = glm::vec3(1.0, 2.0, 3.0)
 				});
 		}
 		// Fill Mesh Buffer and upload to GPU
-		mMeshBuffer = avk::context().create_buffer(
+		mPrimitiveBuffer = avk::context().create_buffer(
 			avk::memory_usage::device, {},
-			avk::storage_buffer_meta::create_from_data(meshBufferData)
+			avk::storage_buffer_meta::create_from_data(primitiveData)
 		);
-		avk::context().record_and_submit_with_fence({ mMeshBuffer->fill(meshBufferData.data(), 0), }, *mQueue)->wait_until_signalled();
+		avk::context().record_and_submit_with_fence({ mPrimitiveBuffer->fill(primitiveData.data(), 0), }, *mQueue)->wait_until_signalled();
 
 		// Put the meshlets that we have gathered into a buffer:
 		mMeshletsBuffer = avk::context().create_buffer(
@@ -317,7 +320,8 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 				avk::descriptor_binding(3, 0, avk::as_uniform_texel_buffer_views(mPositionBuffers)),
 				avk::descriptor_binding(3, 2, avk::as_uniform_texel_buffer_views(mNormalBuffers)),
 				avk::descriptor_binding(3, 3, avk::as_uniform_texel_buffer_views(mTexCoordsBuffers)),
-				avk::descriptor_binding(4, 0, mMeshletsBuffer)
+				avk::descriptor_binding(4, 0, mMeshletsBuffer),
+				avk::descriptor_binding(4, 1, mPrimitiveBuffer)
 			);
 		};
 
@@ -366,6 +370,20 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 					ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
 					ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
 					ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
+					ImGui::Separator();
+					if (ImGui::Button("Open File")) {
+						ImGuiFileDialog::Instance()->OpenDialog("open_file", "Choose File", "{.fbx,.obj}", ".", 1, nullptr, ImGuiFileDialogFlags_Modal);
+					}
+					// display
+					if (ImGuiFileDialog::Instance()->Display("open_file"))
+					{
+						if (ImGuiFileDialog::Instance()->IsOk())
+						{
+							mNewFileName = ImGuiFileDialog::Instance()->GetFilePathName();
+							mLoadNewFile = true;
+						}
+						ImGuiFileDialog::Instance()->Close();
+					}
 					ImGui::Separator();
 					ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
 					lastFrameDurationMs = glm::mix(lastFrameDurationMs, mLastFrameDuration * 1e-6 * timestampPeriod, 0.05);
@@ -449,19 +467,32 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 
 	void update() override
 	{
-		if (avk::input().key_pressed(avk::key_code::c)) {
+		using namespace avk;
+		if (input().key_pressed(avk::key_code::c)) {
 			// Center the cursor:
-			auto resolution = avk::context().main_window()->resolution();
-			avk::context().main_window()->set_cursor_pos({ resolution[0] / 2.0, resolution[1] / 2.0 });
+			auto resolution = context().main_window()->resolution();
+			context().main_window()->set_cursor_pos({ resolution[0] / 2.0, resolution[1] / 2.0 });
 		}
-		if (avk::input().key_pressed(avk::key_code::escape)) {
+		if (input().key_pressed(avk::key_code::escape)) {
 			// Stop the current composition:
-			avk::current_composition()->stop();
+			current_composition()->stop();
+		}
+		// After wanting to load a file, the following code waits for number_of_frames_in_flight, such
+		// that all buffers/descriptors... are not in a queue and can safely be destroyed. (Is there a vk-toolkit way to do this?)
+		if (mLoadNewFile) {
+			if (mFrameWait == -1) mFrameWait = context().main_window()->number_of_frames_in_flight();
+			else if (mFrameWait > 0) mFrameWait--;
+			else if (mFrameWait == 0) {
+				load(mNewFileName);
+				mLoadNewFile = false;
+				mFrameWait = -1;
+			}
 		}
 	}
 
 	void render() override
 	{
+		if (mLoadNewFile) return;	// We want to free the commandPool such that we can load a new file
 		using namespace avk;
 
 		auto mainWnd = context().main_window();
@@ -515,7 +546,8 @@ mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
 						descriptor_binding(3, 0, as_uniform_texel_buffer_views(mPositionBuffers)),
 						descriptor_binding(3, 2, as_uniform_texel_buffer_views(mNormalBuffers)),
 						descriptor_binding(3, 3, as_uniform_texel_buffer_views(mTexCoordsBuffers)),
-						descriptor_binding(4, 0, mMeshletsBuffer)
+						descriptor_binding(4, 0, mMeshletsBuffer),
+						descriptor_binding(4, 1, mPrimitiveBuffer)
 					})),
 
 					command::push_constants(pipeline->layout(), push_constants{
@@ -546,9 +578,14 @@ mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
 			.submit();
 
 		mainWnd->handle_lifetime(std::move(cmdBfr));
+
 	}
 
 private: // v== Member variables ==v
+
+	bool mLoadNewFile = false;
+	std::string mNewFileName;
+	int mFrameWait = -1;
 
 	avk::queue* mQueue;
 	avk::descriptor_cache mDescriptorCache;
@@ -556,7 +593,7 @@ private: // v== Member variables ==v
 	std::vector<avk::buffer> mViewProjBuffers;
 	avk::buffer mMaterialBuffer;
 	avk::buffer mMeshletsBuffer;
-	avk::buffer mMeshBuffer;
+	avk::buffer mPrimitiveBuffer;
 	std::vector<avk::image_sampler> mImageSamplers;
 
 	std::vector<data_for_draw_call> mDrawCalls;

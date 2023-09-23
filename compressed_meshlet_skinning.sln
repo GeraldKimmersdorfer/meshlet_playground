@@ -56,8 +56,8 @@ Global
 		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.MinSizeRel|x64.Build.0 = MinSizeRel|x64
 		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Publish_Vulkan|x64.ActiveCfg = RelWithDebInfo|x64
 		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Publish_Vulkan|x64.Build.0 = RelWithDebInfo|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release_Vulkan|x64.ActiveCfg = RelWithDebInfo|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release_Vulkan|x64.Build.0 = RelWithDebInfo|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release_Vulkan|x64.ActiveCfg = Release|x64
+		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release_Vulkan|x64.Build.0 = Release|x64
 		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release|x64.ActiveCfg = Release|x64
 		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release|x64.Build.0 = Release|x64
 		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64

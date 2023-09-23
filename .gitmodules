@@ -5,3 +5,6 @@
 [submodule "meshoptimizer"]
 	path = meshoptimizer
 	url = https://github.com/zeux/meshoptimizer
+[submodule "ImGuiFileDialog"]
+	path = ImGuiFileDialog
+	url = https://github.com/aiekick/ImGuiFileDialog.git

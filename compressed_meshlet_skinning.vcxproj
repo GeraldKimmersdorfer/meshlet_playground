@@ -15,6 +15,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\compressed_meshlet_skinning.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -113,6 +114,7 @@
     <OutDir>$(ProjectDir)bin\$(Configuration)_$(Platform)\</OutDir>
     <IntDir>$(ProjectDir)temp\intermediate\$(Configuration)_$(Platform)\</IntDir>
     <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
+    <SourcePath>$(SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Vulkan|x64'">
     <ClCompile>
@@ -129,6 +131,7 @@
       </ForcedIncludeFiles>
       <TreatSpecificWarningsAsErrors>4715</TreatSpecificWarningsAsErrors>
       <PrecompiledHeaderFile>cg_stdafx.hpp</PrecompiledHeaderFile>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
