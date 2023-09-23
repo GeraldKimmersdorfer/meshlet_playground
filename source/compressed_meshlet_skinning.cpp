@@ -60,9 +60,7 @@ auto meshlet_division_meshoptimizer = [](const std::vector<glm::vec3>& tVertices
 			meshlet_triangles.begin() + m.triangle_offset + gm.mIndexCount,
 			gm.mIndices.begin());
 	}
-
 	return generatedMeshlets;
-
 };
 
 class compressed_meshlets_app : public avk::invokee
@@ -77,33 +75,12 @@ class compressed_meshlets_app : public avk::invokee
 		int32_t    mVisibleMeshletIndexTo;
 	};
 
-	/** Contains the necessary buffers for drawing everything */
-	struct data_for_draw_call
-	{
-		avk::buffer mPositionsBuffer;
-		avk::buffer mTexCoordsBuffer;
-		avk::buffer mNormalsBuffer;
-
-		glm::mat4 mModelMatrix;
-
-		int32_t mMaterialIndex;
-	};
-
-	/** Contains the data for each draw call */
-	struct loaded_data_for_draw_call
-	{
-		std::vector<glm::vec3> mPositions;
-		std::vector<glm::vec2> mTexCoords;
-		std::vector<glm::vec3> mNormals;
-		std::vector<uint32_t> mIndices;
-
-		glm::mat4 mModelMatrix;
-
-		int32_t mMaterialIndex;
-	};
-
-	struct primitive_data {
+	struct mesh_data {
 		glm::mat4 mTransformationMatrix;
+		uint32_t mOffsetPositions;	// Offset to first item in Positions Texel-Buffer
+		uint32_t mOffsetTexCoords;	// Offset to first item in TexCoords Texel-Buffer
+		uint32_t mOffsetNormals;	// Offset to first item in Normals Texel-Buffer
+		uint32_t mOffsetIndices;	// Offset to first item in Indices Texel-Buffer (unused yet)
 		uint32_t mMaterialIndex;
 		glm::vec3 padding;
 	};
@@ -111,9 +88,7 @@ class compressed_meshlets_app : public avk::invokee
 	/** The meshlet we upload to the gpu with its additional data. */
 	struct alignas(16) meshlet
 	{
-		glm::mat4 mTransformationMatrix;
-		uint32_t mMaterialIndex;
-		uint32_t mTexelBufferIndex;	// equals the mesh buffer index?
+		uint32_t mMeshIndex;
 		avk::meshlet_gpu_data<sNumVertices, sNumIndices> mGeometry;
 	};
 
@@ -122,58 +97,19 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		: mQueue{ &aQueue }
 	{}
 
-	/** Creates buffers for all the drawcalls.
-	 *  Called after everything has been loaded and split into meshlets properly.
-	 *  @param dataForDrawCall		The loaded data for the drawcalls.
-	 *	@param drawCallsTarget		The target vector for the draw call data.
-	 */
-	void add_draw_calls(std::vector<loaded_data_for_draw_call>& dataForDrawCall, std::vector<data_for_draw_call>& drawCallsTarget) {
-		for (auto& drawCallData : dataForDrawCall) {
-			auto& drawCall = drawCallsTarget.emplace_back();
-			drawCall.mModelMatrix = drawCallData.mModelMatrix;
-			drawCall.mMaterialIndex = drawCallData.mMaterialIndex;
-
-			drawCall.mPositionsBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
-				avk::vertex_buffer_meta::create_from_data(drawCallData.mPositions).describe_only_member(drawCallData.mPositions[0], avk::content_description::position),
-				avk::storage_buffer_meta::create_from_data(drawCallData.mPositions),
-				avk::uniform_texel_buffer_meta::create_from_data(drawCallData.mPositions).describe_only_member(drawCallData.mPositions[0]) // just take the vec3 as it is
-			);
-
-			drawCall.mNormalsBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
-				avk::vertex_buffer_meta::create_from_data(drawCallData.mNormals),
-				avk::storage_buffer_meta::create_from_data(drawCallData.mNormals),
-				avk::uniform_texel_buffer_meta::create_from_data(drawCallData.mNormals).describe_only_member(drawCallData.mNormals[0]) // just take the vec3 as it is
-			);
-
-			drawCall.mTexCoordsBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
-				avk::vertex_buffer_meta::create_from_data(drawCallData.mTexCoords),
-				avk::storage_buffer_meta::create_from_data(drawCallData.mTexCoords),
-				avk::uniform_texel_buffer_meta::create_from_data(drawCallData.mTexCoords).describe_only_member(drawCallData.mTexCoords[0]) // just take the vec2 as it is   
-			);
-
-			avk::context().record_and_submit_with_fence({
-				drawCall.mPositionsBuffer->fill(drawCallData.mPositions.data(), 0),
-				drawCall.mNormalsBuffer->fill(drawCallData.mNormals.data(), 0),
-				drawCall.mTexCoordsBuffer->fill(drawCallData.mTexCoords.data(), 0)
-				}, *mQueue)->wait_until_signalled();
-
-			// add them to the texel buffers
-			mPositionBuffers.push_back(avk::context().create_buffer_view(drawCall.mPositionsBuffer));
-			mNormalBuffers.push_back(avk::context().create_buffer_view(drawCall.mNormalsBuffer));
-			mTexCoordsBuffers.push_back(avk::context().create_buffer_view(drawCall.mTexCoordsBuffer));
-		}
-	}
-
 	void load(const std::string& filename) {
 		avk::model model = std::move(avk::model_t::load_from_file(filename, aiProcess_Triangulate | aiProcess_PreTransformVertices));
 		std::vector<avk::material_config> allMatConfigs; // <-- Gather the material config from all models to be loaded
-		std::vector<loaded_data_for_draw_call> dataForDrawCall;
 		std::vector<meshlet> meshletsGeometry;
+		std::vector<mesh_data> meshData;
+		std::vector<glm::vec3> positions;
+		std::vector<glm::vec2> texCoords;
+		std::vector<glm::vec3> normals;
+		std::vector<uint32_t> indices;
 
 		// get all the meshlet indices of the model
 		const auto meshIndicesInOrder = model->select_all_meshes();
 		auto distinctMaterials = model->distinct_material_configs();
-		const auto matOffset = allMatConfigs.size();
 		// add all the materials of the model
 		for (auto& pair : distinctMaterials) allMatConfigs.push_back(pair.first);
 
@@ -181,22 +117,32 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 			auto meshIndex = meshIndicesInOrder[mpos];
 			std::string meshname = model->name_of_mesh(mpos);
 
-			auto texelBufferIndex = dataForDrawCall.size();
-			auto& drawCallData = dataForDrawCall.emplace_back();
+			auto& mesh = meshData.emplace_back(mesh_data{
+				.mTransformationMatrix = model->transformation_matrix_for_mesh(meshIndex),
+				.mOffsetPositions = static_cast<uint32_t>(positions.size()),
+				.mOffsetTexCoords = static_cast<uint32_t>(texCoords.size()),
+				.mOffsetNormals = static_cast<uint32_t>(normals.size()),
+				.mOffsetIndices = static_cast<uint32_t>(indices.size()),
+				.mMaterialIndex = 0,
+				});
 
-			drawCallData.mMaterialIndex = static_cast<int32_t>(matOffset);
-			drawCallData.mModelMatrix = model->transformation_matrix_for_mesh(meshIndex);
 			// Find and assign the correct material in the allMatConfigs vector
 			for (auto pair : distinctMaterials) {
 				if (std::end(pair.second) != std::ranges::find(pair.second, meshIndex)) break;
-				drawCallData.mMaterialIndex++;
+				mesh.mMaterialIndex++;
 			}
 
 			auto selection = avk::make_model_references_and_mesh_indices_selection(model, meshIndex);
-			// Build meshlets:
-			std::tie(drawCallData.mPositions, drawCallData.mIndices) = avk::get_vertices_and_indices(selection);
-			drawCallData.mNormals = avk::get_normals(selection);
-			drawCallData.mTexCoords = avk::get_2d_texture_coordinates(selection, 0);	// ToDo: Get rid of texture coordinates
+			//std::vector<glm::vec3> meshPositions; std::vector<uint32_t> meshIndices;
+			//std::tie(meshPositions, meshIndices) = avk::get_vertices_and_indices(selection);
+			auto [meshPositions, meshIndices] = avk::get_vertices_and_indices(selection);
+			auto meshNormals = avk::get_normals(selection);
+			auto meshTexCoords = avk::get_2d_texture_coordinates(selection, 0);
+
+			positions.insert(positions.end(), meshPositions.begin(), meshPositions.end());
+			texCoords.insert(texCoords.end(), meshTexCoords.begin(), meshTexCoords.end());
+			normals.insert(normals.end(), meshNormals.begin(), meshNormals.end());
+			indices.insert(indices.end(), meshIndices.begin(), meshIndices.end());
 
 			// create selection for the meshlets
 			auto meshletSelection = avk::make_models_and_mesh_indices_selection(model, meshIndex);
@@ -214,44 +160,56 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 			auto [gpuMeshlets, _] = avk::convert_for_gpu_usage<avk::meshlet_gpu_data<sNumVertices, sNumIndices>>(cpuMeshlets);
 #endif
 
-			// fill our own meshlets with the loaded/generated data
 			for (size_t mshltidx = 0; mshltidx < gpuMeshlets.size(); ++mshltidx) {
 				auto& genMeshlet = gpuMeshlets[mshltidx];
-
-				auto& ml = meshletsGeometry.emplace_back(meshlet{});
-
-#pragma region start to assemble meshlet struct
-				ml.mTransformationMatrix = drawCallData.mModelMatrix;
-				ml.mMaterialIndex = drawCallData.mMaterialIndex;
-				ml.mTexelBufferIndex = static_cast<uint32_t>(texelBufferIndex);
-				ml.mGeometry = genMeshlet;
-#pragma endregion
+				auto& ml = meshletsGeometry.emplace_back(meshlet{
+					.mMeshIndex = static_cast<uint32_t>(mpos),
+					.mGeometry = genMeshlet
+					}
+				);
 			}
 		} // end for (size_t mpos = 0; mpos < meshIndicesInOrder.size(); mpos++)
 
 		// Create a descriptor cache that helps us to conveniently create descriptor sets:
 		mDescriptorCache = avk::context().create_descriptor_cache();
-		mPositionBuffers.clear(); mTexCoordsBuffers.clear(); mNormalBuffers.clear(); mImageSamplers.clear(); mViewProjBuffers.clear();
-		
-		// create all the buffers for our drawcall data
-		add_draw_calls(dataForDrawCall, mDrawCalls);
+		mImageSamplers.clear(); mViewProjBuffers.clear();
 
-		std::vector<primitive_data> primitiveData;
-		for (int i = 0; i < mDrawCalls.size(); i++) {
-			primitiveData.push_back(primitive_data{
-				.mTransformationMatrix = mDrawCalls[i].mModelMatrix,
-				.mMaterialIndex = static_cast<uint32_t>(mDrawCalls[i].mMaterialIndex),
-				.padding = glm::vec3(1.0, 2.0, 3.0)
-				});
-		}
-		// Fill Mesh Buffer and upload to GPU
-		mPrimitiveBuffer = avk::context().create_buffer(
-			avk::memory_usage::device, {},
-			avk::storage_buffer_meta::create_from_data(primitiveData)
+		// ======== START UPLOADING TO GPU =============
+		mPositionsBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
+			avk::vertex_buffer_meta::create_from_data(positions).describe_only_member(positions[0], avk::content_description::position),
+			avk::storage_buffer_meta::create_from_data(positions),
+			avk::uniform_texel_buffer_meta::create_from_data(positions).describe_only_member(positions[0]) // just take the vec3 as it is
 		);
-		avk::context().record_and_submit_with_fence({ mPrimitiveBuffer->fill(primitiveData.data(), 0), }, *mQueue)->wait_until_signalled();
 
-		// Put the meshlets that we have gathered into a buffer:
+		mNormalsBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
+			avk::vertex_buffer_meta::create_from_data(normals),
+			avk::storage_buffer_meta::create_from_data(normals),
+			avk::uniform_texel_buffer_meta::create_from_data(normals).describe_only_member(normals[0]) // just take the vec3 as it is
+		);
+
+		mTexCoordsBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
+			avk::vertex_buffer_meta::create_from_data(texCoords),
+			avk::storage_buffer_meta::create_from_data(texCoords),
+			avk::uniform_texel_buffer_meta::create_from_data(texCoords).describe_only_member(texCoords[0]) // just take the vec2 as it is   
+		);
+
+		avk::context().record_and_submit_with_fence({
+			mPositionsBuffer->fill(positions.data(), 0),
+			mNormalsBuffer->fill(normals.data(), 0),
+			mTexCoordsBuffer->fill(texCoords.data(), 0)
+			}, *mQueue
+		)->wait_until_signalled();
+
+		mPositionsBufferView = avk::context().create_buffer_view(mPositionsBuffer);
+		mNormalsBufferView = avk::context().create_buffer_view(mNormalsBuffer);
+		mTexCoordsBufferView = avk::context().create_buffer_view(mTexCoordsBuffer);
+		
+		mMeshesBuffer = avk::context().create_buffer(
+			avk::memory_usage::device, {},
+			avk::storage_buffer_meta::create_from_data(meshData)
+		);
+		avk::context().record_and_submit_with_fence({ mMeshesBuffer->fill(meshData.data(), 0), }, *mQueue)->wait_until_signalled();
+
 		mMeshletsBuffer = avk::context().create_buffer(
 			avk::memory_usage::device, {},
 			avk::storage_buffer_meta::create_from_data(meshletsGeometry)
@@ -263,7 +221,7 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 		// suited for GPU-usage (proper alignment, and containing only the relevant data),
 		// also load all the referenced images from file and provide access to them
 		// via samplers; It all happens in `ak::convert_for_gpu_usage`:
-		auto [gpuMaterials, imageSamplers, matCommands] = avk::convert_for_gpu_usage<avk::material_gpu_data>(  // Todo no textures
+		auto [gpuMaterials, imageSamplers, matCommands] = avk::convert_for_gpu_usage<avk::material_gpu_data>( 
 			allMatConfigs, false, false,
 			avk::image_usage::general_texture,
 			avk::filter_mode::trilinear
@@ -284,11 +242,11 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 			));
 		}
 
-		mMaterialBuffer = avk::context().create_buffer(
+		mMaterialsBuffer = avk::context().create_buffer(
 			avk::memory_usage::host_visible, {},
 			avk::storage_buffer_meta::create_from_data(gpuMaterials)
 		);
-		auto emptyCommand = mMaterialBuffer->fill(gpuMaterials.data(), 0);
+		auto emptyCommand = mMaterialsBuffer->fill(gpuMaterials.data(), 0);
 
 		mImageSamplers = std::move(imageSamplers);
 
@@ -315,13 +273,13 @@ public: // v== avk::invokee overrides which will be invoked by the framework ==v
 				avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(push_constants) },
 				avk::descriptor_binding(0, 0, avk::as_combined_image_samplers(mImageSamplers, avk::layout::shader_read_only_optimal)),
 				avk::descriptor_binding(0, 1, mViewProjBuffers[0]),
-				avk::descriptor_binding(1, 0, mMaterialBuffer),
+				avk::descriptor_binding(1, 0, mMaterialsBuffer),
 				// texel buffers
-				avk::descriptor_binding(3, 0, avk::as_uniform_texel_buffer_views(mPositionBuffers)),
-				avk::descriptor_binding(3, 2, avk::as_uniform_texel_buffer_views(mNormalBuffers)),
-				avk::descriptor_binding(3, 3, avk::as_uniform_texel_buffer_views(mTexCoordsBuffers)),
+				avk::descriptor_binding(3, 0, avk::as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mPositionsBufferView})),
+				avk::descriptor_binding(3, 2, avk::as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mNormalsBufferView})),
+				avk::descriptor_binding(3, 3, avk::as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mTexCoordsBufferView})),
 				avk::descriptor_binding(4, 0, mMeshletsBuffer),
-				avk::descriptor_binding(4, 1, mPrimitiveBuffer)
+				avk::descriptor_binding(4, 1, mMeshesBuffer)
 			);
 		};
 
@@ -542,12 +500,12 @@ mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
 					command::bind_descriptors(pipeline->layout(), mDescriptorCache->get_or_create_descriptor_sets({
 						descriptor_binding(0, 0, as_combined_image_samplers(mImageSamplers, layout::shader_read_only_optimal)),
 						descriptor_binding(0, 1, mViewProjBuffers[inFlightIndex]),
-						descriptor_binding(1, 0, mMaterialBuffer),
-						descriptor_binding(3, 0, as_uniform_texel_buffer_views(mPositionBuffers)),
-						descriptor_binding(3, 2, as_uniform_texel_buffer_views(mNormalBuffers)),
-						descriptor_binding(3, 3, as_uniform_texel_buffer_views(mTexCoordsBuffers)),
+						descriptor_binding(1, 0, mMaterialsBuffer),
+						descriptor_binding(3, 0, as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mPositionsBufferView})),
+						descriptor_binding(3, 2, as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mNormalsBufferView})),
+						descriptor_binding(3, 3, as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mTexCoordsBufferView})),
 						descriptor_binding(4, 0, mMeshletsBuffer),
-						descriptor_binding(4, 1, mPrimitiveBuffer)
+						descriptor_binding(4, 1, mMeshesBuffer)
 					})),
 
 					command::push_constants(pipeline->layout(), push_constants{
@@ -591,12 +549,15 @@ private: // v== Member variables ==v
 	avk::descriptor_cache mDescriptorCache;
 
 	std::vector<avk::buffer> mViewProjBuffers;
-	avk::buffer mMaterialBuffer;
+	avk::buffer mMaterialsBuffer;
 	avk::buffer mMeshletsBuffer;
-	avk::buffer mPrimitiveBuffer;
-	std::vector<avk::image_sampler> mImageSamplers;
+	avk::buffer mMeshesBuffer;
+	avk::buffer mPositionsBuffer;
+	avk::buffer mTexCoordsBuffer;
+	avk::buffer mNormalsBuffer;
+	// ToDo: We need index buffer for normal pipeline?
 
-	std::vector<data_for_draw_call> mDrawCalls;
+	std::vector<avk::image_sampler> mImageSamplers;
 	avk::graphics_pipeline mPipelineExt;
 	avk::graphics_pipeline mPipelineNv;
 
@@ -607,9 +568,9 @@ private: // v== Member variables ==v
 	uint32_t mTaskInvocationsExt;
 	uint32_t mTaskInvocationsNv;
 
-	std::vector<avk::buffer_view> mPositionBuffers;
-	std::vector<avk::buffer_view> mTexCoordsBuffers;
-	std::vector<avk::buffer_view> mNormalBuffers;
+	avk::buffer_view mPositionsBufferView;
+	avk::buffer_view mTexCoordsBufferView;
+	avk::buffer_view mNormalsBufferView;
 
 	bool mHighlightMeshlets = true;
 	int  mShowMeshletsFrom = 0;

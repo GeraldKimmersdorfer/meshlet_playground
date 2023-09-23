@@ -3,6 +3,10 @@
 #extension GL_EXT_shader_8bit_storage    : require
 #extension GL_EXT_mesh_shader            : require
 #extension GL_EXT_nonuniform_qualifier   : require
+#extension GL_GOOGLE_include_directive	 : require
+
+#include "glsl_helpers.glsl"
+#include "shared_structs.glsl"
 
 layout (constant_id = 0) const uint NUM_TASK_SHADER_INVOCATIONS = 1; // <- Expected to be set to 32 for Nvidia on host side.
 layout (constant_id = 1) const uint NUM_MESH_SHADER_INVOCATIONS = 1; // <- Expected to be set to 32 for Nvidia on host side.
@@ -10,44 +14,15 @@ layout(local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 // The max_vertices and max_primitives numbers have been recommended by Nvidia:
 layout(triangles, max_vertices = 64, max_primitives = 126) out;
 
-layout(set = 0, binding = 1) uniform CameraTransform
-{
-	mat4 mViewProjMatrix;
-} ubo;
-
 taskPayloadSharedEXT uint meshletIndices[NUM_TASK_SHADER_INVOCATIONS];
 
-//////////////////////////////////////////////////////////////////////
-// Meshlet data passed from the host side:
-struct meshlet
-{
-	uint    mVertices[64];
-	uint8_t mIndices[378]; // 126 triangles * 3 indices
-	uint8_t mVertexCount;
-	uint8_t mTriangleCount;
-};
-
-struct extended_meshlet
-{
-	mat4 mTransformationMatrix;
-	uint mMaterialIndex;
-	uint mTexelBufferIndex;
-	meshlet mGeometry;
-};
-
-struct primitive_data
-{
-	mat4 mModelMatrix;
-	uint mMaterialIndex;
-};
-
-layout(set = 3, binding = 0) uniform  samplerBuffer positionBuffers[];
-layout(set = 3, binding = 2) uniform  samplerBuffer normalBuffers[];
-layout(set = 3, binding = 3) uniform  samplerBuffer texCoordsBuffers[];
+layout(set = 0, binding = 1) uniform CameraBuffer { camera_data camera; };
+layout(set = 3, binding = 0) uniform  samplerBuffer positionsBuffer;
+layout(set = 3, binding = 2) uniform  samplerBuffer normalsBuffer;
+layout(set = 3, binding = 3) uniform  samplerBuffer texCoordsBuffer;
 layout(set = 4, binding = 0) buffer MeshletsBuffer { extended_meshlet meshlets[]; };
-layout(set = 4, binding = 1) buffer PrimitiveBuffer { primitive_data primitives[]; };
+layout(set = 4, binding = 1) buffer MeshBuffer { mesh_data meshes[]; };
 
-//////////////////////////////////////////////////////////////////////
 // Mesh shader output block:
 layout (location = 0) out PerVertexData
 {
@@ -56,23 +31,7 @@ layout (location = 0) out PerVertexData
 	vec2 texCoord;
 	flat int materialIndex;
 	vec3 color;
-} v_out[];   // [max_vertices]
- 
-// Color table for drawing each meshlet with a different color:
-#define MAX_COLORS 10
-vec3 meshletcolors[MAX_COLORS] = {
-  vec3(0.9, 0.1, 0.1), 
-  vec3(0.7, 0.2, 0.2), 
-  vec3(0.5, 0.3, 0.3), 
-  vec3(0.3, 0.4, 0.5), 
-  vec3(0.2, 0.5, 0.7), 
-  vec3(0.1, 0.7, 0.9), 
-  vec3(0.3, 0.6, 0.8), 
-  vec3(0.6, 0.8, 0.9), 
-  vec3(0.8, 0.9, 0.95),
-  vec3(1.0, 1.0, 1.0)  
-};
-//////////////////////////////////////////////////////////////////////
+} v_out[];
 
 void main() 
 {
@@ -80,26 +39,24 @@ void main()
 	uint invocationId = gl_LocalInvocationID.x;
 
 	// Get all the meshlet data:
+	mesh_data mesh = meshes[meshlets[meshletIndex].mMeshIndex];
 	uint vertexCount          = uint(meshlets[meshletIndex].mGeometry.mVertexCount);
 	uint triangleCount        = uint(meshlets[meshletIndex].mGeometry.mTriangleCount);
-	uint modelIndex = meshlets[meshletIndex].mTexelBufferIndex;
-	uint materialIndex        = primitives[modelIndex].mMaterialIndex;
-	mat4 transformationMatrix = primitives[modelIndex].mModelMatrix;
-
-	uint texelBufferIndex     = meshlets[meshletIndex].mTexelBufferIndex;
+	uint materialIndex        = mesh.mMaterialIndex;
+	mat4 transformationMatrix = mesh.mTransformationMatrix;
 	
 	// Step by NUM_MESH_SHADER_INVOCATIONS as we have that many threads but potentially more vertices to calculate:
 	for (uint i = invocationId; i < vertexCount; i += NUM_MESH_SHADER_INVOCATIONS)
 	{
 		// Get the vertex index:
-		uint vi = meshlets[meshletIndex].mGeometry.mVertices[i];
+		int vi = int(meshlets[meshletIndex].mGeometry.mVertices[i] + mesh.mOffsetPositions);
 		// Get vertex data from the appropriate texel buffers and vertex indices:
-		vec4 posMshSp = vec4(texelFetch(positionBuffers[texelBufferIndex], int(vi)).xyz, 1.0);
-		vec3 nrmMshSp = texelFetch(normalBuffers[texelBufferIndex], int(vi)).xyz;
+		vec4 posMshSp = vec4(texelFetch(positionsBuffer, vi).xyz, 1.0);
+		vec3 nrmMshSp = texelFetch(normalsBuffer, vi).xyz;
 
 		// Standard transformation:
 		vec4 posWS = transformationMatrix * posMshSp;
-		vec4 posCS = ubo.mViewProjMatrix * posWS;
+		vec4 posCS = camera.mViewProjMatrix * posWS;
  
 		// Set the vertex position:
 		gl_MeshVerticesEXT[i].gl_Position = posCS;
@@ -107,9 +64,9 @@ void main()
 		// Set the per vertex data for the fragment shader:
 		v_out[i].positionWS = posWS.xyz;
 		v_out[i].normalWS = mat3(transformationMatrix) * nrmMshSp;
-		v_out[i].texCoord = texelFetch(texCoordsBuffers[texelBufferIndex], int(vi)).st;
+		v_out[i].texCoord = texelFetch(texCoordsBuffer, vi).st;
 		v_out[i].materialIndex = int(materialIndex);
-		v_out[i].color = meshletcolors[meshletIndex % MAX_COLORS];
+		v_out[i].color = color_from_id_hash(meshletIndex);
 	}
  
 	// Sets the actual output size of the primitives and vertices that the 

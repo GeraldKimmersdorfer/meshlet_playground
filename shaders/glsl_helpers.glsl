@@ -75,3 +75,21 @@ bounding_box transform(bounding_box bbIn, mat4 M)
 	}
 	return bbOut;
 }
+
+uint compute_hash(uint a)
+{
+   uint b = (a+2127912214u) + (a<<12u); b = (b^3345072700u) ^ (b>>19u); b = (b+374761393u) + (b<<5u); 
+   b = (b+3551683692u) ^ (b<<9u); b = (b+4251993797u) + (b<<3u); b = (b^3042660105u) ^ (b>>16u);
+   return b;
+}
+
+vec3 color_from_id_hash(uint a) {
+    uint hash = compute_hash(a);
+	return vec3(float(hash & 255u), float((hash >> 8u) & 255u), float((hash >> 16u) & 255u)) / 255.0;
+}
+
+// Cool ressource for a lot of different blend modes: https://github.com/jamieowen/glsl-blend/tree/master
+vec3 color_from_id_hash(uint a, vec3 tint) { 
+	return (color_from_id_hash(a + uint(dot(tint, vec3(1.0)) * 255)) * tint); 
+
+}
