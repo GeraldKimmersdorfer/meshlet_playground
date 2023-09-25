@@ -31,7 +31,7 @@
     <None Include="shaders\meshlet.nv.mesh" />
     <None Include="shaders\meshlet.nv.task" />
     <None Include="shaders\meshlet.task" />
-    <None Include="shaders\transform_and_pass_pos_nrm_uv.vert" />
+    <None Include="shaders\transform_and_pass_pulled_pos_nrm_uv.vert" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="auto_vk_toolkit\visual_studio\auto_vk_toolkit\auto_vk_toolkit.vcxproj">
@@ -126,7 +126,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <TreatSpecificWarningsAsErrors>4715</TreatSpecificWarningsAsErrors>

@@ -34,14 +34,14 @@
     <None Include="shaders\meshlet.task">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\transform_and_pass_pos_nrm_uv.vert">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="assets\metaball.fbx">
       <Filter>assets</Filter>
     </None>
     <None Include="assets\two_objects_in_one.fbx">
       <Filter>assets</Filter>
+    </None>
+    <None Include="shaders\transform_and_pass_pulled_pos_nrm_uv.vert">
+      <Filter>shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

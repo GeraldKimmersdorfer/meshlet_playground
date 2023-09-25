@@ -12,14 +12,12 @@ struct extended_meshlet
 	meshlet mGeometry;
 };
 
-struct mesh_data
-{
+struct mesh_data {
 	mat4 mTransformationMatrix;
-    uint mOffsetPositions;	// Offset to first item in Positions Texel-Buffer
-	uint mOffsetTexCoords;	// Offset to first item in TexCoords Texel-Buffer
-	uint mOffsetNormals;	// Offset to first item in Normals Texel-Buffer
-	uint mOffsetIndices;	// Offset to first item in Indices Texel-Buffer (unused yet)
-	uint mMaterialIndex;
+	uint mVertexOffset;		// Offset to first item in Positions Texel-Buffer
+	uint mIndexOffset;		// Offset to first item in Indices Texel-Buffer
+	uint mIndexCount;		// Amount if indices
+	uint mMaterialIndex;	// index of material for mesh
 };
 
 struct camera_data
