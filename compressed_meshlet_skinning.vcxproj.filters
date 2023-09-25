@@ -14,6 +14,9 @@
     <Filter Include="thirdparty">
       <UniqueIdentifier>{8e4b60ad-1582-4dce-ad49-448133c5c013}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{b43989ff-aab1-474b-882d-c08b44ff45fe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
@@ -45,9 +48,19 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\compressed_meshlet_skinning.cpp" />
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">
       <Filter>thirdparty</Filter>
     </ClCompile>
+    <ClCompile Include="source\MeshletsApp.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\main.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\MeshletsApp.h">
+      <Filter>source</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

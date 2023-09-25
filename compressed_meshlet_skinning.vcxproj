@@ -16,9 +16,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
-    <ClCompile Include="source\compressed_meshlet_skinning.cpp" />
+    <ClCompile Include="source\MeshletsApp.cpp" />
+    <ClCompile Include="source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\MeshletsApp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\metaball.fbx" />
