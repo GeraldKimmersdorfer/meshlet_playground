@@ -18,6 +18,19 @@ struct mesh_data {
 	uint mIndexOffset;		// Offset to first item in Indices Texel-Buffer
 	uint mIndexCount;		// Amount if indices
 	uint mMaterialIndex;	// index of material for mesh
+	bool mAnimated;	// Index offset inside bone matrix buffer, -1 if not animated
+	int p1;int p2;int p3;
+};
+
+struct vertex_data {
+	vec4 mPositionTxX;
+	vec4 mNormalTxY;
+	uvec4 mBoneIndices;
+	vec4 mBoneWeights;
+};
+
+struct bone_data {
+	mat4 transform;
 };
 
 struct camera_data

@@ -17,9 +17,8 @@ layout(triangles, max_vertices = 64, max_primitives = 126) out;
 in taskNV block { uint meshletIndices[NUM_TASK_SHADER_INVOCATIONS];  };
 
 layout(set = 0, binding = 1) uniform CameraBuffer { camera_data camera; };
-layout(set = 3, binding = 0) uniform  samplerBuffer positionsBuffer;
-layout(set = 3, binding = 2) uniform  samplerBuffer normalsBuffer;
-layout(set = 3, binding = 3) uniform  samplerBuffer texCoordsBuffer;
+layout(set = 2, binding = 0) buffer BoneTransformBuffer { bone_data bones[]; };
+layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data vertices[]; };
 layout(set = 4, binding = 0) buffer MeshletsBuffer { extended_meshlet meshlets[]; };
 layout(set = 4, binding = 1) buffer MeshBuffer { mesh_data meshes[]; };
 
@@ -50,9 +49,34 @@ void main()
 	{
 		// Get the vertex index:
 		int vi = int(meshlets[meshletIndex].mGeometry.mVertices[i] + mesh.mVertexOffset);
+		vertex_data vertex = vertices[vi];
 		// Get vertex data from the appropriate texel buffers and vertex indices:
-		vec4 posMshSp = vec4(texelFetch(positionsBuffer, vi).xyz, 1.0);
-		vec3 nrmMshSp = texelFetch(normalsBuffer, vi).xyz;
+		vec4 posMshSp = vec4(vertex.mPositionTxX.xyz, 1.0);
+		vec3 nrmMshSp = vertex.mNormalTxY.xyz;
+
+		if (mesh.mAnimated) {
+			vec4 boneWeights = vertex.mBoneWeights;
+			uvec4 boneIndices = vertex.mBoneIndices;
+
+			posMshSp = bone_transform(
+				bones[boneIndices[0]].transform,
+				bones[boneIndices[1]].transform,
+				bones[boneIndices[2]].transform,
+				bones[boneIndices[3]].transform,
+				boneWeights,
+				posMshSp
+			);
+
+					// Do the bone transform for the normal:
+			nrmMshSp = bone_transform(
+				bones[boneIndices[0]].transform,
+				bones[boneIndices[1]].transform,
+				bones[boneIndices[2]].transform,
+				bones[boneIndices[3]].transform,
+				boneWeights, 
+				nrmMshSp
+			);
+		}
 
 		// Standard transformation:
 		vec4 posWS = transformationMatrix * posMshSp;
@@ -64,9 +88,10 @@ void main()
 		// Set the per vertex data for the fragment shader:
 		v_out[i].positionWS = posWS.xyz;
 		v_out[i].normalWS = mat3(transformationMatrix) * nrmMshSp;
-		v_out[i].texCoord = texelFetch(texCoordsBuffer, vi).st;
+		v_out[i].texCoord = vec2(vertex.mPositionTxX.w, vertex.mNormalTxY.w);
 		v_out[i].materialIndex = int(materialIndex);
 		v_out[i].color = color_from_id_hash(meshletIndex, vec3(118, 185, 0) / 255.0);
+		//v_out[i].color = vec3(vertex.mBoneWeights.rgb);
 	}
  
 	// Sets the actual output size of the primitives and vertices that the 

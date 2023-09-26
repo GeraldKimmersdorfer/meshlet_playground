@@ -15,10 +15,9 @@
 
 #include <functional>
 
-
-#define STARTUP_FILE "assets/two_objects_in_one.fbx"
+#define STARTUP_FILE "../../assets/skinning_dummy/dummy.fbx"
+//#define STARTUP_FILE "../../assets/two_objects_in_one.fbx"
 #define USE_CACHE 0
-#define ASD 1
 
 enum PipelineType : int {
 	VERTEX_PIPELINE,
@@ -45,10 +44,29 @@ class MeshletsApp : public avk::invokee
 
 	struct mesh_data {
 		glm::mat4 mTransformationMatrix;
-		uint32_t mVertexOffset;		// Offset to first item in Positions Texel-Buffer
-		uint32_t mIndexOffset;		// Offset to first item in Indices Texel-Buffer
-		uint32_t mIndexCount;		// Amount if indices
-		uint32_t mMaterialIndex;	// index of material for mesh
+		uint32_t mVertexOffset;				// Offset to first item in Positions Texel-Buffer
+		uint32_t mIndexOffset;				// Offset to first item in Indices Texel-Buffer
+		uint32_t mIndexCount;				// Amount if indices
+		uint32_t mMaterialIndex;			// index of material for mesh
+		int32_t mAnimated = false;	// Index offset inside bone matrix buffer, -1 if not animated
+		glm::vec3 padding;
+	};
+
+	struct vertex_data {
+		glm::vec4 mPositionTxX;
+		glm::vec4 mNormalTxY;
+		glm::uvec4 mBoneIndices;
+		glm::vec4 mBoneWeights;
+	};	// mind padding and alignment!
+
+	struct animation_data {
+		std::string mName;
+		double mDurationTicks;
+		double mDurationSeconds;
+		unsigned int mChannelCount;
+		double mTicksPerSecond;
+		avk::animation_clip_data mClip;
+		avk::animation mAnimation;
 	};
 
 	/** The meshlet we upload to the gpu with its additional data. */
@@ -80,16 +98,24 @@ private: // v== Member variables ==v
 	std::string mNewFileName;
 	int mFrameWait = -1;
 
+	bool mInverseMeshRootFix = true;
+
+	int mCurrentlyPlayingAnimationId = -1;	// negative if no animation currently
+
 	avk::queue* mQueue;
 	avk::descriptor_cache mDescriptorCache;
 
+	std::vector<animation_data> mAnimations;
+	std::vector<glm::mat4> mBoneTransforms;
+	std::vector<glm::mat4> mInitialBoneTransforms;
+
 	std::vector<avk::buffer> mViewProjBuffers;
+	std::vector<avk::buffer> mBoneTransformBuffers;
 	avk::buffer mMaterialsBuffer;
 	avk::buffer mMeshletsBuffer;
 	avk::buffer mMeshesBuffer;
-	avk::buffer mPositionsBuffer;
-	avk::buffer mTexCoordsBuffer;
-	avk::buffer mNormalsBuffer;
+	avk::buffer mVertexBuffer;
+	
 	avk::buffer mIndirectDrawCommandBuffer;
 	avk::buffer mIndexBuffer;
 

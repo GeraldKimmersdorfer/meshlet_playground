@@ -109,17 +109,18 @@ void openDialogOptionPane(const char* vFilter, IGFDUserDatas vUserDatas, bool* v
 
 void MeshletsApp::load(const std::string& filename)
 {
-	avk::model model = std::move(avk::model_t::load_from_file(filename, aiProcess_Triangulate | aiProcess_PreTransformVertices));
+	avk::model model = std::move(avk::model_t::load_from_file(filename, aiProcess_Triangulate));
 	std::vector<avk::material_config> allMatConfigs;
 	std::vector<meshlet> meshletsGeometry;
 	std::vector<mesh_data> meshData;
-	std::vector<glm::vec3> positions;
-	std::vector<glm::vec2> texCoords;
-	std::vector<glm::vec3> normals;
-	std::vector<glm::uvec4> boneIndices;
-	std::vector<glm::vec4> boneWeights;
+	std::vector<vertex_data> vertexData;
 	std::vector<uint32_t> indices;
+	mAnimations.clear(); mBoneTransformBuffers.clear(); 
+	mBoneTransforms.clear(); mBoneTransformBuffers.clear();
+	mImageSamplers.clear();
+	mCurrentlyPlayingAnimationId = -1;
 
+	const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();
 	const auto &globalTransform = globalTransformPresets[selectedGlobalTransformPresetId];
 
 	// get all the meshlet indices of the model
@@ -128,15 +129,38 @@ void MeshletsApp::load(const std::string& filename)
 	// add all the materials of the model
 	for (auto& pair : distinctMaterials) allMatConfigs.push_back(pair.first);
 
+	// Load all Animations:
+
+	auto aScene = model->handle();
+	for (int i = 0; i < aScene->mNumAnimations; i++) {
+		auto* aAnim = aScene->mAnimations[i];
+		auto& anim = mAnimations.emplace_back(animation_data{
+			.mName = aAnim->mName.C_Str(),
+			.mDurationTicks = aAnim->mDuration,
+			.mDurationSeconds = aAnim->mDuration / aAnim->mTicksPerSecond,
+			.mChannelCount = aAnim->mNumChannels,
+			.mTicksPerSecond = aAnim->mTicksPerSecond
+			});
+		anim.mClip = model->load_animation_clip(i, 0.0, anim.mDurationTicks);
+		anim.mAnimation = model->prepare_animation(i, meshIndicesInOrder);
+	}
+
+	// Fill the bone transforms array with init data
+	mBoneTransforms.resize(model->num_bone_matrices(meshIndicesInOrder)); //OMG... num_bone_matrices returns fake bones for meshes. I DONT WANT THAT!!!
+	
+	// ToDo: Gather init pose
+
 	for (size_t mpos = 0; mpos < meshIndicesInOrder.size(); mpos++) {
 		auto meshIndex = meshIndicesInOrder[mpos];
 		std::string meshname = model->name_of_mesh(mpos);
+		auto* amesh = aScene->mMeshes[meshIndex];
 
 		auto& mesh = meshData.emplace_back(mesh_data{
 			.mTransformationMatrix = globalTransform * model->transformation_matrix_for_mesh(meshIndex),
-			.mVertexOffset = static_cast<uint32_t>(positions.size()),
+			.mVertexOffset = static_cast<uint32_t>(vertexData.size()),
 			.mIndexOffset = static_cast<uint32_t>(indices.size()),
 			.mMaterialIndex = 0,
+			.mAnimated = static_cast<int32_t>(amesh->HasBones())
 			});
 
 		// Find and assign the correct material in the allMatConfigs vector
@@ -149,12 +173,27 @@ void MeshletsApp::load(const std::string& filename)
 		auto [meshPositions, meshIndices] = avk::get_vertices_and_indices(selection);
 		auto meshNormals = avk::get_normals(selection);
 		auto meshTexCoords = avk::get_2d_texture_coordinates(selection, 0);
-
+		auto meshBoneIndices = avk::get_bone_indices_for_single_target_buffer(selection, meshIndicesInOrder);
+		auto meshBoneWeights = avk::get_bone_weights(selection);
+		if (meshPositions.size() != meshBoneIndices.size() || meshPositions.size() != meshTexCoords.size()) {
+			LOG_WARNING("Model has a mesh with a different indices, weights and position count.");
+		}
+		if (meshPositions.size() != meshNormals.size() || meshPositions.size() != meshTexCoords.size()) {
+			LOG_WARNING("Model has a mesh with a different texcoord, normal and position count.");
+		}
 		mesh.mIndexCount = meshIndices.size();
 
-		positions.insert(positions.end(), meshPositions.begin(), meshPositions.end());
-		texCoords.insert(texCoords.end(), meshTexCoords.begin(), meshTexCoords.end());
-		normals.insert(normals.end(), meshNormals.begin(), meshNormals.end());
+		for (int i = 0; i < meshPositions.size(); i++) {
+			auto& vd = vertexData.emplace_back(vertex_data{ 
+				.mPositionTxX = glm::vec4(meshPositions[i], meshTexCoords[i].x), 
+				.mNormalTxY = glm::vec4(meshNormals[i], meshTexCoords[i].y),
+			});
+			if (mesh.mAnimated) {
+				vd.mBoneIndices = meshBoneIndices[i];
+				vd.mBoneWeights = meshBoneWeights[i];
+			}
+		}
+
 		indices.insert(indices.end(), meshIndices.begin(), meshIndices.end());
 
 		// create selection for the meshlets
@@ -190,29 +229,18 @@ void MeshletsApp::load(const std::string& filename)
 	mImageSamplers.clear(); mViewProjBuffers.clear();
 
 	// ======== START UPLOADING TO GPU =============
-	mPositionsBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
-		avk::vertex_buffer_meta::create_from_data(positions).describe_only_member(positions[0], avk::content_description::position),
-		avk::storage_buffer_meta::create_from_data(positions),
-		avk::uniform_texel_buffer_meta::create_from_data(positions).describe_only_member(positions[0]) // just take the vec3 as it is
+	mVertexBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
+		avk::storage_buffer_meta::create_from_data(vertexData)
 	);
+	avk::context().record_and_submit_with_fence({ mVertexBuffer->fill(vertexData.data(), 0) }, *mQueue)->wait_until_signalled();
 
-	mNormalsBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
-		avk::vertex_buffer_meta::create_from_data(normals).describe_only_member(normals[0], avk::content_description::normal),
-		avk::storage_buffer_meta::create_from_data(normals),
-		avk::uniform_texel_buffer_meta::create_from_data(normals).describe_only_member(normals[0]) // just take the vec3 as it is
-	);
-
-	mTexCoordsBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
-		avk::vertex_buffer_meta::create_from_data(texCoords).describe_only_member(texCoords[0], avk::content_description::texture_coordinate),
-		avk::storage_buffer_meta::create_from_data(texCoords),
-		avk::uniform_texel_buffer_meta::create_from_data(texCoords).describe_only_member(texCoords[0]) // just take the vec2 as it is   
-	);
-	avk::context().record_and_submit_with_fence({
-		mPositionsBuffer->fill(positions.data(), 0),
-		mNormalsBuffer->fill(normals.data(), 0),
-		mTexCoordsBuffer->fill(texCoords.data(), 0)
-		}, *mQueue
-	)->wait_until_signalled();
+	// buffers for the animated bone matrices, will be populated before rendering
+	for (size_t cfi = 0; cfi < concurrentFrames; ++cfi) {
+		mBoneTransformBuffers.push_back(avk::context().create_buffer(
+			avk::memory_usage::host_coherent, {},
+			avk::storage_buffer_meta::create_from_data(mBoneTransforms)
+		));
+	}
 
 	// === FOR CLASSIC PIPELINE ===
 	mIndexBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
@@ -239,10 +267,6 @@ void MeshletsApp::load(const std::string& filename)
 		}, *mQueue
 	)->wait_until_signalled();
 	// ======
-
-	mPositionsBufferView = avk::context().create_buffer_view(mPositionsBuffer);
-	mNormalsBufferView = avk::context().create_buffer_view(mNormalsBuffer);
-	mTexCoordsBufferView = avk::context().create_buffer_view(mTexCoordsBuffer);
 
 	mMeshesBuffer = avk::context().create_buffer(
 		avk::memory_usage::device, {},
@@ -273,16 +297,6 @@ void MeshletsApp::load(const std::string& filename)
 		matCommands
 		}, *mQueue)->wait_until_signalled();
 
-	// ToDo doesnt need to be reset each load
-	// One for each concurrent frame
-	const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();
-	for (int i = 0; i < concurrentFrames; ++i) {
-		mViewProjBuffers.push_back(avk::context().create_buffer(
-			avk::memory_usage::host_coherent, {},
-			avk::uniform_buffer_meta::create_from_data(glm::mat4())
-		));
-	}
-
 	mMaterialsBuffer = avk::context().create_buffer(
 		avk::memory_usage::host_visible, {},
 		avk::storage_buffer_meta::create_from_data(gpuMaterials)
@@ -291,38 +305,39 @@ void MeshletsApp::load(const std::string& filename)
 
 	mImageSamplers = std::move(imageSamplers);
 
+	
+	for (int i = 0; i < concurrentFrames; ++i) {
+		mViewProjBuffers.push_back(avk::context().create_buffer(
+			avk::memory_usage::host_coherent, {},
+			avk::uniform_buffer_meta::create_from_data(glm::mat4())
+		));
+	}
+
 	// Create our graphics mesh pipeline with the required configuration:
 	auto createGraphicsMeshPipeline = [this](auto taskShader, auto meshShader, uint32_t taskInvocations, uint32_t meshInvocations) {
 		return avk::context().create_graphics_pipeline_for(
-			// Specify which shaders the pipeline consists of:
 			avk::task_shader(taskShader)
 			.set_specialization_constant(0, taskInvocations),
 			avk::mesh_shader(meshShader)
 			.set_specialization_constant(0, taskInvocations)
 			.set_specialization_constant(1, meshInvocations),
 			avk::fragment_shader("shaders/diffuse_shading_fixed_lightsource.frag"),
-			// Some further settings:
 			avk::cfg::front_face::define_front_faces_to_be_counter_clockwise(),
 			avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),
-			// We'll render to the back buffer, which has a color attachment always, and in our case additionally a depth
-			// attachment, which has been configured when creating the window. See main() function!
 			avk::context().create_renderpass({
 				avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
 				avk::attachment::declare(avk::format_from_window_depth_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
 				}, avk::context().main_window()->renderpass_reference().subpass_dependencies()),
-			// The following define additional data which we'll pass to the pipeline:
 			avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(push_constants) },
 			avk::descriptor_binding(0, 0, avk::as_combined_image_samplers(mImageSamplers, avk::layout::shader_read_only_optimal)),
 			avk::descriptor_binding(0, 1, mViewProjBuffers[0]),
 			avk::descriptor_binding(1, 0, mMaterialsBuffer),
-			// texel buffers
-			avk::descriptor_binding(3, 0, avk::as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mPositionsBufferView})),
-			avk::descriptor_binding(3, 2, avk::as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mNormalsBufferView})),
-			avk::descriptor_binding(3, 3, avk::as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mTexCoordsBufferView})),
+			avk::descriptor_binding(2, 0, mBoneTransformBuffers[0]),
+			avk::descriptor_binding(3, 0, mVertexBuffer),
 			avk::descriptor_binding(4, 0, mMeshletsBuffer),
 			avk::descriptor_binding(4, 1, mMeshesBuffer)
 		);
-		};
+	};
 
 	mPipelineExt = createGraphicsMeshPipeline("shaders/meshlet.task", "shaders/meshlet.mesh", mPropsMeshShader.maxPreferredTaskWorkGroupInvocations, mPropsMeshShader.maxPreferredMeshWorkGroupInvocations);
 	// we want to use an updater, so create one:
@@ -345,15 +360,12 @@ void MeshletsApp::load(const std::string& filename)
 			avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
 			avk::attachment::declare(avk::format_from_window_depth_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
 			}, avk::context().main_window()->renderpass_reference().subpass_dependencies()),
-		// The following define additional data which we'll pass to the pipeline:
 		avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(push_constants) },
 		avk::descriptor_binding(0, 0, avk::as_combined_image_samplers(mImageSamplers, avk::layout::shader_read_only_optimal)),
 		avk::descriptor_binding(0, 1, mViewProjBuffers[0]),
 		avk::descriptor_binding(1, 0, mMaterialsBuffer),
-		// texel buffers
-		avk::descriptor_binding(3, 0, avk::as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mPositionsBufferView})),
-		avk::descriptor_binding(3, 2, avk::as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mNormalsBufferView})),
-		avk::descriptor_binding(3, 3, avk::as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mTexCoordsBufferView})),
+		avk::descriptor_binding(2, 0, mBoneTransformBuffers[0]),
+		avk::descriptor_binding(3, 0, mVertexBuffer),
 		avk::descriptor_binding(4, 0, mMeshletsBuffer), // Meshlet Buffer nicht notwendig, Performance implication?
 		avk::descriptor_binding(4, 1, mMeshesBuffer)
 	);
@@ -367,7 +379,7 @@ void MeshletsApp::load(const std::string& filename)
 
 void MeshletsApp::initCamera()
 {
-	mOrbitCam.set_translation({ 0.0f, 0.0f, 0.0f });
+	mOrbitCam.set_translation({ 0.0f, 1.0f, 3.0f });
 	mOrbitCam.set_pivot_distance(3.0f);
 	mQuakeCam.set_translation({ 0.0f, 0.0f, 5.0f });
 	mOrbitCam.set_perspective_projection(glm::radians(45.0f), avk::context().main_window()->aspect_ratio(), 0.3f, 1000.0f);
@@ -399,15 +411,19 @@ void MeshletsApp::initGUI()
 				if (ImGui::Button("Open File")) {
 					ImGuiFileDialog::Instance()->OpenDialogWithPane("open_file", "Choose File", "{.fbx,.obj,.dae,.ply}", ".", "", std::bind(&openDialogOptionPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 300.0, 1, (IGFDUserDatas)nullptr, ImGuiFileDialogFlags_Modal);
 				}
-				// display
-				if (ImGuiFileDialog::Instance()->Display("open_file"))
-				{
-					if (ImGuiFileDialog::Instance()->IsOk())
-					{
-						mNewFileName = ImGuiFileDialog::Instance()->GetFilePathName();
-						mLoadNewFile = true;
+
+				ImGui::Separator();
+				if (ImGui::BeginCombo("Animation", mCurrentlyPlayingAnimationId >= 0 ? mAnimations[mCurrentlyPlayingAnimationId].mName.c_str(): "None")) {
+					if (ImGui::Selectable("None", mCurrentlyPlayingAnimationId < 0)) mCurrentlyPlayingAnimationId = -1;
+					for (int n = 0; n < mAnimations.size(); n++) {
+						bool is_selected = (mCurrentlyPlayingAnimationId == n);
+						if (ImGui::Selectable(mAnimations[n].mName.c_str(), is_selected)) mCurrentlyPlayingAnimationId = n;
+						if (is_selected) ImGui::SetItemDefaultFocus();
 					}
-					ImGuiFileDialog::Instance()->Close();
+					ImGui::EndCombo();
+				}
+				if (mCurrentlyPlayingAnimationId >= 0) {
+					ImGui::Checkbox("Inverse Mesh Root Fix", &mInverseMeshRootFix);
 				}
 				ImGui::Separator();
 				ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
@@ -442,7 +458,7 @@ void MeshletsApp::initGUI()
 
 				ImGui::Separator();
 				auto pipelineOptions = "Vertex\0Mesh Shader\0";
-				if (mNvPipelineSupport) pipelineOptions = "Vertex\0Mesh Shader\0Nvidia Mesh Shader";
+				if (mNvPipelineSupport) pipelineOptions = "Vertex\0Mesh Shader\0Nvidia Mesh Shader\0";
 				ImGui::Combo("Pipeline", (int*)(void*)&mSelectedPipeline, pipelineOptions);
 				ImGui::Separator();
 
@@ -450,6 +466,16 @@ void MeshletsApp::initGUI()
 				ImGui::Checkbox("Highlight meshlets", &mHighlightMeshlets);
 				ImGui::Text("Select meshlets to be rendered:");
 				ImGui::DragIntRange2("Visible range", &mShowMeshletsFrom, &mShowMeshletsTo, 1, 0, static_cast<int>(mNumMeshlets));
+
+				if (ImGuiFileDialog::Instance()->Display("open_file"))
+				{
+					if (ImGuiFileDialog::Instance()->IsOk())
+					{
+						mNewFileName = ImGuiFileDialog::Instance()->GetFilePathName();
+						mLoadNewFile = true;
+					}
+					ImGuiFileDialog::Instance()->Close();
+				}
 
 				ImGui::End();
 			});
@@ -504,6 +530,7 @@ void MeshletsApp::update()
 		// Stop the current composition:
 		current_composition()->stop();
 	}
+
 	// After wanting to load a file, the following code waits for number_of_frames_in_flight, such
 	// that all buffers/descriptors... are not in a queue and can safely be destroyed. (Is there a vk-toolkit way to do this?)
 	if (mLoadNewFile) {
@@ -524,6 +551,23 @@ void MeshletsApp::render()
 
 	auto mainWnd = context().main_window();
 	auto inFlightIndex = mainWnd->current_in_flight_index();
+
+	if (mCurrentlyPlayingAnimationId >= 0) {
+		auto& aData = mAnimations[mCurrentlyPlayingAnimationId];
+		auto& animation = aData.mAnimation;
+		auto& clip = aData.mClip;
+		const auto doubleTime = fmod(time().absolute_time_dp(), aData.mDurationSeconds * 2);
+		auto time = glm::lerp(0.0, aData.mDurationSeconds, (doubleTime > aData.mDurationSeconds ? doubleTime - aData.mDurationSeconds : doubleTime) / aData.mDurationSeconds);
+		auto targetMemory = mBoneTransforms.data();
+
+		animation.animate(clip, time, [this, &animation, targetMemory](mesh_bone_info aInfo, const glm::mat4& aInverseMeshRootMatrix, const glm::mat4& aTransformMatrix, const glm::mat4& aInverseBindPoseMatrix, const glm::mat4& aLocalTransformMatrix, size_t aAnimatedNodeIndex, size_t aBoneMeshTargetIndex, double aAnimationTimeInTicks) {
+			glm::mat4 result;
+			if (mInverseMeshRootFix) result = aInverseMeshRootMatrix * aTransformMatrix * aInverseBindPoseMatrix;
+			else result = aTransformMatrix * aInverseBindPoseMatrix;
+			targetMemory[aInfo.mGlobalBoneIndexOffset + aInfo.mMeshLocalBoneIndex] = result;
+			}
+		);
+	}
 
 	auto viewProjMat = mQuakeCam.is_enabled()
 		? mQuakeCam.projection_and_view_matrix()
@@ -561,6 +605,7 @@ void MeshletsApp::render()
 
 			// Upload the updated bone matrices into the buffer for the current frame (considering that we have cConcurrentFrames-many concurrent frames):
 			mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
+			mBoneTransformBuffers[inFlightIndex]->fill(mBoneTransforms.data(), 0),
 
 			sync::global_memory_barrier(stage::all_commands >> stage::all_commands, access::memory_write >> access::memory_write | access::memory_read),
 
@@ -570,9 +615,8 @@ void MeshletsApp::render()
 					descriptor_binding(0, 0, as_combined_image_samplers(mImageSamplers, layout::shader_read_only_optimal)),
 					descriptor_binding(0, 1, mViewProjBuffers[inFlightIndex]),
 					descriptor_binding(1, 0, mMaterialsBuffer),
-					descriptor_binding(3, 0, as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mPositionsBufferView})),
-					descriptor_binding(3, 2, as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mNormalsBufferView})),
-					descriptor_binding(3, 3, as_uniform_texel_buffer_views(std::vector<avk::buffer_view>{mTexCoordsBufferView})),
+					descriptor_binding(2, 0, mBoneTransformBuffers[inFlightIndex]),
+					descriptor_binding(3, 0, mVertexBuffer),
 					descriptor_binding(4, 0, mMeshletsBuffer),
 					descriptor_binding(4, 1, mMeshesBuffer)
 				})),
@@ -588,10 +632,10 @@ void MeshletsApp::render()
 					if (mSelectedPipeline == NVIDIA_MESH_PIPELINE) {
 						cb.record(command::draw_mesh_tasks_nv(div_ceil(mNumMeshlets, mTaskInvocationsNv), 0));
 					}
-else if (mSelectedPipeline == MESH_PIPELINE) {
- cb.record(command::draw_mesh_tasks_ext(div_ceil(mNumMeshlets, mTaskInvocationsExt), 1, 1));
-}
-else if (mSelectedPipeline == VERTEX_PIPELINE) {
+					else if (mSelectedPipeline == MESH_PIPELINE) {
+						cb.record(command::draw_mesh_tasks_ext(div_ceil(mNumMeshlets, mTaskInvocationsExt), 1, 1));
+					}
+					else if (mSelectedPipeline == VERTEX_PIPELINE) {
 						// Note: command::draw_indexed_indirect needs vertex buffer! Suggest to change that
 						cb.record(draw_indexed_indirect_nobind(mIndirectDrawCommandBuffer.as_reference(), mIndexBuffer.as_reference(), mNumMeshes, 0, static_cast<uint32_t>(sizeof(VkDrawIndexedIndirectCommand))));
 					}
