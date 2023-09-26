@@ -17,6 +17,9 @@
     <Filter Include="source">
       <UniqueIdentifier>{b43989ff-aab1-474b-882d-c08b44ff45fe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\pipelines">
+      <UniqueIdentifier>{212c5f6e-a5e3-453f-81c3-ab14a5655a2c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
@@ -57,10 +60,43 @@
     <ClCompile Include="source\main.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="source\pipelines\VertexPulledIndirectNoCompressionPipeline.cpp">
+      <Filter>source\pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pipelines\PipelineInterface.cpp">
+      <Filter>source\pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pipelines\PipelineFactory.cpp">
+      <Filter>source\pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pipelines\VertexIndirectNoCompressionPipeline.cpp">
+      <Filter>source\pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pipelines\MeshNvNoCompressionPipeline.cpp">
+      <Filter>source\pipelines</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
       <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipelines\VertexPulledIndirectNoCompressionPipeline.h">
+      <Filter>source\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipelines\PipelineInterface.h">
+      <Filter>source\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="source\SharedData.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipelines\PipelineFactory.h">
+      <Filter>source\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipelines\VertexIndirectNoCompressionPipeline.h">
+      <Filter>source\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipelines\MeshNvNoCompressionPipeline.h">
+      <Filter>source\pipelines</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -18,9 +18,20 @@
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\MeshletsApp.cpp" />
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\pipelines\MeshNvNoCompressionPipeline.cpp" />
+    <ClCompile Include="source\pipelines\PipelineFactory.cpp" />
+    <ClCompile Include="source\pipelines\PipelineInterface.cpp" />
+    <ClCompile Include="source\pipelines\VertexIndirectNoCompressionPipeline.cpp" />
+    <ClCompile Include="source\pipelines\VertexPulledIndirectNoCompressionPipeline.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h" />
+    <ClInclude Include="source\pipelines\MeshNvNoCompressionPipeline.h" />
+    <ClInclude Include="source\pipelines\PipelineFactory.h" />
+    <ClInclude Include="source\pipelines\PipelineInterface.h" />
+    <ClInclude Include="source\pipelines\VertexIndirectNoCompressionPipeline.h" />
+    <ClInclude Include="source\pipelines\VertexPulledIndirectNoCompressionPipeline.h" />
+    <ClInclude Include="source\SharedData.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\metaball.fbx" />

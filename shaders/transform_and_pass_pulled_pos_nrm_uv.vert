@@ -6,6 +6,7 @@
 #include "glsl_helpers.glsl"
 
 layout(set = 0, binding = 1) uniform CameraBuffer { camera_data camera; };
+layout(set = 2, binding = 0) buffer BoneTransformBuffer { bone_data bones[]; };
 layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data vertices[]; };
 layout(set = 4, binding = 1) buffer MeshBuffer { mesh_data meshes[]; };
 
@@ -25,6 +26,29 @@ void main() {
 	vertex_data vertex = vertices[vi];
 	vec4 posMshSp = vec4(vertex.mPositionTxX.xyz, 1.0);
 	vec3 nrmMshSp = vertex.mNormalTxY.xyz;
+	if (mesh.mAnimated) {
+		vec4 boneWeights = vertex.mBoneWeights;
+		uvec4 boneIndices = vertex.mBoneIndices;
+
+		posMshSp = bone_transform(
+			bones[boneIndices[0]].transform,
+			bones[boneIndices[1]].transform,
+			bones[boneIndices[2]].transform,
+			bones[boneIndices[3]].transform,
+			boneWeights,
+			posMshSp
+		);
+
+					// Do the bone transform for the normal:
+		nrmMshSp = bone_transform(
+			bones[boneIndices[0]].transform,
+			bones[boneIndices[1]].transform,
+			bones[boneIndices[2]].transform,
+			bones[boneIndices[3]].transform,
+			boneWeights, 
+			nrmMshSp
+		);
+	}
 	vec4 posWS = transformationMatrix * posMshSp;
 	vec4 posCS = camera.mViewProjMatrix * posWS;
 
