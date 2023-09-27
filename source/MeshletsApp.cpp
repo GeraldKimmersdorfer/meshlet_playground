@@ -14,8 +14,9 @@
 #include "../meshoptimizer/src/meshoptimizer.h"
 #include "../ImGuiFileDialog/ImGuiFileDialog.h"
 
-#include "pipelines/VertexPulledIndirectNoCompressionPipeline.h"
-#include "pipelines/MeshNvNoCompressionPipeline.h"
+#include "pipelines/VertexPulledIndirectPipeline.h"
+#include "pipelines/MeshNvPipeline.h"
+#include "pipelines/MeshExtPipeline.h"
 
 #include <functional>
 
@@ -24,56 +25,20 @@ std::vector<glm::mat4> globalTransformPresets = {
 	 glm::rotate(glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f)) * glm::scale(glm::vec3(0.01f))	// lucy
 };
 const char* transformPresetsNames = "None\0Lucy\0";
-MeshletInterpreter selectedMeshletInterpreter = MeshletInterpreter::MESHOPTIMIZER;
 int selectedGlobalTransformPresetId = 0;
-
-
-
-auto meshlet_division_meshoptimizer = [](const std::vector<glm::vec3>& tVertices, const std::vector<uint32_t>& aIndices, const avk::model_t& aModel, std::optional<avk::mesh_index_t> aMeshIndex, uint32_t aMaxVertices, uint32_t aMaxIndices) {
-	// definitions
-	size_t max_triangles = aMaxIndices / 3;
-	const float cone_weight = 0.0f;
-
-	// get the maximum number of meshlets that could be generated
-	size_t max_meshlets = meshopt_buildMeshletsBound(aIndices.size(), aMaxVertices, max_triangles);
-	std::vector<meshopt_Meshlet> meshlets(max_meshlets);
-	std::vector<unsigned int> meshlet_vertices(max_meshlets * aMaxVertices);
-	std::vector<unsigned char> meshlet_triangles(max_meshlets * max_triangles * 3);
-
-	// let meshoptimizer build the meshlets for us
-	size_t meshlet_count = meshopt_buildMeshlets(meshlets.data(), meshlet_vertices.data(), meshlet_triangles.data(),
-		aIndices.data(), aIndices.size(), &tVertices[0].x, tVertices.size(), sizeof(glm::vec3),
-		aMaxVertices, max_triangles, cone_weight);
-
-	// copy the data over to Auto-Vk-Toolkit's meshlet structure
-	std::vector<avk::meshlet> generatedMeshlets(meshlet_count);
-	generatedMeshlets.resize(meshlet_count);
-	generatedMeshlets.reserve(meshlet_count);
-	for (int k = 0; k < meshlet_count; k++) {
-		auto& m = meshlets[k];
-		auto& gm = generatedMeshlets[k];
-		gm.mIndexCount = m.triangle_count * 3;
-		gm.mVertexCount = m.vertex_count;
-		gm.mVertices.reserve(m.vertex_count);
-		gm.mVertices.resize(m.vertex_count);
-		gm.mIndices.reserve(gm.mIndexCount);
-		gm.mIndices.resize(gm.mIndexCount);
-		std::ranges::copy(meshlet_vertices.begin() + m.vertex_offset,
-			meshlet_vertices.begin() + m.vertex_offset + m.vertex_count,
-			gm.mVertices.begin());
-		std::ranges::copy(meshlet_triangles.begin() + m.triangle_offset,
-			meshlet_triangles.begin() + m.triangle_offset + gm.mIndexCount,
-			gm.mIndices.begin());
-	}
-	return generatedMeshlets;
-	};
 
 void openDialogOptionPane(const char* vFilter, IGFDUserDatas vUserDatas, bool* vCantContinue)
 {
 	ImGui::Text("IMPORT OPTIONS");
 	ImGui::Separator();
-	ImGui::Combo("Meshlet builder", (int*)(void*)&selectedMeshletInterpreter, "AVK-Default\0Meshoptimizer\0");
+	//ImGui::Combo("Meshlet builder", (int*)(void*)&selectedMeshletInterpreter, "AVK-Default\0Meshoptimizer\0");
 	ImGui::Combo("Global transform", (int*)(void*)&selectedGlobalTransformPresetId, transformPresetsNames);
+}
+
+MeshletsApp::~MeshletsApp()
+{
+	mPipelines[mSelectedPipelineIndex]->destroy();
+	mPipelines.clear();
 }
 
 void MeshletsApp::reset()
@@ -223,39 +188,9 @@ void MeshletsApp::load(const std::string& filename)
 		));
 	}
 
-	/*
-	// Create our graphics mesh pipeline with the required configuration:
-	auto createGraphicsMeshPipeline = [this](auto taskShader, auto meshShader, uint32_t taskInvocations, uint32_t meshInvocations) {
-		return avk::context().create_graphics_pipeline_for(
-			avk::task_shader(taskShader)
-			.set_specialization_constant(0, taskInvocations),
-			avk::mesh_shader(meshShader)
-			.set_specialization_constant(0, taskInvocations)
-			.set_specialization_constant(1, meshInvocations),
-			avk::fragment_shader("shaders/diffuse_shading_fixed_lightsource.frag"),
-			avk::cfg::front_face::define_front_faces_to_be_counter_clockwise(),
-			avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),
-			avk::context().create_renderpass({
-				avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
-				avk::attachment::declare(avk::format_from_window_depth_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
-				}, avk::context().main_window()->renderpass_reference().subpass_dependencies()),
-			avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(push_constants) },
-			avk::descriptor_binding(0, 0, avk::as_combined_image_samplers(mImageSamplers, avk::layout::shader_read_only_optimal)),
-			avk::descriptor_binding(0, 1, mViewProjBuffers[0]),
-			avk::descriptor_binding(1, 0, mMaterialsBuffer),
-			avk::descriptor_binding(2, 0, mBoneTransformBuffers[0]),
-			avk::descriptor_binding(3, 0, mVertexBuffer),
-			avk::descriptor_binding(4, 0, mMeshletsBuffer),
-			avk::descriptor_binding(4, 1, mMeshesBuffer)
-		);
-	};
-
-	mPipelineExt = createGraphicsMeshPipeline("shaders/meshlet.task", "shaders/meshlet.mesh", mPropsMeshShader.maxPreferredTaskWorkGroupInvocations, mPropsMeshShader.maxPreferredMeshWorkGroupInvocations);
+	//mUpdater->on(avk::shader_files_changed_event(mPipelineExt.as_reference())).update(mPipelineExt);
 	// we want to use an updater, so create one:
 	mUpdater.emplace();
-	mUpdater->on(avk::shader_files_changed_event(mPipelineExt.as_reference())).update(mPipelineExt);
-	*/
-
 	mUpdater->on(avk::swapchain_resized_event(avk::context().main_window())).invoke([this]() {
 		this->mQuakeCam.set_aspect_ratio(avk::context().main_window()->aspect_ratio());
 		});
@@ -341,9 +276,20 @@ void MeshletsApp::initGUI()
 				ImGui::Separator();
 
 				ImGui::Separator();
-				auto pipelineOptions = "Vertex\0Mesh Shader\0";
-				if (mNvPipelineSupport) pipelineOptions = "Vertex\0Mesh Shader\0Nvidia Mesh Shader\0";
-				ImGui::Combo("Pipeline", (int*)(void*)&mSelectedPipelineIndex, pipelineOptions);
+				if (ImGui::BeginCombo("Pipeline", mPipelines[mSelectedPipelineIndex]->getName().c_str())) {
+					for (int n = 0; n < mPipelines.size(); n++) {
+						bool is_selected = (mSelectedPipelineIndex == n);
+						if (ImGui::Selectable(mPipelines[n]->getName().c_str(), is_selected)) {
+							freeCommandBufferAndExecute({
+								.type = FreeCMDBufferExecutionData::CHANGE_PIPELINE,
+								.mNextPipelineID = n
+								});
+						}
+						if (is_selected) ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+
 				ImGui::Separator();
 				if (ImGui::CollapsingHeader("Pipeline-Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
 					mPipelines[mSelectedPipelineIndex]->hud();
@@ -353,8 +299,10 @@ void MeshletsApp::initGUI()
 				{
 					if (ImGuiFileDialog::Instance()->IsOk())
 					{
-						mNewFileName = ImGuiFileDialog::Instance()->GetFilePathName();
-						mLoadNewFile = true;
+						freeCommandBufferAndExecute({
+							.type = FreeCMDBufferExecutionData::LOAD_NEW_FILE,
+							.mNextFileName = ImGuiFileDialog::Instance()->GetFilePathName()
+							});
 					}
 					ImGuiFileDialog::Instance()->Close();
 				}
@@ -394,12 +342,14 @@ void MeshletsApp::loadDeviceProperties()
 void MeshletsApp::initialize()
 {
 	this->loadDeviceProperties();
-	this->load(STARTUP_FILE);
 	this->initCamera();
 	this->initGUI();
 	this->initGPUQueryPools();
-	mPipelines.push_back(std::make_unique<VertexPulledIndirectNoCompressionPipeline>(this));
-	mPipelines.push_back(std::make_unique<MeshNvNoCompressionPipeline>(this));
+	this->load(STARTUP_FILE);
+	// TODO QUERY FOR NV PIPELINE SUPPORT
+	mPipelines.push_back(std::make_unique<VertexPulledIndirectPipeline>(this));
+	mPipelines.push_back(std::make_unique<MeshNvPipeline>(this));
+	mPipelines.push_back(std::make_unique<MeshExtPipeline>(this));
 	mPipelines[mSelectedPipelineIndex]->initialize(mQueue);
 }
 
@@ -418,20 +368,15 @@ void MeshletsApp::update()
 
 	// After wanting to load a file, the following code waits for number_of_frames_in_flight, such
 	// that all buffers/descriptors... are not in a queue and can safely be destroyed. (Is there a vk-toolkit way to do this?)
-	if (mLoadNewFile) {
-		if (mFrameWait == -1) mFrameWait = context().main_window()->number_of_frames_in_flight();
-		else if (mFrameWait > 0) mFrameWait--;
-		else if (mFrameWait == 0) {
-			load(mNewFileName);
-			mLoadNewFile = false;
-			mFrameWait = -1;
-		}
+	if (mExecutionData.mFrameWait >= 0) {
+		if (mExecutionData.mFrameWait-- == 0)
+			executeWithFreeCommandBuffer();
 	}
 }
 
 void MeshletsApp::render()
 {
-	if (mLoadNewFile) return;	// We want to free the commandPool such that we can load a new file
+	if (mExecutionData.mFrameWait >= 0) return;	// We want to free the commandPool such that we can load a new file
 	using namespace avk;
 
 	auto mainWnd = context().main_window();
@@ -495,40 +440,6 @@ void MeshletsApp::render()
 			sync::global_memory_barrier(stage::all_commands >> stage::all_commands, access::memory_write >> access::memory_write | access::memory_read),
 
 			mPipelines[mSelectedPipelineIndex]->render(inFlightIndex),
-			/*
-			command::render_pass(pipeline->renderpass_reference(), context().main_window()->current_backbuffer_reference(), {
-				command::bind_pipeline(pipeline.as_reference()),
-				command::bind_descriptors(pipeline->layout(), mDescriptorCache->get_or_create_descriptor_sets({
-					descriptor_binding(0, 0, as_combined_image_samplers(mImageSamplers, layout::shader_read_only_optimal)),
-					descriptor_binding(0, 1, mViewProjBuffers[inFlightIndex]),
-					descriptor_binding(1, 0, mMaterialsBuffer),
-					descriptor_binding(2, 0, mBoneTransformBuffers[inFlightIndex]),
-					descriptor_binding(3, 0, mVertexBuffer),
-					descriptor_binding(4, 0, mMeshletsBuffer),
-					descriptor_binding(4, 1, mMeshesBuffer)
-				})),
-
-				command::push_constants(pipeline->layout(), push_constants{
-					mHighlightMeshlets,
-					static_cast<int32_t>(mShowMeshletsFrom),
-					static_cast<int32_t>(mShowMeshletsTo)
-				}),
-
-				// Draw all the meshlets with just one single draw call:
-				command::custom_commands([this](avk::command_buffer_t& cb) {
-					if (mSelectedPipeline == NVIDIA_MESH_PIPELINE) {
-						cb.record(command::draw_mesh_tasks_nv(div_ceil(mNumMeshlets, mTaskInvocationsNv), 0));
-					}
-					else if (mSelectedPipeline == MESH_PIPELINE) {
-						cb.record(command::draw_mesh_tasks_ext(div_ceil(mNumMeshlets, mTaskInvocationsExt), 1, 1));
-					}
-					else if (mSelectedPipeline == VERTEX_PIPELINE) {
-						// Note: command::draw_indexed_indirect needs vertex buffer! Suggest to change that
-						cb.record(draw_indexed_indirect_nobind(mIndirectDrawCommandBuffer.as_reference(), mIndexBuffer.as_reference(), mNumMeshes, 0, static_cast<uint32_t>(sizeof(VkDrawIndexedIndirectCommand))));
-					}
-				}),
-
-			}),*/
 
 			mTimestampPool->write_timestamp(firstQueryIndex + 1, stage::mesh_shader),
 			mPipelineStatsPool->end_query(inFlightIndex)
@@ -541,4 +452,28 @@ void MeshletsApp::render()
 
 	mainWnd->handle_lifetime(std::move(cmdBfr));
 
+}
+
+
+void MeshletsApp::freeCommandBufferAndExecute(FreeCMDBufferExecutionData executeAfterwards)
+{
+	mExecutionData = std::move(executeAfterwards);
+	mExecutionData.mFrameWait = avk::context().main_window()->number_of_frames_in_flight();
+}
+
+void MeshletsApp::executeWithFreeCommandBuffer()
+{
+	if (mExecutionData.type == FreeCMDBufferExecutionData::LOAD_NEW_FILE) {
+		int nextPipeline = mExecutionData.mNextPipelineID >= 0 ? mExecutionData.mNextPipelineID : mSelectedPipelineIndex;
+		mPipelines[mSelectedPipelineIndex]->destroy();
+		load(mExecutionData.mNextFileName);
+		mPipelines[nextPipeline]->initialize(mQueue);
+		mSelectedPipelineIndex = nextPipeline;
+	}
+	else if (mExecutionData.type == FreeCMDBufferExecutionData::CHANGE_PIPELINE) {
+		if (mSelectedPipelineIndex == mExecutionData.mNextPipelineID) return;
+		mPipelines[mSelectedPipelineIndex]->destroy();
+		mSelectedPipelineIndex = mExecutionData.mNextPipelineID;
+		mPipelines[mSelectedPipelineIndex]->initialize(mQueue);
+	}
 }

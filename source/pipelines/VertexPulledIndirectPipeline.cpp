@@ -1,4 +1,4 @@
-#include "VertexPulledIndirectNoCompressionPipeline.h"
+#include "VertexPulledIndirectPipeline.h"
 #include <vk_convenience_functions.hpp>
 
 avk::command::action_type_command draw_indexed_indirect_nobind(const avk::buffer_t& aParametersBuffer, const avk::buffer_t& aIndexBuffer, uint32_t aNumberOfDraws, vk::DeviceSize aParametersOffset, uint32_t aParametersStride)
@@ -36,12 +36,12 @@ avk::command::action_type_command draw_indexed_indirect_nobind(const avk::buffer
 	};
 }
 
-VertexPulledIndirectNoCompressionPipeline::VertexPulledIndirectNoCompressionPipeline(SharedData* shared)
-	:PipelineInterface(shared)
+VertexPulledIndirectPipeline::VertexPulledIndirectPipeline(SharedData* shared)
+	:PipelineInterface(shared, "Vertex Pulled Indirect")
 {
 }
 
-void VertexPulledIndirectNoCompressionPipeline::doInitialize(avk::queue* queue)
+void VertexPulledIndirectPipeline::doInitialize(avk::queue* queue)
 {
 	auto gpuDrawCommands = std::vector<VkDrawIndexedIndirectCommand>(mShared->mMeshData.size());
 	for (int i = 0; i < gpuDrawCommands.size(); i++) {
@@ -82,7 +82,7 @@ void VertexPulledIndirectNoCompressionPipeline::doInitialize(avk::queue* queue)
 	// TODO HOT RELOAD!
 }
 
-avk::command::action_type_command VertexPulledIndirectNoCompressionPipeline::render(int64_t inFlightIndex)
+avk::command::action_type_command VertexPulledIndirectPipeline::render(int64_t inFlightIndex)
 {
 	using namespace avk;
 	return command::render_pass(mPipeline->renderpass_reference(), context().main_window()->current_backbuffer_reference(), {
@@ -113,7 +113,7 @@ avk::command::action_type_command VertexPulledIndirectNoCompressionPipeline::ren
 		});
 }
 
-void VertexPulledIndirectNoCompressionPipeline::doDestroy()
+void VertexPulledIndirectPipeline::doDestroy()
 {
 	mIndirectDrawCommandBuffer = avk::buffer();
 }

@@ -3,11 +3,11 @@
 #include "PipelineInterface.h"
 class SharedData;
 
-class MeshNvNoCompressionPipeline : public PipelineInterface {
+class MeshExtPipeline : public PipelineInterface {
 
 public:
 
-	MeshNvNoCompressionPipeline(SharedData* shared);
+	MeshExtPipeline(SharedData* shared);
 
 	avk::command::action_type_command render(int64_t inFlightIndex) override;
 
@@ -17,7 +17,7 @@ private:
 	bool mHighlightMeshlets = true;
 	int  mShowMeshletsFrom = 0;
 	int  mShowMeshletsTo = 0;
-	uint32_t mTaskInvocationsNv;
+	uint32_t mTaskInvocationsExt;
 
 	std::vector<meshlet> mMeshlets;
 	avk::buffer mMeshletsBuffer;

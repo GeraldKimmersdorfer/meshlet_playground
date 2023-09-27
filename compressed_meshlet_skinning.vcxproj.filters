@@ -60,19 +60,19 @@
     <ClCompile Include="source\main.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="source\pipelines\VertexPulledIndirectNoCompressionPipeline.cpp">
+    <ClCompile Include="source\pipelines\MeshExtPipeline.cpp">
+      <Filter>source\pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pipelines\MeshNvPipeline.cpp">
       <Filter>source\pipelines</Filter>
     </ClCompile>
     <ClCompile Include="source\pipelines\PipelineInterface.cpp">
       <Filter>source\pipelines</Filter>
     </ClCompile>
-    <ClCompile Include="source\pipelines\PipelineFactory.cpp">
+    <ClCompile Include="source\pipelines\VertexIndirectPipeline.cpp">
       <Filter>source\pipelines</Filter>
     </ClCompile>
-    <ClCompile Include="source\pipelines\VertexIndirectNoCompressionPipeline.cpp">
-      <Filter>source\pipelines</Filter>
-    </ClCompile>
-    <ClCompile Include="source\pipelines\MeshNvNoCompressionPipeline.cpp">
+    <ClCompile Include="source\pipelines\VertexPulledIndirectPipeline.cpp">
       <Filter>source\pipelines</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,22 +80,22 @@
     <ClInclude Include="source\MeshletsApp.h">
       <Filter>source</Filter>
     </ClInclude>
-    <ClInclude Include="source\pipelines\VertexPulledIndirectNoCompressionPipeline.h">
+    <ClInclude Include="source\SharedData.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipelines\MeshExtPipeline.h">
+      <Filter>source\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipelines\MeshNvPipeline.h">
       <Filter>source\pipelines</Filter>
     </ClInclude>
     <ClInclude Include="source\pipelines\PipelineInterface.h">
       <Filter>source\pipelines</Filter>
     </ClInclude>
-    <ClInclude Include="source\SharedData.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\pipelines\PipelineFactory.h">
+    <ClInclude Include="source\pipelines\VertexIndirectPipeline.h">
       <Filter>source\pipelines</Filter>
     </ClInclude>
-    <ClInclude Include="source\pipelines\VertexIndirectNoCompressionPipeline.h">
-      <Filter>source\pipelines</Filter>
-    </ClInclude>
-    <ClInclude Include="source\pipelines\MeshNvNoCompressionPipeline.h">
+    <ClInclude Include="source\pipelines\VertexPulledIndirectPipeline.h">
       <Filter>source\pipelines</Filter>
     </ClInclude>
   </ItemGroup>

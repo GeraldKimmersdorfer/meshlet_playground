@@ -18,19 +18,19 @@
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\MeshletsApp.cpp" />
     <ClCompile Include="source\main.cpp" />
-    <ClCompile Include="source\pipelines\MeshNvNoCompressionPipeline.cpp" />
-    <ClCompile Include="source\pipelines\PipelineFactory.cpp" />
+    <ClCompile Include="source\pipelines\MeshExtPipeline.cpp" />
+    <ClCompile Include="source\pipelines\MeshNvPipeline.cpp" />
     <ClCompile Include="source\pipelines\PipelineInterface.cpp" />
-    <ClCompile Include="source\pipelines\VertexIndirectNoCompressionPipeline.cpp" />
-    <ClCompile Include="source\pipelines\VertexPulledIndirectNoCompressionPipeline.cpp" />
+    <ClCompile Include="source\pipelines\VertexIndirectPipeline.cpp" />
+    <ClCompile Include="source\pipelines\VertexPulledIndirectPipeline.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h" />
-    <ClInclude Include="source\pipelines\MeshNvNoCompressionPipeline.h" />
-    <ClInclude Include="source\pipelines\PipelineFactory.h" />
+    <ClInclude Include="source\pipelines\MeshExtPipeline.h" />
+    <ClInclude Include="source\pipelines\MeshNvPipeline.h" />
     <ClInclude Include="source\pipelines\PipelineInterface.h" />
-    <ClInclude Include="source\pipelines\VertexIndirectNoCompressionPipeline.h" />
-    <ClInclude Include="source\pipelines\VertexPulledIndirectNoCompressionPipeline.h" />
+    <ClInclude Include="source\pipelines\VertexIndirectPipeline.h" />
+    <ClInclude Include="source\pipelines\VertexPulledIndirectPipeline.h" />
     <ClInclude Include="source\SharedData.h" />
   </ItemGroup>
   <ItemGroup>

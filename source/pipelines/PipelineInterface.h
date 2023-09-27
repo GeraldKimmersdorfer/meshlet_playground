@@ -9,8 +9,8 @@ class PipelineInterface {
 
 public:
 
-	PipelineInterface(SharedData* shared): 
-		mShared(shared) 
+	PipelineInterface(SharedData* shared, const std::string name) :
+		mShared(shared) , mName(name)
 	{};
 
 	/// <summary>
@@ -40,6 +40,8 @@ public:
 	/// of the pipeline. 
 	/// </summary>
 	virtual void hud() {};
+
+	const std::string& getName() { return mName; }
 
 protected:
 

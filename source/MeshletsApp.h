@@ -2,31 +2,28 @@
 
 
 #include "SharedData.h"
-
-#include "pipelines/VertexPulledIndirectNoCompressionPipeline.h"
-
 #include <functional>
+#include "pipelines/PipelineInterface.h"
 
 //#define STARTUP_FILE "../../assets/skinning_dummy/dummy.fbx"
 #define STARTUP_FILE "../../assets/two_objects_in_one.fbx"
-#define USE_CACHE 0
 
-enum PipelineType : int {
-	VERTEX_PIPELINE,
-	MESH_PIPELINE,
-	NVIDIA_MESH_PIPELINE
-};
-
-enum MeshletInterpreter : int {
-	AVK_DEFAULT,
-	MESHOPTIMIZER
-};
+class PipelineInterface;
 
 class MeshletsApp : public avk::invokee, public SharedData
 {
+	struct FreeCMDBufferExecutionData {
+		enum FreeCMDBufferExecutionType { LOAD_NEW_FILE, CHANGE_PIPELINE };
+		FreeCMDBufferExecutionType type;
+		int mNextPipelineID = -1;
+		std::string mNextFileName;
+		int mFrameWait;
+	};
+
 public:
 
 	MeshletsApp(avk::queue& aQueue) : mQueue{ &aQueue } {}
+	~MeshletsApp();
 
 	// Empties all vectors and resets stuff before loading new file
 	void reset();
@@ -43,12 +40,13 @@ public:
 
 
 private: // v== Member variables ==v
+
+	FreeCMDBufferExecutionData mExecutionData;
+	void freeCommandBufferAndExecute(FreeCMDBufferExecutionData executeAfterwards);
+	void executeWithFreeCommandBuffer();
+
 	int mSelectedPipelineIndex = 0;
 	std::vector<std::unique_ptr<PipelineInterface>> mPipelines;
-
-	bool mLoadNewFile = false;
-	std::string mNewFileName;
-	int mFrameWait = -1;
 
 	bool mInverseMeshRootFix = true;
 

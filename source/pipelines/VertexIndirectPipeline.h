@@ -3,11 +3,11 @@
 #include "PipelineInterface.h"
 class SharedData;
 
-class VertexIndirectNoCompressionPipeline : public PipelineInterface {
+class VertexIndirectPipeline : public PipelineInterface {
 
 public:
 
-	VertexIndirectNoCompressionPipeline(SharedData* shared);
+	VertexIndirectPipeline(SharedData* shared);
 
 	avk::command::action_type_command render(int64_t inFlightIndex) override;
 

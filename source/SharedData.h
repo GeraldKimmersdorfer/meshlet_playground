@@ -97,7 +97,4 @@ public:
 	vk::PhysicalDeviceFeatures2 mFeatures2;
 	vk::PhysicalDeviceMeshShaderFeaturesEXT mFeaturesMeshShader;
 
-	// TODO: PUT IN A CONFIG UBO
-
-
 };

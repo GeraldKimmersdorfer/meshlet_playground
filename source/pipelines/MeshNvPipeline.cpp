@@ -1,4 +1,4 @@
-#include "MeshNvNoCompressionPipeline.h"
+#include "MeshNvPipeline.h"
 #include <vk_convenience_functions.hpp>
 
 auto meshlet_division_meshoptimizer = [](const std::vector<glm::vec3>& tVertices, const std::vector<uint32_t>& aIndices, const avk::model_t& aModel, std::optional<avk::mesh_index_t> aMeshIndex, uint32_t aMaxVertices, uint32_t aMaxIndices) {
@@ -41,14 +41,14 @@ auto meshlet_division_meshoptimizer = [](const std::vector<glm::vec3>& tVertices
 	};
 
 
-MeshNvNoCompressionPipeline::MeshNvNoCompressionPipeline(SharedData* shared)
-	:PipelineInterface(shared)
+MeshNvPipeline::MeshNvPipeline(SharedData* shared)
+	:PipelineInterface(shared, "MeshNv")
 {
 }
 
-void MeshNvNoCompressionPipeline::doInitialize(avk::queue* queue)
+void MeshNvPipeline::doInitialize(avk::queue* queue)
 {
-	for (int meshIndex = 0; meshIndex < mShared->mMeshData.size(); meshIndex++) {
+	for (size_t meshIndex = 0; meshIndex < mShared->mMeshData.size(); meshIndex++) {
 		// create selection for the meshlets
 		auto meshletSelection = avk::make_models_and_mesh_indices_selection(mShared->mModel, meshIndex);
 
@@ -103,7 +103,7 @@ void MeshNvNoCompressionPipeline::doInitialize(avk::queue* queue)
 	// TODO HOT RELOAD!
 }
 
-avk::command::action_type_command MeshNvNoCompressionPipeline::render(int64_t inFlightIndex)
+avk::command::action_type_command MeshNvPipeline::render(int64_t inFlightIndex)
 {
 	using namespace avk;
 	return command::render_pass(mPipeline->renderpass_reference(), context().main_window()->current_backbuffer_reference(), {
@@ -127,7 +127,7 @@ avk::command::action_type_command MeshNvNoCompressionPipeline::render(int64_t in
 		});
 }
 
-void MeshNvNoCompressionPipeline::hud()
+void MeshNvPipeline::hud()
 {
 	// Select the range of meshlets to be rendered:
 	ImGui::Checkbox("Highlight meshlets", &mHighlightMeshlets);
@@ -135,7 +135,7 @@ void MeshNvNoCompressionPipeline::hud()
 	ImGui::DragIntRange2("Visible range", &mShowMeshletsFrom, &mShowMeshletsTo, 1, 0, static_cast<int>(mMeshlets.size()));
 }
 
-void MeshNvNoCompressionPipeline::doDestroy()
+void MeshNvPipeline::doDestroy()
 {
 	mMeshlets.clear();
 	mPipeline = avk::graphics_pipeline();
