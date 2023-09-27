@@ -9,6 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+*.blend1
 assets_large
 
 # User-specific files (MonoDevelop/Xamarin Studio)

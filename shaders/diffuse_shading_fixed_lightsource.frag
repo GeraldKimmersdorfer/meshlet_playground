@@ -1,67 +1,15 @@
 #version 460
+#extension GL_EXT_shader_16bit_storage   : require
+#extension GL_EXT_shader_8bit_storage    : require
 #extension GL_EXT_nonuniform_qualifier : require
+#extension GL_GOOGLE_include_directive : require
+
+#include "shared_structs.glsl"
 
 layout(set = 0, binding = 0) uniform sampler2D textures[];
+layout(set = 0, binding = 2) uniform ConfigurationBuffer { config_data config; };
+layout(set = 1, binding = 0) buffer Material { MaterialGpuData materials[]; } matSsbo;
 
-struct MaterialGpuData
-{
-	vec4 mDiffuseReflectivity;
-	vec4 mAmbientReflectivity;
-	vec4 mSpecularReflectivity;
-	vec4 mEmissiveColor;
-	vec4 mTransparentColor;
-	vec4 mReflectiveColor;
-	vec4 mAlbedo;
-
-	float mOpacity;
-	float mBumpScaling;
-	float mShininess;
-	float mShininessStrength;
-	
-	float mRefractionIndex;
-	float mReflectivity;
-	float mMetallic;
-	float mSmoothness;
-	
-	float mSheen;
-	float mThickness;
-	float mRoughness;
-	float mAnisotropy;
-	
-	vec4 mAnisotropyRotation;
-	vec4 mCustomData;
-	
-	int mDiffuseTexIndex;
-	int mSpecularTexIndex;
-	int mAmbientTexIndex;
-	int mEmissiveTexIndex;
-	int mHeightTexIndex;
-	int mNormalsTexIndex;
-	int mShininessTexIndex;
-	int mOpacityTexIndex;
-	int mDisplacementTexIndex;
-	int mReflectionTexIndex;
-	int mLightmapTexIndex;
-	int mExtraTexIndex;
-	
-	vec4 mDiffuseTexOffsetTiling;
-	vec4 mSpecularTexOffsetTiling;
-	vec4 mAmbientTexOffsetTiling;
-	vec4 mEmissiveTexOffsetTiling;
-	vec4 mHeightTexOffsetTiling;
-	vec4 mNormalsTexOffsetTiling;
-	vec4 mShininessTexOffsetTiling;
-	vec4 mOpacityTexOffsetTiling;
-	vec4 mDisplacementTexOffsetTiling;
-	vec4 mReflectionTexOffsetTiling;
-	vec4 mLightmapTexOffsetTiling;
-	vec4 mExtraTexOffsetTiling;
-};
-
-layout(set = 1, binding = 0) buffer Material 
-{
-	MaterialGpuData materials[];
-} matSsbo;
 
 layout (location = 0) in PerVertexData
 {
@@ -71,12 +19,6 @@ layout (location = 0) in PerVertexData
 	flat int materialIndex;
 	vec3 color;
 } v_in;
-
-layout(push_constant) uniform PushConstants {
-	bool mHighlightMeshlets;
-	int  mVisibleMeshletIndexFrom;
-	int  mVisibleMeshletIndexTo;  
-} pushConstants;
 
 layout (location = 0) out vec4 fs_out;
 
@@ -93,7 +35,7 @@ void main()
 	vec3 illum = vec3(ambient) + diffuse * max(0.0, dot(normalize(v_in.normalWS), toLight));
 	color *= illum;
 	
-	if(pushConstants.mHighlightMeshlets) {
+	if(config.mOverlayMeshlets) {
 		color = mix(color, v_in.color, 0.5);
 	}
 

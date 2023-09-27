@@ -19,6 +19,7 @@ public:
 	void initialize(avk::queue* queue) {
 		mDescriptorCache = avk::context().create_descriptor_cache();
 		doInitialize(queue);
+		initCount++;
 	}
 
 	/// <summary>
@@ -39,7 +40,7 @@ public:
 	/// Allows for custom ImGUI elements, which should be used for specific configurations
 	/// of the pipeline. 
 	/// </summary>
-	virtual void hud() {};
+	virtual void hud(bool& config_has_changed) {};
 
 	const std::string& getName() { return mName; }
 
@@ -48,6 +49,7 @@ protected:
 	std::string mName;
 	avk::descriptor_cache mDescriptorCache;
 	SharedData* mShared;
+	int initCount = 0;
 
 private:
 	virtual void doInitialize(avk::queue* queue) = 0;

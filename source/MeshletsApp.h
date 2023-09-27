@@ -6,7 +6,7 @@
 #include "pipelines/PipelineInterface.h"
 
 //#define STARTUP_FILE "../../assets/skinning_dummy/dummy.fbx"
-#define STARTUP_FILE "../../assets/two_objects_in_one.fbx"
+#define STARTUP_FILE "assets/two_objects_in_one.fbx"
 
 class PipelineInterface;
 
@@ -17,7 +17,7 @@ class MeshletsApp : public avk::invokee, public SharedData
 		FreeCMDBufferExecutionType type;
 		int mNextPipelineID = -1;
 		std::string mNextFileName;
-		int mFrameWait;
+		int mFrameWait = -1;
 	};
 
 public:
@@ -29,10 +29,9 @@ public:
 	void reset();
 	void load(const std::string& filename);
 
-	void initCamera();
 	void initGUI();
-	void initGPUQueryPools();
-	void loadDeviceProperties();
+	void initReusableObjects();
+	void uploadConfig();
 
 	void initialize() override;
 	void update() override;
@@ -45,7 +44,7 @@ private: // v== Member variables ==v
 	void freeCommandBufferAndExecute(FreeCMDBufferExecutionData executeAfterwards);
 	void executeWithFreeCommandBuffer();
 
-	int mSelectedPipelineIndex = 0;
+	int mSelectedPipelineIndex = 2;
 	std::vector<std::unique_ptr<PipelineInterface>> mPipelines;
 
 	bool mInverseMeshRootFix = true;

@@ -25,7 +25,7 @@ void main() {
 	int vi = gl_VertexIndex;
 	vertex_data vertex = vertices[vi];
 	vec4 posMshSp = vec4(vertex.mPositionTxX.xyz, 1.0);
-	vec3 nrmMshSp = vertex.mNormalTxY.xyz;
+	vec3 nrmMshSp = vertex.mTxYNormal.yzw;
 	if (mesh.mAnimated) {
 		vec4 boneWeights = vertex.mBoneWeights;
 		uvec4 boneIndices = vertex.mBoneIndices;
@@ -56,7 +56,7 @@ void main() {
 
 	v_out.positionWS = posWS.xyz;
 	v_out.normalWS = mat3(transformationMatrix) * nrmMshSp;
-	v_out.texCoord = vec2(vertex.mPositionTxX.w, vertex.mNormalTxY.w);
+	v_out.texCoord = vec2(vertex.mPositionTxX.w, vertex.mTxYNormal.x);
 	v_out.materialIndex = int(mesh.mMaterialIndex);
 	v_out.color = color_from_id_hash(gl_InstanceIndex, vec3(1.0, 0.5, 0.5)); 
 }

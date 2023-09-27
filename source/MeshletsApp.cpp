@@ -17,6 +17,7 @@
 #include "pipelines/VertexPulledIndirectPipeline.h"
 #include "pipelines/MeshNvPipeline.h"
 #include "pipelines/MeshExtPipeline.h"
+#include "pipelines/VertexIndirectPipeline.h"
 
 #include <functional>
 
@@ -51,7 +52,6 @@ void MeshletsApp::reset()
 	mBoneTransforms.clear(); 
 	mBoneTransformBuffers.clear();
 	mImageSamplers.clear();
-	mViewProjBuffers.clear();
 }
 
 void MeshletsApp::load(const std::string& filename)
@@ -67,7 +67,7 @@ void MeshletsApp::load(const std::string& filename)
 
 	// get all the meshlet indices of the model
 	const auto meshIndicesInOrder = model->select_all_meshes();
-	auto distinctMaterials = model->distinct_material_configs();
+	auto distinctMaterials = model->distinct_material_configs(); 
 	// add all the materials of the model
 	for (auto& pair : distinctMaterials) allMatConfigs.push_back(pair.first);
 
@@ -123,7 +123,7 @@ void MeshletsApp::load(const std::string& filename)
 		for (int i = 0; i < meshPositions.size(); i++) {
 			auto& vd = mVertexData.emplace_back(vertex_data{ 
 				.mPositionTxX = glm::vec4(meshPositions[i], meshTexCoords[i].x), 
-				.mNormalTxY = glm::vec4(meshNormals[i], meshTexCoords[i].y),
+				.mTxYNormal = glm::vec4(meshTexCoords[i].y, meshNormals[i]),
 				.mBoneIndices = meshBoneIndices[i],
 				.mBoneWeights = meshBoneWeights[i]
 			});
@@ -132,11 +132,10 @@ void MeshletsApp::load(const std::string& filename)
 		mIndices.insert(mIndices.end(), meshIndices.begin(), meshIndices.end());
 	} 
 
-	// Create a descriptor cache that helps us to conveniently create descriptor sets:
-	mDescriptorCache = avk::context().create_descriptor_cache();
 
 	// ======== START UPLOADING TO GPU =============
-	mVertexBuffer = avk::context().create_buffer(avk::memory_usage::device, {},
+	mVertexBuffer = avk::context().create_buffer(avk::memory_usage::device, 
+		VULKAN_HPP_NAMESPACE::BufferUsageFlagBits::eVertexBuffer,
 		avk::storage_buffer_meta::create_from_data(mVertexData)
 	);
 	avk::context().record_and_submit_with_fence({ mVertexBuffer->fill(mVertexData.data(), 0) }, *mQueue)->wait_until_signalled();
@@ -179,33 +178,6 @@ void MeshletsApp::load(const std::string& filename)
 	mMaterialsBuffer->fill(gpuMaterials.data(), 0);
 
 	mImageSamplers = std::move(imageSamplers);
-
-	
-	for (int i = 0; i < concurrentFrames; ++i) {
-		mViewProjBuffers.push_back(avk::context().create_buffer(
-			avk::memory_usage::host_coherent, {},
-			avk::uniform_buffer_meta::create_from_data(glm::mat4())
-		));
-	}
-
-	//mUpdater->on(avk::shader_files_changed_event(mPipelineExt.as_reference())).update(mPipelineExt);
-	// we want to use an updater, so create one:
-	mUpdater.emplace();
-	mUpdater->on(avk::swapchain_resized_event(avk::context().main_window())).invoke([this]() {
-		this->mQuakeCam.set_aspect_ratio(avk::context().main_window()->aspect_ratio());
-		});
-}
-
-void MeshletsApp::initCamera()
-{
-	mOrbitCam.set_translation({ 0.0f, 1.0f, 3.0f });
-	mOrbitCam.set_pivot_distance(3.0f);
-	mQuakeCam.set_translation({ 0.0f, 0.0f, 5.0f });
-	mOrbitCam.set_perspective_projection(glm::radians(45.0f), avk::context().main_window()->aspect_ratio(), 0.3f, 1000.0f);
-	mQuakeCam.set_perspective_projection(glm::radians(45.0f), avk::context().main_window()->aspect_ratio(), 0.3f, 1000.0f);
-	avk::current_composition()->add_element(mOrbitCam);
-	avk::current_composition()->add_element(mQuakeCam);
-	mQuakeCam.disable();
 }
 
 void MeshletsApp::initGUI()
@@ -221,7 +193,8 @@ void MeshletsApp::initGUI()
 					}),
 				lastFrameDurationMs = 0.0,
 				lastDrawMeshTasksDurationMs = 0.0
-		]() mutable {
+		]() mutable { 
+				bool config_has_changed = false;
 				ImGui::Begin("Info & Settings");
 				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
 				ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
@@ -292,7 +265,7 @@ void MeshletsApp::initGUI()
 
 				ImGui::Separator();
 				if (ImGui::CollapsingHeader("Pipeline-Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-					mPipelines[mSelectedPipelineIndex]->hud();
+					mPipelines[mSelectedPipelineIndex]->hud(config_has_changed);
 				}
 
 				if (ImGuiFileDialog::Instance()->Display("open_file"))
@@ -307,25 +280,34 @@ void MeshletsApp::initGUI()
 					ImGuiFileDialog::Instance()->Close();
 				}
 
+				if (config_has_changed) uploadConfig();
+
 				ImGui::End();
 			});
 	}
 }
 
-void MeshletsApp::initGPUQueryPools()
+void MeshletsApp::initReusableObjects()
 {
-	mTimestampPool = avk::context().create_query_pool_for_timestamp_queries(
-		static_cast<uint32_t>(avk::context().main_window()->number_of_frames_in_flight()) * 2
-	);
+	// ===== CPU CAMERA ======
+	mOrbitCam.set_translation({ 0.0f, 1.0f, 3.0f });
+	mOrbitCam.set_pivot_distance(3.0f);
+	mQuakeCam.set_translation({ 0.0f, 0.0f, 5.0f });
+	mOrbitCam.set_perspective_projection(glm::radians(45.0f), avk::context().main_window()->aspect_ratio(), 0.3f, 1000.0f);
+	mQuakeCam.set_perspective_projection(glm::radians(45.0f), avk::context().main_window()->aspect_ratio(), 0.3f, 1000.0f);
+	avk::current_composition()->add_element(mOrbitCam);
+	avk::current_composition()->add_element(mQuakeCam);
+	mQuakeCam.disable();
 
-	mPipelineStatsPool = avk::context().create_query_pool_for_pipeline_statistics_queries(
-		vk::QueryPipelineStatisticFlagBits::eFragmentShaderInvocations | vk::QueryPipelineStatisticFlagBits::eMeshShaderInvocationsEXT | vk::QueryPipelineStatisticFlagBits::eTaskShaderInvocationsEXT,
-		avk::context().main_window()->number_of_frames_in_flight()
-	);
-}
+	// ===== CPU UPDATER ==== 
+	mSharedUpdater = &mUpdater.emplace();
+	mUpdater->on(avk::swapchain_resized_event(avk::context().main_window())).invoke([this]() {
+		this->mQuakeCam.set_aspect_ratio(avk::context().main_window()->aspect_ratio());
+		});
 
-void MeshletsApp::loadDeviceProperties()
-{
+	// ===== DESCRIPTOR CACHE ====
+	mDescriptorCache = avk::context().create_descriptor_cache();
+
 	// ==== FETCH DEVICE PROPERTIES AND FEATURES ===
 	mNvPipelineSupport = avk::context().supports_mesh_shader_nv(avk::context().physical_device());
 	mFeatures2.pNext = &mFeaturesMeshShader; // get all in one swoop
@@ -337,17 +319,46 @@ void MeshletsApp::loadDeviceProperties()
 	LOG_INFO(std::format("This device supports the following subgroup operations: {}", vk::to_string(mPropsSubgroup.supportedOperations)));
 	LOG_INFO(std::format("This device supports subgroup operations in the following stages: {}", vk::to_string(mPropsSubgroup.supportedStages)));
 	mTaskInvocationsExt = mPropsMeshShader.maxPreferredTaskWorkGroupInvocations;
+
+	// ===== GPU QUERY POOLS ====
+	mTimestampPool = avk::context().create_query_pool_for_timestamp_queries(
+		static_cast<uint32_t>(avk::context().main_window()->number_of_frames_in_flight()) * 2
+	);
+	mPipelineStatsPool = avk::context().create_query_pool_for_pipeline_statistics_queries(
+		vk::QueryPipelineStatisticFlagBits::eFragmentShaderInvocations | vk::QueryPipelineStatisticFlagBits::eMeshShaderInvocationsEXT | vk::QueryPipelineStatisticFlagBits::eTaskShaderInvocationsEXT,
+		avk::context().main_window()->number_of_frames_in_flight()
+	);
+
+	// ===== GPU CAMERA BUFFER ====
+	const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();
+	for (int i = 0; i < concurrentFrames; ++i) {
+		mViewProjBuffers.push_back(avk::context().create_buffer(
+			avk::memory_usage::host_coherent, {},
+			avk::uniform_buffer_meta::create_from_data(glm::mat4())
+		));
+	}
+
+	// ===== GPU CONFIG BUFFER ====
+	mConfigurationBuffer = avk::context().create_buffer(
+		avk::memory_usage::host_coherent, {},
+		avk::uniform_buffer_meta::create_from_data(mConfig)
+	);
+	uploadConfig();
+}
+
+void MeshletsApp::uploadConfig()
+{
+	mConfigurationBuffer->fill(&mConfig, 0);
 }
 
 void MeshletsApp::initialize()
 {
-	this->loadDeviceProperties();
-	this->initCamera();
+	this->initReusableObjects();
 	this->initGUI();
-	this->initGPUQueryPools();
 	this->load(STARTUP_FILE);
 	// TODO QUERY FOR NV PIPELINE SUPPORT
 	mPipelines.push_back(std::make_unique<VertexPulledIndirectPipeline>(this));
+	mPipelines.push_back(std::make_unique<VertexIndirectPipeline>(this));
 	mPipelines.push_back(std::make_unique<MeshNvPipeline>(this));
 	mPipelines.push_back(std::make_unique<MeshExtPipeline>(this));
 	mPipelines[mSelectedPipelineIndex]->initialize(mQueue);
@@ -362,8 +373,7 @@ void MeshletsApp::update()
 		context().main_window()->set_cursor_pos({ resolution[0] / 2.0, resolution[1] / 2.0 });
 	}
 	if (input().key_pressed(avk::key_code::escape)) {
-		// Stop the current composition:
-		current_composition()->stop();
+		avk::current_composition()->stop();
 	}
 
 	// After wanting to load a file, the following code waits for number_of_frames_in_flight, such

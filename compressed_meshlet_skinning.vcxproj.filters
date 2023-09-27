@@ -49,6 +49,9 @@
     <None Include="shaders\transform_and_pass_pulled_pos_nrm_uv.vert">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\transform_and_pass_pos_nrm_uv.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">

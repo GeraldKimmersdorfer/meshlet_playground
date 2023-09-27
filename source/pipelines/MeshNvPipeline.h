@@ -11,12 +11,9 @@ public:
 
 	avk::command::action_type_command render(int64_t inFlightIndex) override;
 
-	void hud() override;
+	void hud(bool& config_has_changed) override;
 
 private:
-	bool mHighlightMeshlets = true;
-	int  mShowMeshletsFrom = 0;
-	int  mShowMeshletsTo = 0;
 	uint32_t mTaskInvocationsNv;
 
 	std::vector<meshlet> mMeshlets;

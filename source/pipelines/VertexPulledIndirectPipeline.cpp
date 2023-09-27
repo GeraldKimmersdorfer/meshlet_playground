@@ -71,15 +71,15 @@ void VertexPulledIndirectPipeline::doInitialize(avk::queue* queue)
 			avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
 			avk::attachment::declare(avk::format_from_window_depth_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
 			}, avk::context().main_window()->renderpass_reference().subpass_dependencies()),
-		avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(push_constants) },
 		avk::descriptor_binding(0, 0, avk::as_combined_image_samplers(mShared->mImageSamplers, avk::layout::shader_read_only_optimal)),
 		avk::descriptor_binding(0, 1, mShared->mViewProjBuffers[0]),
+		avk::descriptor_binding(0, 2, mShared->mConfigurationBuffer),
 		avk::descriptor_binding(1, 0, mShared->mMaterialsBuffer),
 		avk::descriptor_binding(2, 0, mShared->mBoneTransformBuffers[0]),
 		avk::descriptor_binding(3, 0, mShared->mVertexBuffer),
 		avk::descriptor_binding(4, 1, mShared->mMeshesBuffer)
 	);
-	// TODO HOT RELOAD!
+	mShared->mSharedUpdater->on(avk::shader_files_changed_event(mPipeline.as_reference())).update(mPipeline);
 }
 
 avk::command::action_type_command VertexPulledIndirectPipeline::render(int64_t inFlightIndex)
@@ -90,18 +90,12 @@ avk::command::action_type_command VertexPulledIndirectPipeline::render(int64_t i
 				command::bind_descriptors(mPipeline->layout(), mDescriptorCache->get_or_create_descriptor_sets({
 					descriptor_binding(0, 0, as_combined_image_samplers(mShared->mImageSamplers, layout::shader_read_only_optimal)),
 					descriptor_binding(0, 1, mShared->mViewProjBuffers[inFlightIndex]),
+					descriptor_binding(0, 2, mShared->mConfigurationBuffer),
 					descriptor_binding(1, 0, mShared->mMaterialsBuffer),
 					descriptor_binding(2, 0, mShared->mBoneTransformBuffers[inFlightIndex]),
 					descriptor_binding(3, 0, mShared->mVertexBuffer),
 					descriptor_binding(4, 1, mShared->mMeshesBuffer)
 				})),
-
-				// TODO GET RID OF PUSH CONSTANTS
-				command::push_constants(mPipeline->layout(), push_constants{
-					true,
-					static_cast<int32_t>(0),
-					static_cast<int32_t>(0)
-				}),
 
 				draw_indexed_indirect_nobind(
 					mIndirectDrawCommandBuffer.as_reference(),
@@ -111,6 +105,11 @@ avk::command::action_type_command VertexPulledIndirectPipeline::render(int64_t i
 					static_cast<uint32_t>(sizeof(VkDrawIndexedIndirectCommand))
 				),
 		});
+}
+
+void VertexPulledIndirectPipeline::hud(bool& config_has_changed)
+{
+	config_has_changed |= ImGui::Checkbox("Highlight meshes", (bool*)(void*)&mShared->mConfig.mOverlayMeshlets);
 }
 
 void VertexPulledIndirectPipeline::doDestroy()

@@ -44,6 +44,7 @@
     <None Include="shaders\meshlet.nv.mesh" />
     <None Include="shaders\meshlet.nv.task" />
     <None Include="shaders\meshlet.task" />
+    <None Include="shaders\transform_and_pass_pos_nrm_uv.vert" />
     <None Include="shaders\transform_and_pass_pulled_pos_nrm_uv.vert" />
   </ItemGroup>
   <ItemGroup>

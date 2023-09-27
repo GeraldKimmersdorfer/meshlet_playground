@@ -23,13 +23,6 @@
 static constexpr size_t sNumVertices = 64;
 static constexpr size_t sNumIndices = 378;
 
-struct alignas(16) push_constants
-{
-	vk::Bool32 mHighlightMeshlets;
-	int32_t    mVisibleMeshletIndexFrom;
-	int32_t    mVisibleMeshletIndexTo;
-};
-
 struct mesh_data {
 	glm::mat4 mTransformationMatrix;
 	uint32_t mVertexOffset;			// Offset to first item in Positions Texel-Buffer
@@ -52,10 +45,17 @@ struct animation_data {
 
 struct vertex_data {
 	glm::vec4 mPositionTxX;
-	glm::vec4 mNormalTxY;
+	glm::vec4 mTxYNormal;
 	glm::uvec4 mBoneIndices;
 	glm::vec4 mBoneWeights;
 };	// mind padding and alignment!
+
+struct config_data {
+	uint32_t mOverlayMeshlets = true;
+	uint32_t mMeshletsFrom = 0;
+	uint32_t mMeshletsTo = 0;
+	uint32_t padding;
+};
 
 /** The meshlet we upload to the gpu with its additional data. */
 struct alignas(16) meshlet
@@ -71,6 +71,8 @@ class SharedData
 {
 public:
 
+	config_data mConfig;
+
 	avk::model mModel;
 
 	std::vector<mesh_data> mMeshData;
@@ -83,6 +85,7 @@ public:
 	avk::buffer mMeshesBuffer;
 	avk::buffer mVertexBuffer;
 	avk::buffer mIndexBuffer;
+	avk::buffer mConfigurationBuffer;
 
 	std::vector<avk::image_sampler> mImageSamplers;
 
@@ -96,5 +99,8 @@ public:
 	// VK FEATURES:
 	vk::PhysicalDeviceFeatures2 mFeatures2;
 	vk::PhysicalDeviceMeshShaderFeaturesEXT mFeaturesMeshShader;
+
+	// Updater:
+	avk::updater* mSharedUpdater;
 
 };

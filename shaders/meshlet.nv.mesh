@@ -52,7 +52,7 @@ void main()
 		vertex_data vertex = vertices[vi];
 		// Get vertex data from the appropriate texel buffers and vertex indices:
 		vec4 posMshSp = vec4(vertex.mPositionTxX.xyz, 1.0);
-		vec3 nrmMshSp = vertex.mNormalTxY.xyz;
+		vec3 nrmMshSp = vertex.mTxYNormal.yzw;
 
 		if (mesh.mAnimated) {
 			vec4 boneWeights = vertex.mBoneWeights;
@@ -88,7 +88,7 @@ void main()
 		// Set the per vertex data for the fragment shader:
 		v_out[i].positionWS = posWS.xyz;
 		v_out[i].normalWS = mat3(transformationMatrix) * nrmMshSp;
-		v_out[i].texCoord = vec2(vertex.mPositionTxX.w, vertex.mNormalTxY.w);
+		v_out[i].texCoord = vec2(vertex.mPositionTxX.w, vertex.mTxYNormal.x);
 		v_out[i].materialIndex = int(materialIndex);
 		v_out[i].color = color_from_id_hash(meshletIndex, vec3(118, 185, 0) / 255.0);
 		//v_out[i].color = vec3(vertex.mBoneWeights.rgb);

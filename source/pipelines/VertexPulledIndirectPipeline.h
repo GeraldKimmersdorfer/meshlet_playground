@@ -11,6 +11,8 @@ public:
 
 	avk::command::action_type_command render(int64_t inFlightIndex) override;
 
+	void hud(bool& config_has_changed) override;
+
 private:
 	avk::buffer mIndirectDrawCommandBuffer;
 	avk::graphics_pipeline mPipeline;
