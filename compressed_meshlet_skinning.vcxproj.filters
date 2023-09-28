@@ -20,6 +20,9 @@
     <Filter Include="source\pipelines">
       <UniqueIdentifier>{212c5f6e-a5e3-453f-81c3-ab14a5655a2c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\meshletbuilder">
+      <UniqueIdentifier>{c38d8077-a4ea-4510-920f-fb8885648596}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
@@ -78,12 +81,15 @@
     <ClCompile Include="source\pipelines\VertexPulledIndirectPipeline.cpp">
       <Filter>source\pipelines</Filter>
     </ClCompile>
+    <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp">
+      <Filter>source\meshletbuilder</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
       <Filter>source</Filter>
     </ClInclude>
-    <ClInclude Include="source\SharedData.h">
+    <ClInclude Include="source\shared_data.h">
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\pipelines\MeshExtPipeline.h">
@@ -100,6 +106,15 @@
     </ClInclude>
     <ClInclude Include="source\pipelines\VertexPulledIndirectPipeline.h">
       <Filter>source\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h">
+      <Filter>source\meshletbuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="source\shared_structs.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h">
+      <Filter>source\meshletbuilder</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

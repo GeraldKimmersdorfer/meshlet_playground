@@ -13,7 +13,6 @@
 #include "vk_convenience_functions.hpp"
 #include "../meshoptimizer/src/meshoptimizer.h"
 #include "../ImGuiFileDialog/ImGuiFileDialog.h"
-
 #include "pipelines/VertexPulledIndirectPipeline.h"
 #include "pipelines/MeshNvPipeline.h"
 #include "pipelines/MeshExtPipeline.h"
@@ -119,6 +118,7 @@ void MeshletsApp::load(const std::string& filename)
 		auto meshBoneWeights = avk::get_bone_weights(selection);
 
 		mesh.mIndexCount = meshIndices.size();
+		mesh.mVertexCount = meshPositions.size();
 
 		for (int i = 0; i < meshPositions.size(); i++) {
 			auto& vd = mVertexData.emplace_back(vertex_data{ 
