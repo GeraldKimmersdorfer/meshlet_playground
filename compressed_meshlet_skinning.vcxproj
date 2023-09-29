@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
+    <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp" />
     <ClCompile Include="source\MeshletsApp.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\pipelines\MeshExtPipeline.cpp" />
@@ -25,13 +26,16 @@
     <ClCompile Include="source\pipelines\VertexPulledIndirectPipeline.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h" />
+    <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h" />
     <ClInclude Include="source\MeshletsApp.h" />
     <ClInclude Include="source\pipelines\MeshExtPipeline.h" />
     <ClInclude Include="source\pipelines\MeshNvPipeline.h" />
     <ClInclude Include="source\pipelines\PipelineInterface.h" />
     <ClInclude Include="source\pipelines\VertexIndirectPipeline.h" />
     <ClInclude Include="source\pipelines\VertexPulledIndirectPipeline.h" />
-    <ClInclude Include="source\SharedData.h" />
+    <ClInclude Include="source\shared_data.h" />
+    <ClInclude Include="source\shared_structs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\metaball.fbx" />

@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "SharedData.h"
+#include "shared_data.h"
 #include <functional>
 #include "pipelines/PipelineInterface.h"
 
