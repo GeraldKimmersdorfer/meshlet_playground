@@ -17,6 +17,7 @@
 #include "pipelines/MeshNvPipeline.h"
 #include "pipelines/MeshExtPipeline.h"
 #include "pipelines/VertexIndirectPipeline.h"
+#include "pipelines/MeshIndexedNvPipeline.h"
 
 #include <functional>
 
@@ -360,6 +361,7 @@ void MeshletsApp::initialize()
 	mPipelines.push_back(std::make_unique<VertexPulledIndirectPipeline>(this));
 	mPipelines.push_back(std::make_unique<VertexIndirectPipeline>(this));
 	mPipelines.push_back(std::make_unique<MeshNvPipeline>(this));
+	mPipelines.push_back(std::make_unique<MeshIndexedNvPipeline>(this));
 	mPipelines.push_back(std::make_unique<MeshExtPipeline>(this));
 	mPipelines[mSelectedPipelineIndex]->initialize(mQueue);
 }

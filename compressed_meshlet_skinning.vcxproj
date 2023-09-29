@@ -20,6 +20,7 @@
     <ClCompile Include="source\MeshletsApp.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\pipelines\MeshExtPipeline.cpp" />
+    <ClCompile Include="source\pipelines\MeshIndexedNvPipeline.cpp" />
     <ClCompile Include="source\pipelines\MeshNvPipeline.cpp" />
     <ClCompile Include="source\pipelines\PipelineInterface.cpp" />
     <ClCompile Include="source\pipelines\VertexIndirectPipeline.cpp" />
@@ -30,6 +31,7 @@
     <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h" />
     <ClInclude Include="source\MeshletsApp.h" />
     <ClInclude Include="source\pipelines\MeshExtPipeline.h" />
+    <ClInclude Include="source\pipelines\MeshIndexedNvPipeline.h" />
     <ClInclude Include="source\pipelines\MeshNvPipeline.h" />
     <ClInclude Include="source\pipelines\PipelineInterface.h" />
     <ClInclude Include="source\pipelines\VertexIndirectPipeline.h" />
@@ -48,6 +50,8 @@
     <None Include="shaders\meshlet.nv.mesh" />
     <None Include="shaders\meshlet.nv.task" />
     <None Include="shaders\meshlet.task" />
+    <None Include="shaders\meshlet_indexed.nv.mesh" />
+    <None Include="shaders\meshlet_indexed.nv.task" />
     <None Include="shaders\transform_and_pass_pos_nrm_uv.vert" />
     <None Include="shaders\transform_and_pass_pulled_pos_nrm_uv.vert" />
   </ItemGroup>

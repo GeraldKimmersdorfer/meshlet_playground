@@ -55,6 +55,12 @@
     <None Include="shaders\transform_and_pass_pos_nrm_uv.vert">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\meshlet_indexed.nv.mesh">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\meshlet_indexed.nv.task">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">
@@ -83,6 +89,9 @@
     </ClCompile>
     <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp">
       <Filter>source\meshletbuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pipelines\MeshIndexedNvPipeline.cpp">
+      <Filter>source\pipelines</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +124,9 @@
     </ClInclude>
     <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h">
       <Filter>source\meshletbuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipelines\MeshIndexedNvPipeline.h">
+      <Filter>source\pipelines</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

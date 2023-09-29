@@ -15,9 +15,10 @@ struct meshlet_data
 
 struct meshlet_data_index_buffer
 {
-	uint32_t mMeshIndex;
-	uint8_t mPrimitiveCount;
-
+	uint32_t mMeshIndex;		// The index of the mesh this meshlet belongs to (to gather transform, material, etc.)
+	uint32_t mIndexOffset;		// Index offset into the meshlet sorted index buffer (Indices are aligned inside this buffer from [mIndexOffset -> mIndexOffset + mPrimitiveCount/3u]
+	uint8_t mVertexCount;		// The amount of vertices that belong to this meshlet (nvidia recommendation: < 64)
+	uint8_t mPrimitiveCount;	// The amount of triangles that belong to this meshlet (nvidia recommendation: < 126)
 };
 
 struct mesh_data {
@@ -50,4 +51,10 @@ struct alignas(16) meshlet
 {
 	uint32_t mMeshIndex;
 	avk::meshlet_gpu_data<sNumVertices, sNumIndices> mGeometry;
+};
+
+struct alignas(16) meshlet_redirect
+{
+	uint32_t mMeshIndex;
+	avk::meshlet_redirected_gpu_data mGeometry;
 };
