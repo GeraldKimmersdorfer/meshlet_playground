@@ -13,6 +13,13 @@ struct meshlet_data
 	uint8_t mPrimitiveCount;
 };
 
+struct meshlet_data_index_buffer
+{
+	uint32_t mMeshIndex;
+	uint8_t mPrimitiveCount;
+
+};
+
 struct mesh_data {
 	glm::mat4 mTransformationMatrix;
 	uint32_t mVertexOffset;			// Offset to first item in Positions Texel-Buffer
