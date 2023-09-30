@@ -2,7 +2,7 @@
 #include "MeshoptimizerBuilder.h"
 #include <span>
 
-std::vector<meshlet_data> MeshoptimizerBuilder::generate(std::vector<vertex_data>& vertexData, std::vector<uint32_t>& indexData, std::vector<mesh_data>& meshData, uint32_t aMaxVertices, uint32_t aMaxIndices)
+std::vector<meshlet_native> MeshoptimizerBuilder::generate(std::vector<vertex_data>& vertexData, std::vector<uint32_t>& indexData, std::vector<mesh_data>& meshData, uint32_t aMaxVertices, uint32_t aMaxIndices)
 {
 	/*
 	size_t max_triangles = aMaxIndices / 3;
@@ -43,5 +43,5 @@ std::vector<meshlet_data> MeshoptimizerBuilder::generate(std::vector<vertex_data
 		}
 
 	}*/
-	return std::vector<meshlet_data>();
+	return std::vector<meshlet_native>();
 }

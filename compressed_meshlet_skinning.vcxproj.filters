@@ -128,5 +128,8 @@
     <ClInclude Include="source\pipelines\MeshIndexedNvPipeline.h">
       <Filter>source\pipelines</Filter>
     </ClInclude>
+    <ClInclude Include="source\packing_helper.h">
+      <Filter>source</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

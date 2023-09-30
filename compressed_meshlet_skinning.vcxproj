@@ -30,6 +30,7 @@
     <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h" />
     <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h" />
     <ClInclude Include="source\MeshletsApp.h" />
+    <ClInclude Include="source\packing_helper.h" />
     <ClInclude Include="source\pipelines\MeshExtPipeline.h" />
     <ClInclude Include="source\pipelines\MeshIndexedNvPipeline.h" />
     <ClInclude Include="source\pipelines\MeshNvPipeline.h" />

@@ -8,7 +8,6 @@
 #extension GL_EXT_nonuniform_qualifier   : require
 #extension GL_GOOGLE_include_directive	 : require
 #extension GL_EXT_scalar_block_layout : enable
-#extension GL_ARB_shader_draw_parameters: require
 
 #if DEBUG
 #extension GL_EXT_debug_printf : enable
@@ -50,28 +49,30 @@ void main()
 	uint invocationId = gl_LocalInvocationID.x;
 
 	// Get all the meshlet data:
-	mesh_data mesh = meshes[meshlets[meshletIndex].mMeshIndex];
-	uint vertexCount          = (meshlets[meshletIndex].mVCTC & 65280u) >> 8u;
-	uint triangleCount        = (meshlets[meshletIndex].mVCTC & 255u);
-	uint materialIndex        = mesh.mMaterialIndex;
-	mat4 transformationMatrix = mesh.mTransformationMatrix;
+	uint meshIndex 			  = (meshlets[meshletIndex].mMeshIdxVcTc & 0xFFFFC000) >> 18u;
+	uint vertexCount          = (meshlets[meshletIndex].mMeshIdxVcTc & 0x00003F80) >> 7u;
+	uint triangleCount        = (meshlets[meshletIndex].mMeshIdxVcTc & 0x0000007F) >> 0u;
+	uint indexDataOffset	  = meshlets[meshletIndex].mDataOffset;
+	uint materialIndex        = meshes[meshIndex].mMaterialIndex;
+	mat4 transformationMatrix = meshes[meshIndex].mTransformationMatrix;
+	bool isAnimated 		  = meshes[meshIndex].mAnimated;
 
 #if DEBUG
 	if (invocationId == 0 && gl_WorkGroupID.x == 1)
-		debugPrintfEXT("mi %u | tc %u | vc %u | mdo %u | le %u \n", meshletIndex, triangleCount, vertexCount, meshlets[meshletIndex].mDataOffset, meshlets.length());
+		debugPrintfEXT("mi %u | tc %u | vc %u | mdo %u | le %u | midxvctc %u \n", meshletIndex, triangleCount, vertexCount, indexDataOffset, meshlets.length(), meshlets[meshletIndex].mMeshIdxVcTc);
 #endif
 
 	// Step by NUM_MESH_SHADER_INVOCATIONS as we have that many threads but potentially more vertices to calculate:
 	for (uint i = invocationId; i < vertexCount; i += NUM_MESH_SHADER_INVOCATIONS)
 	{
 		// Get the vertex index: (mesh offset already included in mPackedIndices)
-		uint vi = uint(mPackedIndices[int(meshlets[meshletIndex].mDataOffset + i)]);
+		uint vi = uint(mPackedIndices[int(indexDataOffset + i)]);
 		vertex_data vertex = vertices[vi];
 		// Get vertex data from the appropriate texel buffers and vertex indices:
 		vec4 posMshSp = vec4(vertex.mPositionTxX.xyz, 1.0);
 		vec3 nrmMshSp = vertex.mTxYNormal.yzw;
 
-		if (mesh.mAnimated) {
+		if (isAnimated) {
 			vec4 boneWeights = vertex.mBoneWeights;
 			uvec4 boneIndices = vertex.mBoneIndices;
 
@@ -112,7 +113,7 @@ void main()
 		gl_PrimitiveCountNV = triangleCount;
 	}
 
-	uint indexOffset = uint(meshlets[meshletIndex].mDataOffset + vertexCount);
+	uint indexOffset = uint(indexDataOffset + vertexCount);
  	
 	uint indexGroupCount = (triangleCount * 3 + 3) / 4; // need to calculate how many packed uints we have
 	// Write for each triangle, also note the NUM_MESH_SHADER_INVOCATIONS stepping

@@ -12,7 +12,7 @@ public:
 		mName(name)
 	{};
 
-	virtual std::vector<meshlet_data> generate(std::vector<vertex_data>& vertexData, std::vector<uint32_t>& indexData, std::vector<mesh_data>& meshData, uint32_t aMaxVertices, uint32_t aMaxIndices) = 0;
+	virtual std::vector<meshlet_native> generate(std::vector<vertex_data>& vertexData, std::vector<uint32_t>& indexData, std::vector<mesh_data>& meshData, uint32_t aMaxVertices, uint32_t aMaxIndices) = 0;
 
 	const std::string& getName() { return mName; }
 

@@ -19,7 +19,7 @@ in taskNV block { uint meshletIndices[NUM_TASK_SHADER_INVOCATIONS];  };
 layout(set = 0, binding = 1) uniform CameraBuffer { camera_data camera; };
 layout(set = 2, binding = 0) buffer BoneTransformBuffer { bone_data bones[]; };
 layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data vertices[]; };
-layout(set = 4, binding = 0) buffer MeshletsBuffer { extended_meshlet meshlets[]; };
+layout(set = 4, binding = 0) buffer MeshletsBuffer { meshlet_native meshlets[]; };
 layout(set = 4, binding = 1) buffer MeshBuffer { mesh_data meshes[]; };
 
 // Mesh shader output block:
@@ -39,8 +39,8 @@ void main()
 
 	// Get all the meshlet data:
 	mesh_data mesh = meshes[meshlets[meshletIndex].mMeshIndex];
-	uint vertexCount          = uint(meshlets[meshletIndex].mGeometry.mVertexCount);
-	uint triangleCount        = uint(meshlets[meshletIndex].mGeometry.mTriangleCount);
+	uint vertexCount          = uint(meshlets[meshletIndex].mVertexCount);
+	uint triangleCount        = uint(meshlets[meshletIndex].mTriangleCount);
 	uint materialIndex        = mesh.mMaterialIndex;
 	mat4 transformationMatrix = mesh.mTransformationMatrix;
 	
@@ -48,7 +48,7 @@ void main()
 	for (uint i = invocationId; i < vertexCount; i += NUM_MESH_SHADER_INVOCATIONS)
 	{
 		// Get the vertex index:
-		int vi = int(meshlets[meshletIndex].mGeometry.mVertices[i] + mesh.mVertexOffset);
+		int vi = int(meshlets[meshletIndex].mVertices[i] + mesh.mVertexOffset);
 		vertex_data vertex = vertices[vi];
 		// Get vertex data from the appropriate texel buffers and vertex indices:
 		vec4 posMshSp = vec4(vertex.mPositionTxX.xyz, 1.0);
@@ -105,8 +105,8 @@ void main()
 	for (uint i = invocationId; i < triangleCount; i += NUM_MESH_SHADER_INVOCATIONS)
 	{
 		// Write the indices for the vertices:
-		gl_PrimitiveIndicesNV[i * 3 + 0] = uint(meshlets[meshletIndex].mGeometry.mIndices[i * 3 + 0]);
-		gl_PrimitiveIndicesNV[i * 3 + 1] = uint(meshlets[meshletIndex].mGeometry.mIndices[i * 3 + 1]);
-		gl_PrimitiveIndicesNV[i * 3 + 2] = uint(meshlets[meshletIndex].mGeometry.mIndices[i * 3 + 2]);
+		gl_PrimitiveIndicesNV[i * 3 + 0] = uint(meshlets[meshletIndex].mIndices[i * 3 + 0]);
+		gl_PrimitiveIndicesNV[i * 3 + 1] = uint(meshlets[meshletIndex].mIndices[i * 3 + 1]);
+		gl_PrimitiveIndicesNV[i * 3 + 2] = uint(meshlets[meshletIndex].mIndices[i * 3 + 2]);
 	}
 }

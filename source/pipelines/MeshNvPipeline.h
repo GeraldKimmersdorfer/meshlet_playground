@@ -16,7 +16,7 @@ public:
 private:
 	uint32_t mTaskInvocationsNv;
 
-	std::vector<meshlet> mMeshlets;
+	std::vector<meshlet_native> mMeshlets;
 	avk::buffer mMeshletsBuffer;
 
 	avk::graphics_pipeline mPipeline;

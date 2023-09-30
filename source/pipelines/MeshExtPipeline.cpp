@@ -61,11 +61,14 @@ void MeshExtPipeline::doInitialize(avk::queue* queue)
 
 		for (size_t mshltidx = 0; mshltidx < gpuMeshlets.size(); ++mshltidx) {
 			auto& genMeshlet = gpuMeshlets[mshltidx];
-			mMeshlets.push_back(meshlet{
+			auto& natMeshlet = mMeshlets.emplace_back(meshlet_native{
 				.mMeshIndex = static_cast<uint32_t>(meshIndex),
-				.mGeometry = genMeshlet
+				.mVertexCount = genMeshlet.mVertexCount,
+				.mTriangleCount = genMeshlet.mPrimitiveCount,
 				}
 			);
+			std::copy(genMeshlet.mVertices[0], genMeshlet.mVertices[sNumVertices - 1], natMeshlet.mVertices);
+			std::copy(genMeshlet.mIndices[0], genMeshlet.mIndices[sNumIndices - 1], natMeshlet.mIndices);
 		}
 	}
 	mMeshletsBuffer = avk::context().create_buffer(

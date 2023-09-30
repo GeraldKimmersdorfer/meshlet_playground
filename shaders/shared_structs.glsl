@@ -1,21 +1,17 @@
-struct meshlet
-{
-	uint    mVertices[64];
-	uint8_t mIndices[378]; // 126 triangles * 3 indices
+#define S_NUM_VERTICES 64
+#define S_NUM_INDICES 378
+
+struct meshlet_native {
+	uint mMeshIndex;
+	uint    mVertices[S_NUM_VERTICES];
+	uint8_t mIndices[S_NUM_INDICES]; // 126 triangles * 3 indices
 	uint8_t mVertexCount;
 	uint8_t mTriangleCount;
 };
 
 struct meshlet_redirected {
-	uint mMeshIndex;
 	uint mDataOffset;
-	uint mVCTC;	// vertex count and triangle count packed
-};
-
-struct extended_meshlet
-{
-	uint mMeshIndex;
-	meshlet mGeometry;
+	uint mMeshIdxVcTc;
 };
 
 struct mesh_data {

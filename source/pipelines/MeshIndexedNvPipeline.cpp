@@ -1,5 +1,6 @@
 #include "MeshIndexedNvPipeline.h"
 #include <vk_convenience_functions.hpp>
+#include "../packing_helper.h"
 
 auto meshlet_division_meshoptimizer3 = [](const std::vector<glm::vec3>& tVertices, const std::vector<uint32_t>& aIndices, const avk::model_t& aModel, std::optional<avk::mesh_index_t> aMeshIndex, uint32_t aMaxVertices, uint32_t aMaxIndices) {
 	// definitions
@@ -62,9 +63,8 @@ void MeshIndexedNvPipeline::doInitialize(avk::queue* queue)
 		for (size_t mshltidx = 0; mshltidx < gpuMeshlets.size(); ++mshltidx) {
 			auto& genMeshlet = gpuMeshlets[mshltidx];
 			auto& meshlet = mMeshlets.emplace_back(meshlet_redirect{
-				.mMeshIndex = static_cast<uint32_t>(meshIndex),
 				.mDataOffset = genMeshlet.mDataOffset + static_cast<uint32_t>(mPackedIndices.size()), 	// add packed indices size because we only have one index array as oposed to one for each model
-				.mVCPC = (unsigned int)(genMeshlet.mVertexCount) << 8u | (unsigned int)(genMeshlet.mPrimitiveCount),
+				.mMeshIdxVcTc = packMeshIdxVcTc(meshIndex, genMeshlet.mVertexCount, genMeshlet.mPrimitiveCount)
 				}
 			);
 		}
