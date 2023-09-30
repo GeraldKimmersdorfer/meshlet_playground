@@ -1,9 +1,18 @@
 #version 460
+
+#define DEBUG 0
+
 #extension GL_EXT_shader_16bit_storage   : require
 #extension GL_EXT_shader_8bit_storage    : require
 #extension GL_NV_mesh_shader             : require
 #extension GL_EXT_nonuniform_qualifier   : require
 #extension GL_GOOGLE_include_directive	 : require
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_ARB_shader_draw_parameters: require
+
+#if DEBUG
+#extension GL_EXT_debug_printf : enable
+#endif
 
 #include "glsl_helpers.glsl"
 #include "shared_structs.glsl"
@@ -19,11 +28,11 @@ in taskNV block { uint meshletIndices[NUM_TASK_SHADER_INVOCATIONS];  };
 layout(set = 0, binding = 1) uniform CameraBuffer { camera_data camera; };
 layout(set = 2, binding = 0) buffer BoneTransformBuffer { bone_data bones[]; };
 layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data vertices[]; };
-layout(set = 4, binding = 0) buffer MeshletsBuffer { extended_meshlet_redirected meshlets[]; };
+layout(scalar, set = 4, binding = 0) buffer MeshletsBuffer { meshlet_redirected meshlets[]; };
 layout(set = 4, binding = 1) buffer MeshBuffer { mesh_data meshes[]; };
 
-layout(set = 4, binding = 2) buffer PackedIndexBuffer { uint mPackedIndices[]; };
-//layout(set = 4, binding = 2) buffer PackedIndexBuffer_u8 { uint8_t mPackedIndices[]; };
+layout(std430, set = 4, binding = 2) buffer PackedIndexBuffer { uint mPackedIndices[]; };
+layout(std430, set = 4, binding = 2) buffer PackedIndexBuffer_u8 { uint8_t mPackedIndices_u8[]; };
 
 // Mesh shader output block:
 layout (location = 0) out PerVertexData
@@ -42,16 +51,21 @@ void main()
 
 	// Get all the meshlet data:
 	mesh_data mesh = meshes[meshlets[meshletIndex].mMeshIndex];
-	uint vertexCount          = uint(meshlets[meshletIndex].mGeometry.mVertexCount);
-	uint triangleCount        = uint(meshlets[meshletIndex].mGeometry.mTriangleCount);
+	uint vertexCount          = (meshlets[meshletIndex].mVCTC & 65280u) >> 8u;
+	uint triangleCount        = (meshlets[meshletIndex].mVCTC & 255u);
 	uint materialIndex        = mesh.mMaterialIndex;
 	mat4 transformationMatrix = mesh.mTransformationMatrix;
-	
+
+#if DEBUG
+	if (invocationId == 0 && gl_WorkGroupID.x == 1)
+		debugPrintfEXT("mi %u | tc %u | vc %u | mdo %u | le %u \n", meshletIndex, triangleCount, vertexCount, meshlets[meshletIndex].mDataOffset, meshlets.length());
+#endif
+
 	// Step by NUM_MESH_SHADER_INVOCATIONS as we have that many threads but potentially more vertices to calculate:
 	for (uint i = invocationId; i < vertexCount; i += NUM_MESH_SHADER_INVOCATIONS)
 	{
 		// Get the vertex index: (mesh offset already included in mPackedIndices)
-		uint vi = uint(mPackedIndices[int(meshlets[meshletIndex].mGeometry.mDataOffset + i)]);
+		uint vi = uint(mPackedIndices[int(meshlets[meshletIndex].mDataOffset + i)]);
 		vertex_data vertex = vertices[vi];
 		// Get vertex data from the appropriate texel buffers and vertex indices:
 		vec4 posMshSp = vec4(vertex.mPositionTxX.xyz, 1.0);
@@ -62,22 +76,16 @@ void main()
 			uvec4 boneIndices = vertex.mBoneIndices;
 
 			posMshSp = bone_transform(
-				bones[boneIndices[0]].transform,
-				bones[boneIndices[1]].transform,
-				bones[boneIndices[2]].transform,
-				bones[boneIndices[3]].transform,
-				boneWeights,
-				posMshSp
+				bones[boneIndices[0]].transform, bones[boneIndices[1]].transform,
+				bones[boneIndices[2]].transform, bones[boneIndices[3]].transform,
+				boneWeights, posMshSp
 			);
 
 					// Do the bone transform for the normal:
 			nrmMshSp = bone_transform(
-				bones[boneIndices[0]].transform,
-				bones[boneIndices[1]].transform,
-				bones[boneIndices[2]].transform,
-				bones[boneIndices[3]].transform,
-				boneWeights, 
-				nrmMshSp
+				bones[boneIndices[0]].transform, bones[boneIndices[1]].transform,
+				bones[boneIndices[2]].transform, bones[boneIndices[3]].transform,
+				boneWeights, nrmMshSp
 			);
 		}
 
@@ -104,7 +112,7 @@ void main()
 		gl_PrimitiveCountNV = triangleCount;
 	}
 
-	uint indexOffset = uint(meshlets[meshletIndex].mGeometry.mDataOffset + vertexCount);
+	uint indexOffset = uint(meshlets[meshletIndex].mDataOffset + vertexCount);
  	
 	uint indexGroupCount = (triangleCount * 3 + 3) / 4; // need to calculate how many packed uints we have
 	// Write for each triangle, also note the NUM_MESH_SHADER_INVOCATIONS stepping
@@ -113,4 +121,11 @@ void main()
 		uint block = uint(mPackedIndices[int(indexOffset + i)]);
 		writePackedPrimitiveIndices4x8NV(i * 4, block);
 	}
+/*
+		for (uint i = invocationId; i < triangleCount; i += NUM_MESH_SHADER_INVOCATIONS)
+	{
+		gl_PrimitiveIndicesNV[i*3 + 0] = uint(mPackedIndices_u8[int(indexOffset*4 + i*3 + 0)]);
+		gl_PrimitiveIndicesNV[i*3 + 1] = uint(mPackedIndices_u8[int(indexOffset*4 + i*3 + 1)]);
+		gl_PrimitiveIndicesNV[i*3 + 2] = uint(mPackedIndices_u8[int(indexOffset*4 + i*3 + 2)]);
+	}*/
 }

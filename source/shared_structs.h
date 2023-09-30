@@ -41,9 +41,8 @@ struct vertex_data {
 
 struct config_data {
 	uint32_t mOverlayMeshlets = true;
-	uint32_t mMeshletsFrom = 0;
-	uint32_t mMeshletsTo = 0;
-	uint32_t padding;
+	uint32_t mMeshletsCount = 0;
+	glm::uvec2 padding;
 };
 
 /** The meshlet we upload to the gpu with its additional data. */
@@ -53,8 +52,9 @@ struct alignas(16) meshlet
 	avk::meshlet_gpu_data<sNumVertices, sNumIndices> mGeometry;
 };
 
-struct alignas(16) meshlet_redirect
+struct meshlet_redirect
 {
 	uint32_t mMeshIndex;
-	avk::meshlet_redirected_gpu_data mGeometry;
+	uint32_t mDataOffset;
+	uint32_t mVCPC;	// vertex count and primitive count packed
 };

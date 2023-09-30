@@ -25,29 +25,20 @@ void main()
 	uint groupId      = gl_WorkGroupID.x;
 	uint invocationId = gl_LocalInvocationID.x;
 	uint meshletIndex = groupId * NUM_TASK_SHADER_INVOCATIONS + invocationId;
-	if (true) {
-		// See if this meshlet shall be rendered, and if so, add it to the array:
-		//bool meshletVisible = meshletIndex >= config.mMeshletsFrom && meshletIndex < config.mMeshletsTo;
-		bool meshletVisible = true;
-		uint insertIndex = subgroupExclusiveAdd(uint(meshletVisible));
-		meshletIndices[insertIndex] = meshletIndex;		
+	// See if this meshlet shall be rendered, and if so, add it to the array:
+	bool meshletVisible = meshletIndex < config.mMeshletsCount;
+	uint insertIndex = subgroupExclusiveAdd(uint(meshletVisible));
+	meshletIndices[insertIndex] = meshletIndex;		
 
-		// Find out how many meshlets been added to the array by the other invocations in this subgroup:
-		uvec4 voteResult  = subgroupBallot(meshletVisible);
-		uint  numMeshlets = subgroupBallotBitCount(voteResult);
+	// Find out how many meshlets been added to the array by the other invocations in this subgroup:
+	uvec4 voteResult  = subgroupBallot(meshletVisible);
+	uint  numMeshlets = subgroupBallotBitCount(voteResult);
 
-		// With this number at hand, spawn the same amount of mesh shader GROUPS from this task shader:
-		// I.e., in total, we spawn (numMeshlets * NUM_MESH_SHADER_INVOCATIONS * 1 * 1) invocations.
-		if (invocationId == 0)
-		{
-			gl_TaskCountNV = numMeshlets;
-		}
-	} else {
-		meshletIndices[invocationId] = meshletIndex;	
-		if (invocationId == 0)
-		{
-			gl_TaskCountNV = 32;
-		}
+	// With this number at hand, spawn the same amount of mesh shader GROUPS from this task shader:
+	// I.e., in total, we spawn (numMeshlets * NUM_MESH_SHADER_INVOCATIONS * 1 * 1) invocations.
+	if (invocationId == 0)
+	{
+		gl_TaskCountNV = numMeshlets;
 	}
 }
 

@@ -31,7 +31,7 @@ public:
 
 	void initGUI();
 	void initReusableObjects();
-	void uploadConfig();
+	virtual void uploadConfig() override;
 
 	void initialize() override;
 	void update() override;

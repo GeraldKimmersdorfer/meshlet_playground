@@ -7,14 +7,9 @@ struct meshlet
 };
 
 struct meshlet_redirected {
-	uint mDataOffset;
-	uint8_t mVertexCount;
-	uint8_t mTriangleCount;
-};
-
-struct extended_meshlet_redirected {
 	uint mMeshIndex;
-	meshlet_redirected mGeometry;
+	uint mDataOffset;
+	uint mVCTC;	// vertex count and triangle count packed
 };
 
 struct extended_meshlet
@@ -52,9 +47,9 @@ struct camera_data
 
 struct config_data {
 	bool mOverlayMeshlets;
-	uint mMeshletsFrom;
-	uint mMeshletsTo;
-	uint padding;
+	uint mMeshletsCount;
+	uint p1;
+	uint p2;
 };
 
 struct MaterialGpuData

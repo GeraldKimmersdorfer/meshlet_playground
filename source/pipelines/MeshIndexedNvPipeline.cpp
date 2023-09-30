@@ -63,10 +63,10 @@ void MeshIndexedNvPipeline::doInitialize(avk::queue* queue)
 			auto& genMeshlet = gpuMeshlets[mshltidx];
 			auto& meshlet = mMeshlets.emplace_back(meshlet_redirect{
 				.mMeshIndex = static_cast<uint32_t>(meshIndex),
-				.mGeometry = genMeshlet,
+				.mDataOffset = genMeshlet.mDataOffset + static_cast<uint32_t>(mPackedIndices.size()), 	// add packed indices size because we only have one index array as oposed to one for each model
+				.mVCPC = (unsigned int)(genMeshlet.mVertexCount) << 8u | (unsigned int)(genMeshlet.mPrimitiveCount),
 				}
 			);
-			meshlet.mGeometry.mDataOffset += mPackedIndices.size();	// add packed indices size because we only have one index array as oposed to one for each model
 		}
 		mPackedIndices.insert(mPackedIndices.end(), gpuIndicesData->begin(), gpuIndicesData->end());
 	}
@@ -82,6 +82,8 @@ void MeshIndexedNvPipeline::doInitialize(avk::queue* queue)
 		}, *queue)->wait_until_signalled();
 
 	mTaskInvocationsNv = mShared->mPropsMeshShaderNV.maxTaskWorkGroupInvocations;
+	mShared->mConfig.mMeshletsCount = mMeshlets.size();
+	mShared->uploadConfig();
 
 	mPipeline = avk::context().create_graphics_pipeline_for(
 		avk::task_shader("shaders/meshlet_indexed.nv.task")

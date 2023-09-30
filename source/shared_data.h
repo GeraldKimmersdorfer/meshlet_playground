@@ -71,4 +71,6 @@ public:
 	// Updater:
 	avk::updater* mSharedUpdater;
 
+	virtual void uploadConfig() = 0;
+
 };
