@@ -8,11 +8,14 @@
 #include <windows.h>
 #include <codecvt>
 
-std::wstring to_wstring(const std::string& stringToConvert)
+// Convert an UTF8 string to a wide Unicode String
+std::wstring to_wstring(const std::string& str)
 {
-	std::wstring wideString =
-		std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(stringToConvert);
-	return wideString;
+	if (str.empty()) return std::wstring();
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+	std::wstring wstrTo(size_needed, 0);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+	return wstrTo;
 }
 
 bool spirv_compile(const std::string& src, const std::string& dest) {
