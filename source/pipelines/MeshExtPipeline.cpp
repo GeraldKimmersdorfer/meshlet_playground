@@ -1,6 +1,8 @@
 #include "MeshExtPipeline.h"
 #include <vk_convenience_functions.hpp>
 #include <list>
+#include "../packing_helper.h"
+#include "../shadercompiler/ShaderMetaCompiler.h"
 
 auto meshlet_division_meshoptimizer2 = [](const std::vector<glm::vec3>& tVertices, const std::vector<uint32_t>& aIndices, const avk::model_t& aModel, std::optional<avk::mesh_index_t> aMeshIndex, uint32_t aMaxVertices, uint32_t aMaxIndices) {
 	// definitions
@@ -62,13 +64,11 @@ void MeshExtPipeline::doInitialize(avk::queue* queue)
 		for (size_t mshltidx = 0; mshltidx < gpuMeshlets.size(); ++mshltidx) {
 			auto& genMeshlet = gpuMeshlets[mshltidx];
 			auto& natMeshlet = mMeshlets.emplace_back(meshlet_native{
-				.mMeshIndex = static_cast<uint32_t>(meshIndex),
-				.mVertexCount = genMeshlet.mVertexCount,
-				.mTriangleCount = genMeshlet.mPrimitiveCount,
+				.mMeshIdxVcTc = packMeshIdxVcTc(meshIndex, genMeshlet.mVertexCount, genMeshlet.mPrimitiveCount)
 				}
 			);
-			std::copy(genMeshlet.mVertices[0], genMeshlet.mVertices[sNumVertices - 1], natMeshlet.mVertices);
-			std::copy(genMeshlet.mIndices[0], genMeshlet.mIndices[sNumIndices - 1], natMeshlet.mIndices);
+			std::copy(&genMeshlet.mVertices[0], &genMeshlet.mVertices[static_cast<uint32_t>(genMeshlet.mVertexCount)], &natMeshlet.mVertices[0]);
+			memcpy(&natMeshlet.mIndicesPacked[0], &genMeshlet.mIndices[0], genMeshlet.mPrimitiveCount * 3);	// good old memcpy so that i dont have to deal with black magic typecasting...
 		}
 	}
 	mMeshletsBuffer = avk::context().create_buffer(
@@ -80,13 +80,15 @@ void MeshExtPipeline::doInitialize(avk::queue* queue)
 		}, *queue)->wait_until_signalled();
 
 	mTaskInvocationsExt = mShared->mPropsMeshShaderNV.maxTaskWorkGroupInvocations;
+	mShared->mConfig.mMeshletsCount = mMeshlets.size();
+	mShared->uploadConfig();
 
 	mPipeline = avk::context().create_graphics_pipeline_for(
-		avk::task_shader("shaders/meshlet.task")
-		.set_specialization_constant(0, mShared->mPropsMeshShader.maxPreferredTaskWorkGroupInvocations),
-		avk::mesh_shader("shaders/meshlet.mesh")
-		.set_specialization_constant(0, mShared->mPropsMeshShader.maxPreferredTaskWorkGroupInvocations)
-		.set_specialization_constant(1, mShared->mPropsMeshShader.maxPreferredMeshWorkGroupInvocations),
+		avk::task_shader(ShaderMetaCompiler::precompile("meshlet.task", { {"MCC_MESHLET_EXTENSION", "_EXT"} }))
+			.set_specialization_constant(0, mShared->mPropsMeshShader.maxPreferredTaskWorkGroupInvocations),
+		avk::mesh_shader(ShaderMetaCompiler::precompile("meshlet.mesh", { {"MCC_MESHLET_EXTENSION", "_EXT"} }))
+			.set_specialization_constant(0, mShared->mPropsMeshShader.maxPreferredTaskWorkGroupInvocations)
+			.set_specialization_constant(1, mShared->mPropsMeshShader.maxPreferredMeshWorkGroupInvocations),
 		avk::fragment_shader("shaders/diffuse_shading_fixed_lightsource.frag"),
 		avk::cfg::front_face::define_front_faces_to_be_counter_clockwise(),
 		avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),

@@ -27,11 +27,11 @@ in taskNV block { uint meshletIndices[NUM_TASK_SHADER_INVOCATIONS];  };
 layout(set = 0, binding = 1) uniform CameraBuffer { camera_data camera; };
 layout(set = 2, binding = 0) buffer BoneTransformBuffer { bone_data bones[]; };
 layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data vertices[]; };
-layout(scalar, set = 4, binding = 0) buffer MeshletsBuffer { meshlet_redirected meshlets[]; };
+layout(set = 4, binding = 0, scalar) buffer MeshletsBuffer { meshlet_redirected meshlets[]; };
 layout(set = 4, binding = 1) buffer MeshBuffer { mesh_data meshes[]; };
 
 layout(std430, set = 4, binding = 2) buffer PackedIndexBuffer { uint mPackedIndices[]; };
-layout(std430, set = 4, binding = 2) buffer PackedIndexBuffer_u8 { uint8_t mPackedIndices_u8[]; };
+//layout(std430, set = 4, binding = 2) buffer PackedIndexBuffer_u8 { uint8_t mPackedIndices_u8[]; };
 
 // Mesh shader output block:
 layout (location = 0) out PerVertexData

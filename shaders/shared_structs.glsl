@@ -1,12 +1,11 @@
 #define S_NUM_VERTICES 64
 #define S_NUM_INDICES 378
+#define S_NUM_PACKED_INDICES 95 // avk::div_ceil(sNumIndices, 4)
 
 struct meshlet_native {
-	uint mMeshIndex;
-	uint    mVertices[S_NUM_VERTICES];
-	uint8_t mIndices[S_NUM_INDICES]; // 126 triangles * 3 indices
-	uint8_t mVertexCount;
-	uint8_t mTriangleCount;
+	uint mMeshIdxVcTc;	// see packMeshIdxVcTc
+	uint mVertices[S_NUM_VERTICES];
+	uint mIndicesPacked[S_NUM_PACKED_INDICES];
 };
 
 struct meshlet_redirected {

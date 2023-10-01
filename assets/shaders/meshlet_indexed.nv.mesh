@@ -1,0 +1,132 @@
+#version 460
+
+#define DEBUG 0
+
+#extension GL_EXT_shader_16bit_storage   : require
+#extension GL_EXT_shader_8bit_storage    : require
+#extension GL_NV_mesh_shader             : require
+#extension GL_EXT_nonuniform_qualifier   : require
+#extension GL_GOOGLE_include_directive	 : require
+#extension GL_EXT_scalar_block_layout : enable
+
+#if DEBUG
+#extension GL_EXT_debug_printf : enable
+#endif
+
+#include "glsl_helpers.glsl"
+#include "shared_structs.glsl"
+
+layout (constant_id = 0) const uint NUM_TASK_SHADER_INVOCATIONS = 1; // <- Expected to be set to 32 for Nvidia on host side.
+layout (constant_id = 1) const uint NUM_MESH_SHADER_INVOCATIONS = 1; // <- Expected to be set to 32 for Nvidia on host side.
+layout(local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
+// The max_vertices and max_primitives numbers have been recommended by Nvidia:
+layout(triangles, max_vertices = 64, max_primitives = 126) out;
+
+in taskNV block { uint meshletIndices[NUM_TASK_SHADER_INVOCATIONS];  };
+
+layout(set = 0, binding = 1) uniform CameraBuffer { camera_data camera; };
+layout(set = 2, binding = 0) buffer BoneTransformBuffer { bone_data bones[]; };
+layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data vertices[]; };
+layout(set = 4, binding = 0, scalar) buffer MeshletsBuffer { meshlet_redirected meshlets[]; };
+layout(set = 4, binding = 1) buffer MeshBuffer { mesh_data meshes[]; };
+
+layout(std430, set = 4, binding = 2) buffer PackedIndexBuffer { uint mPackedIndices[]; };
+//layout(std430, set = 4, binding = 2) buffer PackedIndexBuffer_u8 { uint8_t mPackedIndices_u8[]; };
+
+// Mesh shader output block:
+layout (location = 0) out PerVertexData
+{
+	vec3 positionWS;
+	vec3 normalWS;
+	vec2 texCoord;
+	flat int materialIndex;
+	vec3 color;
+} v_out[];
+
+void main() 
+{
+	uint meshletIndex = meshletIndices[gl_WorkGroupID.x];
+	uint invocationId = gl_LocalInvocationID.x;
+
+	// Get all the meshlet data:
+	uint meshIndex 			  = (meshlets[meshletIndex].mMeshIdxVcTc & 0xFFFFC000) >> 18u;
+	uint vertexCount          = (meshlets[meshletIndex].mMeshIdxVcTc & 0x00003F80) >> 7u;
+	uint triangleCount        = (meshlets[meshletIndex].mMeshIdxVcTc & 0x0000007F) >> 0u;
+	uint indexDataOffset	  = meshlets[meshletIndex].mDataOffset;
+	uint materialIndex        = meshes[meshIndex].mMaterialIndex;
+	mat4 transformationMatrix = meshes[meshIndex].mTransformationMatrix;
+	bool isAnimated 		  = meshes[meshIndex].mAnimated;
+
+#if DEBUG
+	if (invocationId == 0 && gl_WorkGroupID.x == 1)
+		debugPrintfEXT("mi %u | tc %u | vc %u | mdo %u | le %u | midxvctc %u \n", meshletIndex, triangleCount, vertexCount, indexDataOffset, meshlets.length(), meshlets[meshletIndex].mMeshIdxVcTc);
+#endif
+
+	// Step by NUM_MESH_SHADER_INVOCATIONS as we have that many threads but potentially more vertices to calculate:
+	for (uint i = invocationId; i < vertexCount; i += NUM_MESH_SHADER_INVOCATIONS)
+	{
+		// Get the vertex index: (mesh offset already included in mPackedIndices)
+		uint vi = uint(mPackedIndices[int(indexDataOffset + i)]);
+		vertex_data vertex = vertices[vi];
+		// Get vertex data from the appropriate texel buffers and vertex indices:
+		vec4 posMshSp = vec4(vertex.mPositionTxX.xyz, 1.0);
+		vec3 nrmMshSp = vertex.mTxYNormal.yzw;
+
+		if (isAnimated) {
+			vec4 boneWeights = vertex.mBoneWeights;
+			uvec4 boneIndices = vertex.mBoneIndices;
+
+			posMshSp = bone_transform(
+				bones[boneIndices[0]].transform, bones[boneIndices[1]].transform,
+				bones[boneIndices[2]].transform, bones[boneIndices[3]].transform,
+				boneWeights, posMshSp
+			);
+
+					// Do the bone transform for the normal:
+			nrmMshSp = bone_transform(
+				bones[boneIndices[0]].transform, bones[boneIndices[1]].transform,
+				bones[boneIndices[2]].transform, bones[boneIndices[3]].transform,
+				boneWeights, nrmMshSp
+			);
+		}
+
+		// Standard transformation:
+		vec4 posWS = transformationMatrix * posMshSp;
+		vec4 posCS = camera.mViewProjMatrix * posWS;
+ 
+		// Set the vertex position:
+		gl_MeshVerticesNV[i].gl_Position = posCS;
+ 
+		// Set the per vertex data for the fragment shader:
+		v_out[i].positionWS = posWS.xyz;
+		v_out[i].normalWS = mat3(transformationMatrix) * nrmMshSp;
+		v_out[i].texCoord = vec2(vertex.mPositionTxX.w, vertex.mTxYNormal.x);
+		v_out[i].materialIndex = int(materialIndex);
+		v_out[i].color = color_from_id_hash(meshletIndex, vec3(118, 185, 0) / 255.0);
+		//v_out[i].color = vec3(vertex.mBoneWeights.rgb);
+	}
+ 
+	// Sets the actual output size of the primitives and vertices that the 
+	// mesh shader workgroup will emit upon completion:
+	if (invocationId == 0)
+	{
+		gl_PrimitiveCountNV = triangleCount;
+	}
+
+	uint indexOffset = uint(indexDataOffset + vertexCount);
+ 	
+	uint indexGroupCount = (triangleCount * 3 + 3) / 4; // need to calculate how many packed uints we have
+	// Write for each triangle, also note the NUM_MESH_SHADER_INVOCATIONS stepping
+	for (uint i = invocationId; i < indexGroupCount; i += NUM_MESH_SHADER_INVOCATIONS)
+	{
+		uint block = uint(mPackedIndices[int(indexOffset + i)]);
+		writePackedPrimitiveIndices4x8NV(i * 4, block);
+	}
+/*
+		for (uint i = invocationId; i < triangleCount; i += NUM_MESH_SHADER_INVOCATIONS)
+	{
+		gl_PrimitiveIndicesNV[i*3 + 0] = uint(mPackedIndices_u8[int(indexOffset*4 + i*3 + 0)]);
+		gl_PrimitiveIndicesNV[i*3 + 1] = uint(mPackedIndices_u8[int(indexOffset*4 + i*3 + 1)]);
+		gl_PrimitiveIndicesNV[i*3 + 2] = uint(mPackedIndices_u8[int(indexOffset*4 + i*3 + 2)]);
+	}*/
+}

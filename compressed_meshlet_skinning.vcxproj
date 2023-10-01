@@ -19,12 +19,14 @@
     <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp" />
     <ClCompile Include="source\MeshletsApp.cpp" />
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\packing_helper.cpp" />
     <ClCompile Include="source\pipelines\MeshExtPipeline.cpp" />
     <ClCompile Include="source\pipelines\MeshIndexedNvPipeline.cpp" />
     <ClCompile Include="source\pipelines\MeshNvPipeline.cpp" />
     <ClCompile Include="source\pipelines\PipelineInterface.cpp" />
     <ClCompile Include="source\pipelines\VertexIndirectPipeline.cpp" />
     <ClCompile Include="source\pipelines\VertexPulledIndirectPipeline.cpp" />
+    <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h" />
@@ -37,12 +39,20 @@
     <ClInclude Include="source\pipelines\PipelineInterface.h" />
     <ClInclude Include="source\pipelines\VertexIndirectPipeline.h" />
     <ClInclude Include="source\pipelines\VertexPulledIndirectPipeline.h" />
+    <ClInclude Include="source\shadercompiler\ShaderMetaCompiler.h" />
     <ClInclude Include="source\shared_data.h" />
     <ClInclude Include="source\shared_structs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\metaball.fbx" />
+    <None Include="assets\shaders\glsl_helpers.glsl" />
+    <None Include="assets\shaders\mcc.glsl" />
+    <None Include="assets\shaders\meshlet.mesh" />
+    <None Include="assets\shaders\meshlet.task" />
+    <None Include="assets\shaders\shared_structs.glsl" />
+    <None Include="assets\tools\glslangValidator.exe" />
     <None Include="assets\two_objects_in_one.fbx" />
+    <None Include="assets\two_seperate_triangles_2.glb" />
     <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
       <FileType>Document</FileType>
     </None>

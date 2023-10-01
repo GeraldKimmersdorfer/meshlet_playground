@@ -23,6 +23,15 @@
     <Filter Include="source\meshletbuilder">
       <UniqueIdentifier>{c38d8077-a4ea-4510-920f-fb8885648596}</UniqueIdentifier>
     </Filter>
+    <Filter Include="assets\shaders">
+      <UniqueIdentifier>{3c40d2d5-2007-4903-bd9d-4a24d9bfd597}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\shadercompiler">
+      <UniqueIdentifier>{4dd35f8f-ed63-48bb-8808-441f926c0da3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\tools">
+      <UniqueIdentifier>{c00ee4c0-d52e-419b-b6c9-11f4c5c051ea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
@@ -61,6 +70,27 @@
     <None Include="shaders\meshlet_indexed.nv.task">
       <Filter>shaders</Filter>
     </None>
+    <None Include="assets\two_seperate_triangles_2.glb">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="assets\shaders\glsl_helpers.glsl">
+      <Filter>assets\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\shared_structs.glsl">
+      <Filter>assets\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\meshlet.mesh">
+      <Filter>assets\shaders</Filter>
+    </None>
+    <None Include="assets\tools\glslangValidator.exe">
+      <Filter>assets\tools</Filter>
+    </None>
+    <None Include="assets\shaders\mcc.glsl">
+      <Filter>assets\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\meshlet.task">
+      <Filter>assets\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">
@@ -92,6 +122,12 @@
     </ClCompile>
     <ClCompile Include="source\pipelines\MeshIndexedNvPipeline.cpp">
       <Filter>source\pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="source\packing_helper.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp">
+      <Filter>source\shadercompiler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +166,9 @@
     </ClInclude>
     <ClInclude Include="source\packing_helper.h">
       <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\shadercompiler\ShaderMetaCompiler.h">
+      <Filter>source\shadercompiler</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

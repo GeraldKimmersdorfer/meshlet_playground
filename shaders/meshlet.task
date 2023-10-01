@@ -27,9 +27,9 @@ void main()
 	uint meshletIndex = groupId * NUM_TASK_SHADER_INVOCATIONS + invocationId;
 
 	// See if this meshlet shall be rendered, and if so, add it to the array:
-	bool meshletVisible = true;
+	bool meshletVisible = meshletIndex < config.mMeshletsCount;
 	uint insertIndex = subgroupExclusiveAdd(uint(meshletVisible));
-	meshletIndices[insertIndex] = meshletIndex;		
+	meshletIndices[insertIndex] = meshletIndex;	
 
 	// Find out how many meshlets been added to the array by the other invocations in this subgroup:
 	uvec4 voteResult  = subgroupBallot(meshletVisible);

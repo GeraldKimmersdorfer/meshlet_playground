@@ -6,7 +6,7 @@
 #include "pipelines/PipelineInterface.h"
 
 //#define STARTUP_FILE "../../assets/skinning_dummy/dummy.fbx"
-#define STARTUP_FILE "assets/two_objects_in_one.fbx"
+#define STARTUP_FILE "assets/two_seperate_triangles_2.glb"
 
 class PipelineInterface;
 

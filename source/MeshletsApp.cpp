@@ -440,8 +440,8 @@ void MeshletsApp::render()
 	}
 
 	context().record({
-			mPipelineStatsPool->reset(inFlightIndex, 1),
-			mPipelineStatsPool->begin_query(inFlightIndex),
+			//mPipelineStatsPool->reset(inFlightIndex, 1),
+			//mPipelineStatsPool->begin_query(inFlightIndex),
 			mTimestampPool->reset(firstQueryIndex, 2),     // reset the two values relevant for the current frame in flight
 			mTimestampPool->write_timestamp(firstQueryIndex + 0, stage::all_commands), // measure before drawMeshTasks*
 
@@ -454,7 +454,7 @@ void MeshletsApp::render()
 			mPipelines[mSelectedPipelineIndex]->render(inFlightIndex),
 
 			mTimestampPool->write_timestamp(firstQueryIndex + 1, stage::mesh_shader),
-			mPipelineStatsPool->end_query(inFlightIndex)
+			//mPipelineStatsPool->end_query(inFlightIndex)
 		})
 		.into_command_buffer(cmdBfr)
 		.then_submit_to(*mQueue)
