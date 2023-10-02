@@ -76,7 +76,7 @@ avk::command::action_type_command VertexIndirectPipeline::render(int64_t inFligh
 		});
 }
 
-void VertexIndirectPipeline::hud(bool& config_has_changed)
+void VertexIndirectPipeline::hud_config(bool& config_has_changed)
 {
 	config_has_changed |= ImGui::Checkbox("Highlight meshes", (bool*)(void*)&mShared->mConfig.mOverlayMeshlets);
 }

@@ -44,7 +44,7 @@ private: // v== Member variables ==v
 	void freeCommandBufferAndExecute(FreeCMDBufferExecutionData executeAfterwards);
 	void executeWithFreeCommandBuffer();
 
-	int mSelectedPipelineIndex = 2;
+	int mCurrentPipelineID = -1;
 	std::vector<std::unique_ptr<PipelineInterface>> mPipelines;
 
 	bool mInverseMeshRootFix = true;
@@ -71,5 +71,7 @@ private: // v== Member variables ==v
 
 	avk::query_pool mPipelineStatsPool;
 	std::array<uint64_t, 3> mPipelineStats;
+
+	std::string mLastErrorMessage = "";
 
 };

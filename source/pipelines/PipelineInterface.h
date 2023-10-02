@@ -37,10 +37,23 @@ public:
 	}
 
 	/// <summary>
+	/// Additional step that gets executed before initializing. If necessary this step
+	/// is meant to compile a shader. Any exceptions will be caught and displayed in the GUI.
+	/// </summary>
+	virtual void compile() {};
+
+	/// <summary>
 	/// Allows for custom ImGUI elements, which should be used for specific configurations
 	/// of the pipeline. 
 	/// </summary>
-	virtual void hud(bool& config_has_changed) {};
+	/// <param name="config_has_changed">set to true if config ubo is supposed to be updated</param>
+	virtual void hud_config(bool& config_has_changed) {};
+
+	/// <summary>
+	/// Allows for custom ImGUI elements BEFORE the pipeline is loaded. Should be used for precompile variables
+	/// </summary>
+	/// <param name="config_has_changed">set to true if config ubo is supposed to be updated</param>
+	virtual void hud_setup(bool& config_has_changed) {};
 
 	const std::string& getName() { return mName; }
 

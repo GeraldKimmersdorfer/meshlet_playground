@@ -14,10 +14,8 @@
 #include "../meshoptimizer/src/meshoptimizer.h"
 #include "../ImGuiFileDialog/ImGuiFileDialog.h"
 #include "pipelines/VertexPulledIndirectPipeline.h"
-#include "pipelines/MeshNvPipeline.h"
-#include "pipelines/MeshExtPipeline.h"
+#include "pipelines/MeshPipeline.h"
 #include "pipelines/VertexIndirectPipeline.h"
-#include "pipelines/MeshIndexedNvPipeline.h"
 
 #include <functional>
 
@@ -38,7 +36,7 @@ void openDialogOptionPane(const char* vFilter, IGFDUserDatas vUserDatas, bool* v
 
 MeshletsApp::~MeshletsApp()
 {
-	mPipelines[mSelectedPipelineIndex]->destroy();
+	mPipelines[mCurrentPipelineID]->destroy();
 	mPipelines.clear();
 }
 
@@ -250,23 +248,41 @@ void MeshletsApp::initGUI()
 				ImGui::Separator();
 
 				ImGui::Separator();
-				if (ImGui::BeginCombo("Pipeline", mPipelines[mSelectedPipelineIndex]->getName().c_str())) {
-					for (int n = 0; n < mPipelines.size(); n++) {
-						bool is_selected = (mSelectedPipelineIndex == n);
-						if (ImGui::Selectable(mPipelines[n]->getName().c_str(), is_selected)) {
+				if (ImGui::CollapsingHeader("Pipeline-Selection", ImGuiTreeNodeFlags_DefaultOpen)) {
+					static int mSelectedPipelineID = 0;
+					if (ImGui::BeginCombo("Pipeline", mPipelines[mSelectedPipelineID]->getName().c_str())) {
+						for (int n = 0; n < mPipelines.size(); n++) {
+							bool is_selected = (mSelectedPipelineID == n);
+							if (ImGui::Selectable(mPipelines[n]->getName().c_str(), is_selected)) mSelectedPipelineID = n;
+							if (is_selected) ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+					}
+
+					mPipelines[mSelectedPipelineID]->hud_setup(config_has_changed);
+
+					if (ImGui::Button("Compile & Load Pipeline")) {
+						bool withoutError = false;
+						try {
+							mPipelines[mSelectedPipelineID]->compile();
+							withoutError = true;
+						}
+						catch (const std::exception& e) {
+							mLastErrorMessage = e.what();
+							ImGui::OpenPopup("Compile Error");
+						}
+						if (withoutError) {
 							freeCommandBufferAndExecute({
 								.type = FreeCMDBufferExecutionData::CHANGE_PIPELINE,
-								.mNextPipelineID = n
-								});
+								.mNextPipelineID = mSelectedPipelineID
+							});
 						}
-						if (is_selected) ImGui::SetItemDefaultFocus();
 					}
-					ImGui::EndCombo();
 				}
 
 				ImGui::Separator();
 				if (ImGui::CollapsingHeader("Pipeline-Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-					mPipelines[mSelectedPipelineIndex]->hud(config_has_changed);
+					if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->hud_config(config_has_changed);
 				}
 
 				if (ImGuiFileDialog::Instance()->Display("open_file"))
@@ -281,9 +297,25 @@ void MeshletsApp::initGUI()
 					ImGuiFileDialog::Instance()->Close();
 				}
 
-				if (config_has_changed) uploadConfig();
+				ImGuiIO& io = ImGui::GetIO();
+				ImVec2 pos(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
+				ImGui::SetNextWindowPos(pos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+				ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove
+					| ImGuiWindowFlags_NoDecoration
+					| ImGuiWindowFlags_AlwaysAutoResize
+					| ImGuiWindowFlags_NoSavedSettings;
+				ImGui::SetNextWindowSize({ 400, -1 });
+				if (ImGui::BeginPopupModal("Compile Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+				{
+					ImGui::TextWrapped(mLastErrorMessage.c_str());
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 0.1);
+					if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+					ImGui::EndPopup();
+				}
 
 				ImGui::End();
+
+				if (config_has_changed) uploadConfig();
 			});
 	}
 }
@@ -360,10 +392,8 @@ void MeshletsApp::initialize()
 	// TODO QUERY FOR NV PIPELINE SUPPORT
 	mPipelines.push_back(std::make_unique<VertexPulledIndirectPipeline>(this));
 	mPipelines.push_back(std::make_unique<VertexIndirectPipeline>(this));
-	mPipelines.push_back(std::make_unique<MeshNvPipeline>(this));
-	mPipelines.push_back(std::make_unique<MeshIndexedNvPipeline>(this));
-	mPipelines.push_back(std::make_unique<MeshExtPipeline>(this));
-	mPipelines[mSelectedPipelineIndex]->initialize(mQueue);
+	mPipelines.push_back(std::make_unique<MeshPipeline>(this));
+	//mPipelines[mCurrentPipelineID]->initialize(mQueue);
 }
 
 void MeshletsApp::update()
@@ -389,6 +419,7 @@ void MeshletsApp::update()
 void MeshletsApp::render()
 {
 	if (mExecutionData.mFrameWait >= 0) return;	// We want to free the commandPool such that we can load a new file
+	if (mCurrentPipelineID < 0) return;	// No pipeline selected
 	using namespace avk;
 
 	auto mainWnd = context().main_window();
@@ -440,8 +471,8 @@ void MeshletsApp::render()
 	}
 
 	context().record({
-			//mPipelineStatsPool->reset(inFlightIndex, 1),
-			//mPipelineStatsPool->begin_query(inFlightIndex),
+			mPipelineStatsPool->reset(inFlightIndex, 1),
+			mPipelineStatsPool->begin_query(inFlightIndex),
 			mTimestampPool->reset(firstQueryIndex, 2),     // reset the two values relevant for the current frame in flight
 			mTimestampPool->write_timestamp(firstQueryIndex + 0, stage::all_commands), // measure before drawMeshTasks*
 
@@ -451,10 +482,10 @@ void MeshletsApp::render()
 
 			sync::global_memory_barrier(stage::all_commands >> stage::all_commands, access::memory_write >> access::memory_write | access::memory_read),
 
-			mPipelines[mSelectedPipelineIndex]->render(inFlightIndex),
+			mPipelines[mCurrentPipelineID]->render(inFlightIndex),
 
 			mTimestampPool->write_timestamp(firstQueryIndex + 1, stage::mesh_shader),
-			//mPipelineStatsPool->end_query(inFlightIndex)
+			mPipelineStatsPool->end_query(inFlightIndex)
 		})
 		.into_command_buffer(cmdBfr)
 		.then_submit_to(*mQueue)
@@ -476,16 +507,16 @@ void MeshletsApp::freeCommandBufferAndExecute(FreeCMDBufferExecutionData execute
 void MeshletsApp::executeWithFreeCommandBuffer()
 {
 	if (mExecutionData.type == FreeCMDBufferExecutionData::LOAD_NEW_FILE) {
-		int nextPipeline = mExecutionData.mNextPipelineID >= 0 ? mExecutionData.mNextPipelineID : mSelectedPipelineIndex;
-		mPipelines[mSelectedPipelineIndex]->destroy();
+		int nextPipeline = mExecutionData.mNextPipelineID >= 0 ? mExecutionData.mNextPipelineID : mCurrentPipelineID;
+		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->destroy();
 		load(mExecutionData.mNextFileName);
-		mPipelines[nextPipeline]->initialize(mQueue);
-		mSelectedPipelineIndex = nextPipeline;
+		if (mCurrentPipelineID >= 0) mPipelines[nextPipeline]->initialize(mQueue);
+		mCurrentPipelineID = nextPipeline;
 	}
 	else if (mExecutionData.type == FreeCMDBufferExecutionData::CHANGE_PIPELINE) {
-		if (mSelectedPipelineIndex == mExecutionData.mNextPipelineID) return;
-		mPipelines[mSelectedPipelineIndex]->destroy();
-		mSelectedPipelineIndex = mExecutionData.mNextPipelineID;
-		mPipelines[mSelectedPipelineIndex]->initialize(mQueue);
+		//if (mCurrentPipelineID == mExecutionData.mNextPipelineID) return;
+		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->destroy();
+		mCurrentPipelineID = mExecutionData.mNextPipelineID;
+		mPipelines[mCurrentPipelineID]->initialize(mQueue);
 	}
 }

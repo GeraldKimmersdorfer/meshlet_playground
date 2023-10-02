@@ -107,7 +107,7 @@ avk::command::action_type_command VertexPulledIndirectPipeline::render(int64_t i
 		});
 }
 
-void VertexPulledIndirectPipeline::hud(bool& config_has_changed)
+void VertexPulledIndirectPipeline::hud_config(bool& config_has_changed)
 {
 	config_has_changed |= ImGui::Checkbox("Highlight meshes", (bool*)(void*)&mShared->mConfig.mOverlayMeshlets);
 }

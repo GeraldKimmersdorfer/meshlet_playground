@@ -91,6 +91,9 @@
     <None Include="assets\shaders\meshlet.task">
       <Filter>assets\shaders</Filter>
     </None>
+    <None Include="assets\shaders\diffuse_shading_fixed_lightsource.frag">
+      <Filter>assets\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">
@@ -102,10 +105,7 @@
     <ClCompile Include="source\main.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="source\pipelines\MeshExtPipeline.cpp">
-      <Filter>source\pipelines</Filter>
-    </ClCompile>
-    <ClCompile Include="source\pipelines\MeshNvPipeline.cpp">
+    <ClCompile Include="source\pipelines\MeshPipeline.cpp">
       <Filter>source\pipelines</Filter>
     </ClCompile>
     <ClCompile Include="source\pipelines\PipelineInterface.cpp">
@@ -120,13 +120,13 @@
     <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp">
       <Filter>source\meshletbuilder</Filter>
     </ClCompile>
-    <ClCompile Include="source\pipelines\MeshIndexedNvPipeline.cpp">
-      <Filter>source\pipelines</Filter>
-    </ClCompile>
     <ClCompile Include="source\packing_helper.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp">
+      <Filter>source\shadercompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="source\shadercompiler\ShaderFile.cpp">
       <Filter>source\shadercompiler</Filter>
     </ClCompile>
   </ItemGroup>
@@ -137,10 +137,7 @@
     <ClInclude Include="source\shared_data.h">
       <Filter>source</Filter>
     </ClInclude>
-    <ClInclude Include="source\pipelines\MeshExtPipeline.h">
-      <Filter>source\pipelines</Filter>
-    </ClInclude>
-    <ClInclude Include="source\pipelines\MeshNvPipeline.h">
+    <ClInclude Include="source\pipelines\MeshPipeline.h">
       <Filter>source\pipelines</Filter>
     </ClInclude>
     <ClInclude Include="source\pipelines\PipelineInterface.h">
@@ -161,13 +158,16 @@
     <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h">
       <Filter>source\meshletbuilder</Filter>
     </ClInclude>
-    <ClInclude Include="source\pipelines\MeshIndexedNvPipeline.h">
-      <Filter>source\pipelines</Filter>
-    </ClInclude>
     <ClInclude Include="source\packing_helper.h">
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\shadercompiler\ShaderMetaCompiler.h">
+      <Filter>source\shadercompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="source\shadercompiler\ShaderFile.h">
+      <Filter>source\shadercompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="source\shadercompiler\ShaderMetaConstant.h">
       <Filter>source\shadercompiler</Filter>
     </ClInclude>
   </ItemGroup>
