@@ -4,7 +4,7 @@
 #extension GL_EXT_nonuniform_qualifier : require
 #extension GL_GOOGLE_include_directive : require
 
-#include "shared_structs.glsl"
+#include "include/shared_structs.glsl"
 
 layout(set = 0, binding = 0) uniform sampler2D textures[];
 layout(set = 0, binding = 2) uniform ConfigurationBuffer { config_data config; };

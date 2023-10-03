@@ -5,9 +5,6 @@
       <UniqueIdentifier>{24240a51-8fdb-478f-8c1c-27cbca7adc3f}</UniqueIdentifier>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
-    <Filter Include="shaders">
-      <UniqueIdentifier>{1d345cf5-0451-42e0-83a8-6a3f5a7203ca}</UniqueIdentifier>
-    </Filter>
     <Filter Include="precompiled_headers">
       <UniqueIdentifier>{a498e4bc-580a-49d7-9a8e-ec57803fdcd4}</UniqueIdentifier>
     </Filter>
@@ -32,25 +29,13 @@
     <Filter Include="assets\tools">
       <UniqueIdentifier>{c00ee4c0-d52e-419b-b6c9-11f4c5c051ea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="assets\shaders\include">
+      <UniqueIdentifier>{d86f1112-af5f-4972-819c-e5b8a2b35d7e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
       <Filter>assets</Filter>
-    </None>
-    <None Include="shaders\diffuse_shading_fixed_lightsource.frag">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\meshlet.mesh">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\meshlet.nv.mesh">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\meshlet.nv.task">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\meshlet.task">
-      <Filter>shaders</Filter>
     </None>
     <None Include="assets\metaball.fbx">
       <Filter>assets</Filter>
@@ -58,41 +43,32 @@
     <None Include="assets\two_objects_in_one.fbx">
       <Filter>assets</Filter>
     </None>
-    <None Include="shaders\transform_and_pass_pulled_pos_nrm_uv.vert">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\transform_and_pass_pos_nrm_uv.vert">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\meshlet_indexed.nv.mesh">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\meshlet_indexed.nv.task">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="assets\two_seperate_triangles_2.glb">
       <Filter>assets</Filter>
-    </None>
-    <None Include="assets\shaders\glsl_helpers.glsl">
-      <Filter>assets\shaders</Filter>
-    </None>
-    <None Include="assets\shaders\shared_structs.glsl">
-      <Filter>assets\shaders</Filter>
-    </None>
-    <None Include="assets\shaders\meshlet.mesh">
-      <Filter>assets\shaders</Filter>
     </None>
     <None Include="assets\tools\glslangValidator.exe">
       <Filter>assets\tools</Filter>
     </None>
-    <None Include="assets\shaders\mcc.glsl">
+    <None Include="shaders\diffuse_shading_fixed_lightsource.frag">
       <Filter>assets\shaders</Filter>
     </None>
-    <None Include="assets\shaders\meshlet.task">
+    <None Include="shaders\meshlet.mesh">
       <Filter>assets\shaders</Filter>
     </None>
-    <None Include="assets\shaders\diffuse_shading_fixed_lightsource.frag">
+    <None Include="shaders\meshlet.task">
       <Filter>assets\shaders</Filter>
+    </None>
+    <None Include="shaders\vertex.vert">
+      <Filter>assets\shaders</Filter>
+    </None>
+    <None Include="shaders\include\glsl_helpers.glsl">
+      <Filter>assets\shaders\include</Filter>
+    </None>
+    <None Include="shaders\include\mcc.glsl">
+      <Filter>assets\shaders\include</Filter>
+    </None>
+    <None Include="shaders\include\shared_structs.glsl">
+      <Filter>assets\shaders\include</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -112,9 +88,6 @@
       <Filter>source\pipelines</Filter>
     </ClCompile>
     <ClCompile Include="source\pipelines\VertexIndirectPipeline.cpp">
-      <Filter>source\pipelines</Filter>
-    </ClCompile>
-    <ClCompile Include="source\pipelines\VertexPulledIndirectPipeline.cpp">
       <Filter>source\pipelines</Filter>
     </ClCompile>
     <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp">
@@ -146,9 +119,6 @@
     <ClInclude Include="source\pipelines\VertexIndirectPipeline.h">
       <Filter>source\pipelines</Filter>
     </ClInclude>
-    <ClInclude Include="source\pipelines\VertexPulledIndirectPipeline.h">
-      <Filter>source\pipelines</Filter>
-    </ClInclude>
     <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h">
       <Filter>source\meshletbuilder</Filter>
     </ClInclude>
@@ -169,6 +139,9 @@
     </ClInclude>
     <ClInclude Include="source\shadercompiler\ShaderMetaConstant.h">
       <Filter>source\shadercompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pipelines\mcc.h">
+      <Filter>source\pipelines</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

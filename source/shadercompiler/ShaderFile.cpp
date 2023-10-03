@@ -44,29 +44,43 @@ void replaceAll(std::string& inputStr, const std::string& searchStr, const std::
 	}
 }
 
+
 void spirv_compile(const std::filesystem::path& src, const std::filesystem::path& dest) {
-	// Define the command and executable path
-	LPCTSTR executablePath = SPIRV_COMPILER_PATH;
+	auto compilerPath = std::filesystem::path(SPIRV_COMPILER_PATH);
+	if (!std::filesystem::exists(compilerPath)) throw std::runtime_error("Spirv-Compiler not found @ " + compilerPath.string());
+
 	std::wstring args;
-	args += std::wstring(executablePath) + L" ";	// Note: executablePath has to be arg[0]
+	args += compilerPath.wstring() + L" ";	// Note: executablePath has to be arg[0]
 	args += SPIRV_ADDITIONAL_FLAGS;
 	args += L"-o " + dest.wstring() + L" ";
 	args += src.wstring() + L" ";
+
+	// Create pipe for stdout and stderr
+	HANDLE hStdOutRead, hStdOutWrite;
+	SECURITY_ATTRIBUTES saAttr;
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+
+	if (!CreatePipe(&hStdOutRead, &hStdOutWrite, &saAttr, 0)) throw std::runtime_error("Creation of a pipe for the SPIR-V Compiler failed");
 
 	// Initialize the startup info and process info structures
 	STARTUPINFO startupInfo;
 	PROCESS_INFORMATION processInfo;
 	ZeroMemory(&startupInfo, sizeof(startupInfo));
 	startupInfo.cb = sizeof(startupInfo);
+	startupInfo.hStdError = hStdOutWrite;
+	startupInfo.hStdOutput = hStdOutWrite;
+	startupInfo.dwFlags |= STARTF_USESTDHANDLES;
 	ZeroMemory(&processInfo, sizeof(processInfo));
 
 	// Create the process
 	if (CreateProcess(
-		executablePath,    // Application name
+		&compilerPath.wstring()[0],    // Application name
 		&args[0],               // Command line
 		NULL,               // Process handle not inheritable
 		NULL,               // Thread handle not inheritable
-		FALSE,              // Set handle inheritance to FALSE
+		TRUE,              // Set handle inheritance to FALSE
 		0,                  // No creation flags
 		NULL,               // Use parent's environment block
 		NULL,               // Use parent's starting directory
@@ -80,11 +94,30 @@ void spirv_compile(const std::filesystem::path& src, const std::filesystem::path
 		CloseHandle(processInfo.hProcess);
 		CloseHandle(processInfo.hThread);
 
+		// Read and print the captured stdout
+		std::string capturedOutput;
+		char buffer[1024];
+		DWORD bytesRead;
+		while (true) {
+			if (!ReadFile(hStdOutRead, buffer, sizeof(buffer), &bytesRead, NULL)) {
+				throw std::runtime_error("Error reading pipe output.");
+			}
+			if (bytesRead > 0) capturedOutput.append(buffer, bytesRead);
+			if (bytesRead < sizeof(buffer)) break;
+		}
+
+		// Close the read end of the stdout pipe
+		CloseHandle(hStdOutRead);
+		// Close the write end of the stdout pipe
+		CloseHandle(hStdOutWrite);
+
 		if (result == WAIT_TIMEOUT) throw std::runtime_error("Spirv-Compilation of " + src.string() + " suceeded allowed execution time!");
 		else if (result != WAIT_OBJECT_0) throw std::runtime_error("WaitForSingleObject failed for shader " + src.string()); // + ": " + ((std::wstring*)(void*)GetLastError()));
-		if (!std::filesystem::exists(dest)) throw std::runtime_error("Shader Compilation failed. Check log for details.");
+		if (!std::filesystem::exists(dest)) throw std::runtime_error("Shader Compilation failed:\n" + capturedOutput);
 	}
 	else throw std::runtime_error("CreateProcess failed");// << GetLastError() << std::endl)
+
+
 }
 
 ShaderFile::ShaderFile(const std::string& path)
@@ -138,6 +171,17 @@ std::string getUniqueFileIdentifier(const std::map<std::string, std::string> rep
 
 std::string ShaderFile::compile(const std::vector<ShaderMetaConstant>& constants)
 {
+	// Check wether folder for spirv shaders exist, if not create it:
+	if (!std::filesystem::exists(SPIRV_OUTPUT_DIRECTORY)) {
+		try {
+			std::filesystem::create_directory(SPIRV_OUTPUT_DIRECTORY);
+		}
+		catch (const std::exception& e) {
+			std::cerr << "Error creating directory: " << e.what() << std::endl;
+			throw std::runtime_error("Error creating spirv output directory " + std::string(SPIRV_OUTPUT_DIRECTORY));
+		}
+	}
+
 	std::map<std::string, std::string> replacementValues;
 	for (auto& smcs : mAllConstants) {
 		bool smcs_found = false;
@@ -161,8 +205,8 @@ std::string ShaderFile::compile(const std::vector<ShaderMetaConstant>& constants
 			constantNotFound = true;
 		}
 	}
-	if (constantNotFound) return "";
-
+	if (constantNotFound) throw std::runtime_error("At least one mcc constant specified for compilation was not found. Please check the log for more information.");
+	
 	std::string ufid = getUniqueFileIdentifier(replacementValues);
 	
 	auto spvFile = getSpvPathName(ufid);
@@ -181,14 +225,13 @@ std::string ShaderFile::compile(const std::vector<ShaderMetaConstant>& constants
 			}
 		}
 		std::ofstream outputStream(tmpFile);
-		if (!outputStream.is_open()) {
-			std::cerr << "Couldnt open " << tmpFile << " for writing." << std::endl;
-			return "";
-		}
+		if (!outputStream.is_open()) throw std::runtime_error("Couldnt open " + tmpFile.string() + " for writing.");
+
 		outputStream << mAlternatedCode;
 		outputStream.close();
 
-		std::filesystem::remove(spvFile);	// remove old file
+		// remove old file, such that we can check wether compilation was actually successfull
+		std::filesystem::remove(spvFile);	
 
 		// Run glslangValidator
 		spirv_compile(tmpFile, spvFile);

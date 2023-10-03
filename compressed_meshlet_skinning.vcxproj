@@ -23,7 +23,6 @@
     <ClCompile Include="source\pipelines\MeshPipeline.cpp" />
     <ClCompile Include="source\pipelines\PipelineInterface.cpp" />
     <ClCompile Include="source\pipelines\VertexIndirectPipeline.cpp" />
-    <ClCompile Include="source\pipelines\VertexPulledIndirectPipeline.cpp" />
     <ClCompile Include="source\shadercompiler\ShaderFile.cpp" />
     <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp" />
   </ItemGroup>
@@ -32,10 +31,10 @@
     <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h" />
     <ClInclude Include="source\MeshletsApp.h" />
     <ClInclude Include="source\packing_helper.h" />
+    <ClInclude Include="source\pipelines\mcc.h" />
     <ClInclude Include="source\pipelines\MeshPipeline.h" />
     <ClInclude Include="source\pipelines\PipelineInterface.h" />
     <ClInclude Include="source\pipelines\VertexIndirectPipeline.h" />
-    <ClInclude Include="source\pipelines\VertexPulledIndirectPipeline.h" />
     <ClInclude Include="source\shadercompiler\ShaderFile.h" />
     <ClInclude Include="source\shadercompiler\ShaderMetaCompiler.h" />
     <ClInclude Include="source\shadercompiler\ShaderMetaConstant.h" />
@@ -44,12 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\metaball.fbx" />
-    <None Include="assets\shaders\diffuse_shading_fixed_lightsource.frag" />
-    <None Include="assets\shaders\glsl_helpers.glsl" />
-    <None Include="assets\shaders\mcc.glsl" />
-    <None Include="assets\shaders\meshlet.mesh" />
-    <None Include="assets\shaders\meshlet.task" />
-    <None Include="assets\shaders\shared_structs.glsl" />
     <None Include="assets\tools\glslangValidator.exe" />
     <None Include="assets\two_objects_in_one.fbx" />
     <None Include="assets\two_seperate_triangles_2.glb" />
@@ -57,14 +50,12 @@
       <FileType>Document</FileType>
     </None>
     <None Include="shaders\diffuse_shading_fixed_lightsource.frag" />
+    <None Include="shaders\include\glsl_helpers.glsl" />
+    <None Include="shaders\include\mcc.glsl" />
+    <None Include="shaders\include\shared_structs.glsl" />
     <None Include="shaders\meshlet.mesh" />
-    <None Include="shaders\meshlet.nv.mesh" />
-    <None Include="shaders\meshlet.nv.task" />
     <None Include="shaders\meshlet.task" />
-    <None Include="shaders\meshlet_indexed.nv.mesh" />
-    <None Include="shaders\meshlet_indexed.nv.task" />
-    <None Include="shaders\transform_and_pass_pos_nrm_uv.vert" />
-    <None Include="shaders\transform_and_pass_pulled_pos_nrm_uv.vert" />
+    <None Include="shaders\vertex.vert" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="auto_vk_toolkit\visual_studio\auto_vk_toolkit\auto_vk_toolkit.vcxproj">

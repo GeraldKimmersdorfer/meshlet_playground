@@ -13,7 +13,6 @@
 #include "vk_convenience_functions.hpp"
 #include "../meshoptimizer/src/meshoptimizer.h"
 #include "../ImGuiFileDialog/ImGuiFileDialog.h"
-#include "pipelines/VertexPulledIndirectPipeline.h"
 #include "pipelines/MeshPipeline.h"
 #include "pipelines/VertexIndirectPipeline.h"
 
@@ -56,7 +55,7 @@ void MeshletsApp::load(const std::string& filename)
 {
 	reset();
 
-	avk::model& model = mModel = std::move(avk::model_t::load_from_file(filename, aiProcess_Triangulate));
+	avk::model& model = mModel = std::move(avk::model_t::load_from_file(filename, aiProcess_Triangulate | aiProcess_FlipUVs));
 	std::vector<avk::material_config> allMatConfigs;
 	mCurrentlyPlayingAnimationId = -1;
 
@@ -194,10 +193,12 @@ void MeshletsApp::initGUI()
 				lastDrawMeshTasksDurationMs = 0.0
 		]() mutable { 
 				bool config_has_changed = false;
+				ImGuiIO& io = ImGui::GetIO();
+
 				ImGui::Begin("Info & Settings");
 				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
-				ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
-				ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
+				ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
+				ImGui::Text("%.1f FPS", io.Framerate);
 				ImGui::Separator();
 				if (ImGui::Button("Open File")) {
 					ImGuiFileDialog::Instance()->OpenDialogWithPane("open_file", "Choose File", "{.fbx,.obj,.dae,.ply,.gltf,.glb}", ".", "", std::bind(&openDialogOptionPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 300.0, 1, (IGFDUserDatas)nullptr, ImGuiFileDialogFlags_Modal);
@@ -285,6 +286,8 @@ void MeshletsApp::initGUI()
 					if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->hud_config(config_has_changed);
 				}
 
+				ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_FirstUseEver, { 0.5f, 0.5f });
+				ImGui::SetNextWindowSize({ 800, 400 }, ImGuiCond_FirstUseEver);
 				if (ImGuiFileDialog::Instance()->Display("open_file"))
 				{
 					if (ImGuiFileDialog::Instance()->IsOk())
@@ -297,21 +300,19 @@ void MeshletsApp::initGUI()
 					ImGuiFileDialog::Instance()->Close();
 				}
 
-				ImGuiIO& io = ImGui::GetIO();
-				ImVec2 pos(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
-				ImGui::SetNextWindowPos(pos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-				ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove
-					| ImGuiWindowFlags_NoDecoration
-					| ImGuiWindowFlags_AlwaysAutoResize
-					| ImGuiWindowFlags_NoSavedSettings;
-				ImGui::SetNextWindowSize({ 400, -1 });
-				if (ImGui::BeginPopupModal("Compile Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+				ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_Always, { 0.5f, 0.5f });
+				ImGui::SetNextWindowSize({ 600, -1 }, ImGuiCond_Always);
+				ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0, 0.0, 0.0, 1.0));
+				ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0, 0.0, 0.0, 0.1));
+				if (ImGui::BeginPopupModal("Compile Error", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
 				{
 					ImGui::TextWrapped(mLastErrorMessage.c_str());
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 0.1);
-					if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+					ImGui::NewLine();
+					ImGui::SameLine(ImGui::GetWindowWidth() - 80);
+					if (ImGui::Button("Got it.")) ImGui::CloseCurrentPopup();
 					ImGui::EndPopup();
 				}
+				ImGui::PopStyleColor(2);
 
 				ImGui::End();
 
@@ -390,7 +391,6 @@ void MeshletsApp::initialize()
 	this->initGUI();
 	this->load(STARTUP_FILE);
 	// TODO QUERY FOR NV PIPELINE SUPPORT
-	mPipelines.push_back(std::make_unique<VertexPulledIndirectPipeline>(this));
 	mPipelines.push_back(std::make_unique<VertexIndirectPipeline>(this));
 	mPipelines.push_back(std::make_unique<MeshPipeline>(this));
 	//mPipelines[mCurrentPipelineID]->initialize(mQueue);

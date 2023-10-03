@@ -1,27 +1,8 @@
 #pragma once
 
 #include "PipelineInterface.h"
+#include "mcc.h"
 class SharedData;
-
-enum MCC_MESHLET_EXTENSION { _EXT, _NV };
-enum MCC_MESHLET_TYPE { _NATIVE, _REDIR };
-
-template <typename T>
-std::string MCC_to_string(T value) {
-	if constexpr (std::is_same_v<T, MCC_MESHLET_EXTENSION>) {
-		switch (value) {
-		case _EXT: return "_EXT";
-		case _NV: return "_NV";
-		}
-	}
-	else if constexpr (std::is_same_v<T, MCC_MESHLET_TYPE>) {
-		switch (value) {
-		case _NATIVE: return "_NATIVE";
-		case _REDIR: return "_REDIR";
-		}
-	}
-	return "Undefined";
-}
 
 class MeshPipeline : public PipelineInterface {
 
