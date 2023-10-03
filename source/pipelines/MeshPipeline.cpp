@@ -3,46 +3,6 @@
 #include "../packing_helper.h"
 #include "../shadercompiler/ShaderMetaCompiler.h"
 
-auto meshlet_division_meshoptimizer = [](const std::vector<glm::vec3>& tVertices, const std::vector<uint32_t>& aIndices, const avk::model_t& aModel, std::optional<avk::mesh_index_t> aMeshIndex, uint32_t aMaxVertices, uint32_t aMaxIndices) {
-	// definitions
-	size_t max_triangles = aMaxIndices / 3;
-	const float cone_weight = 0.0f;
-
-	// get the maximum number of meshlets that could be generated
-	size_t max_meshlets = meshopt_buildMeshletsBound(aIndices.size(), aMaxVertices, max_triangles);
-	std::vector<meshopt_Meshlet> meshlets(max_meshlets);
-	std::vector<unsigned int> meshlet_vertices(max_meshlets * aMaxVertices);
-	std::vector<unsigned char> meshlet_triangles(max_meshlets * max_triangles * 3);
-
-	// let meshoptimizer build the meshlets for us
-	size_t meshlet_count = meshopt_buildMeshlets(meshlets.data(), meshlet_vertices.data(), meshlet_triangles.data(),
-		aIndices.data(), aIndices.size(), &tVertices[0].x, tVertices.size(), sizeof(glm::vec3),
-		aMaxVertices, max_triangles, cone_weight);
-
-	// copy the data over to Auto-Vk-Toolkit's meshlet structure
-	std::vector<avk::meshlet> generatedMeshlets(meshlet_count);
-	generatedMeshlets.resize(meshlet_count);
-	generatedMeshlets.reserve(meshlet_count);
-	for (int k = 0; k < meshlet_count; k++) {
-		auto& m = meshlets[k];
-		auto& gm = generatedMeshlets[k];
-		gm.mIndexCount = m.triangle_count * 3;
-		gm.mVertexCount = m.vertex_count;
-		gm.mVertices.reserve(m.vertex_count);
-		gm.mVertices.resize(m.vertex_count);
-		gm.mIndices.reserve(gm.mIndexCount);
-		gm.mIndices.resize(gm.mIndexCount);
-		std::ranges::copy(meshlet_vertices.begin() + m.vertex_offset,
-			meshlet_vertices.begin() + m.vertex_offset + m.vertex_count,
-			gm.mVertices.begin());
-		std::ranges::copy(meshlet_triangles.begin() + m.triangle_offset,
-			meshlet_triangles.begin() + m.triangle_offset + gm.mIndexCount,
-			gm.mIndices.begin());
-	}
-	return generatedMeshlets;
-	};
-
-
 MeshPipeline::MeshPipeline(SharedData* shared)
 	:PipelineInterface(shared, "Meshlet")
 {
@@ -55,49 +15,21 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 		mMeshletType.first = mMeshletType.second;
 		mShadersRecompiled = false;
 	}
+	auto builder = mShared->getCurrentMeshletBuilder();
+	builder->generate(sNumVertices, sNumIndices - ((sNumIndices / 3) % 4) * 3);
 	if (mMeshletType.first == _NATIVE) {
-		for (size_t meshIndex = 0; meshIndex < mShared->mMeshData.size(); meshIndex++) {
-			auto meshletSelection = avk::make_models_and_mesh_indices_selection(mShared->mModel, meshIndex);
-			auto cpuMeshlets = std::move(avk::divide_into_meshlets(meshletSelection, meshlet_division_meshoptimizer, true, sNumVertices, sNumIndices - ((sNumIndices / 3) % 4) * 3));
-
-			auto [gpuMeshlets, _] = avk::convert_for_gpu_usage<avk::meshlet_gpu_data<sNumVertices, sNumIndices>>(cpuMeshlets);
-
-			for (size_t mshltidx = 0; mshltidx < gpuMeshlets.size(); ++mshltidx) {
-				auto& genMeshlet = gpuMeshlets[mshltidx];
-				auto& natMeshlet = mMeshletsNative.emplace_back(meshlet_native{
-					.mMeshIdxVcTc = packMeshIdxVcTc(meshIndex, genMeshlet.mVertexCount, genMeshlet.mPrimitiveCount)
-					}
-				);
-				std::copy(&genMeshlet.mVertices[0], &genMeshlet.mVertices[static_cast<uint32_t>(genMeshlet.mVertexCount)], &natMeshlet.mVertices[0]);
-				memcpy(&natMeshlet.mIndicesPacked[0], &genMeshlet.mIndices[0], genMeshlet.mPrimitiveCount * 3);	// good old memcpy so that i dont have to deal with black magic typecasting...
-			}
-		}
-		mMeshletsBuffer = avk::context().create_buffer(avk::memory_usage::device, {}, avk::storage_buffer_meta::create_from_data(mMeshletsNative));
-		avk::context().record_and_submit_with_fence({ mMeshletsBuffer->fill(mMeshletsNative.data(), 0) }, *queue)->wait_until_signalled();
-		mShared->mConfig.mMeshletsCount = mMeshletsNative.size();
+		auto& meshletsNative = builder->getMeshletsNative();
+		mMeshletsBuffer = avk::context().create_buffer(avk::memory_usage::device, {}, avk::storage_buffer_meta::create_from_data(meshletsNative));
+		avk::context().record_and_submit_with_fence({ mMeshletsBuffer->fill(meshletsNative.data(), 0) }, *queue)->wait_until_signalled();
+		mShared->mConfig.mMeshletsCount = meshletsNative.size();
 	}
 	else if (mMeshletType.first == _REDIR) {
-		for (size_t meshIndex = 0; meshIndex < mShared->mMeshData.size(); meshIndex++) {
-			auto meshletSelection = avk::make_models_and_mesh_indices_selection(mShared->mModel, meshIndex);
-			auto cpuMeshlets = std::move(avk::divide_into_meshlets(meshletSelection, meshlet_division_meshoptimizer, true, sNumVertices, sNumIndices - ((sNumIndices / 3) % 4) * 3));
-
-			auto [gpuMeshlets, gpuIndicesData] = avk::convert_for_gpu_usage<avk::meshlet_redirected_gpu_data, sNumVertices, sNumIndices>(cpuMeshlets);
-
-			for (size_t mshltidx = 0; mshltidx < gpuMeshlets.size(); ++mshltidx) {
-				auto& genMeshlet = gpuMeshlets[mshltidx];
-				auto& meshlet = mMeshletsRedirect.emplace_back(meshlet_redirect{
-					.mDataOffset = genMeshlet.mDataOffset + static_cast<uint32_t>(mPackedIndices.size()), 	// add packed indices size because we only have one index array as oposed to one for each model
-					.mMeshIdxVcTc = packMeshIdxVcTc(meshIndex, genMeshlet.mVertexCount, genMeshlet.mPrimitiveCount)
-					}
-				);
-			}
-			mPackedIndices.insert(mPackedIndices.end(), gpuIndicesData->begin(), gpuIndicesData->end());
-		}
-		mMeshletsBuffer = avk::context().create_buffer(avk::memory_usage::device, {}, avk::storage_buffer_meta::create_from_data(mMeshletsRedirect));
-		avk::context().record_and_submit_with_fence({ mMeshletsBuffer->fill(mMeshletsRedirect.data(), 0) }, *queue)->wait_until_signalled();
-		mPackedIndexBuffer = avk::context().create_buffer(avk::memory_usage::device, {}, avk::storage_buffer_meta::create_from_data(mPackedIndices));
-		avk::context().record_and_submit_with_fence({ mPackedIndexBuffer->fill(mPackedIndices.data(), 0) }, *queue)->wait_until_signalled();
-		mShared->mConfig.mMeshletsCount = mMeshletsRedirect.size();
+		auto& [meshletsRedirect, redirectIndexBuffer] = builder->getMeshletsRedirect();
+		mMeshletsBuffer = avk::context().create_buffer(avk::memory_usage::device, {}, avk::storage_buffer_meta::create_from_data(meshletsRedirect));
+		avk::context().record_and_submit_with_fence({ mMeshletsBuffer->fill(meshletsRedirect.data(), 0) }, *queue)->wait_until_signalled();
+		mPackedIndexBuffer = avk::context().create_buffer(avk::memory_usage::device, {}, avk::storage_buffer_meta::create_from_data(redirectIndexBuffer));
+		avk::context().record_and_submit_with_fence({ mPackedIndexBuffer->fill(redirectIndexBuffer.data(), 0) }, *queue)->wait_until_signalled();
+		mShared->mConfig.mMeshletsCount = meshletsRedirect.size();
 	}
 
 	mTaskInvocations = mMeshletExtension.first == _NV ? mShared->mPropsMeshShaderNV.maxTaskWorkGroupInvocations : mShared->mPropsMeshShader.maxPreferredTaskWorkGroupInvocations;
@@ -225,9 +157,6 @@ void MeshPipeline::compile()
 
 void MeshPipeline::doDestroy()
 {
-	mMeshletsNative.clear();
-	mMeshletsRedirect.clear();
-	mPackedIndices.clear();
 	mPipeline = avk::graphics_pipeline();
 	mMeshletsBuffer = avk::buffer();
 	mPackedIndexBuffer = avk::buffer();

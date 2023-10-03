@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
+    <ClCompile Include="source\meshletbuilder\MeshletbuilderInterface.cpp" />
     <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp" />
     <ClCompile Include="source\MeshletsApp.cpp" />
     <ClCompile Include="source\main.cpp" />

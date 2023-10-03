@@ -15,6 +15,7 @@
 #include "../ImGuiFileDialog/ImGuiFileDialog.h"
 #include "pipelines/MeshPipeline.h"
 #include "pipelines/VertexIndirectPipeline.h"
+#include "meshletbuilder/MeshoptimizerBuilder.h"
 
 #include <functional>
 
@@ -249,6 +250,19 @@ void MeshletsApp::initGUI()
 				ImGui::Separator();
 
 				ImGui::Separator();
+				if (ImGui::CollapsingHeader("Meshlet-Building", ImGuiTreeNodeFlags_DefaultOpen)) {
+					static int mSelectedBuilderID = 0;
+					if (ImGui::BeginCombo("Builder", mMeshletBuilder[mSelectedBuilderID]->getName().c_str())) {
+						for (int n = 0; n < mMeshletBuilder.size(); n++) {
+							bool is_selected = (mSelectedBuilderID == n);
+							if (ImGui::Selectable(mMeshletBuilder[n]->getName().c_str(), is_selected)) mSelectedBuilderID = n;
+							if (is_selected) ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+					}
+				}
+
+				ImGui::Separator();
 				if (ImGui::CollapsingHeader("Pipeline-Selection", ImGuiTreeNodeFlags_DefaultOpen)) {
 					static int mSelectedPipelineID = 0;
 					if (ImGui::BeginCombo("Pipeline", mPipelines[mSelectedPipelineID]->getName().c_str())) {
@@ -385,6 +399,11 @@ void MeshletsApp::uploadConfig()
 	mConfigurationBuffer->fill(&mConfig, 0);
 }
 
+MeshletbuilderInterface* MeshletsApp::getCurrentMeshletBuilder()
+{
+	return static_cast<MeshletbuilderInterface*>(mMeshletBuilder[mCurrentMeshletBuilderID].get());
+}
+
 void MeshletsApp::initialize()
 {
 	this->initReusableObjects();
@@ -394,6 +413,8 @@ void MeshletsApp::initialize()
 	mPipelines.push_back(std::make_unique<VertexIndirectPipeline>(this));
 	mPipelines.push_back(std::make_unique<MeshPipeline>(this));
 	//mPipelines[mCurrentPipelineID]->initialize(mQueue);
+
+	mMeshletBuilder.push_back(std::make_unique<MeshoptimizerBuilder>(this));
 }
 
 void MeshletsApp::update()

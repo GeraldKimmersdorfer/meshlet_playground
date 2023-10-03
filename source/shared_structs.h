@@ -1,11 +1,10 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <avk/cpp_utils.hpp>
 
 static constexpr size_t sNumVertices = 64;
 static constexpr size_t sNumIndices = 378;
-static constexpr size_t sNumPackedIndices = avk::div_ceil(sNumIndices, 4);
+static constexpr size_t sNumPackedIndices = 95; //avk::div_ceil(sNumIndices, 4);
 
 struct mesh_data {
 	glm::mat4 mTransformationMatrix;

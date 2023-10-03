@@ -32,6 +32,9 @@
     <Filter Include="assets\shaders\include">
       <UniqueIdentifier>{d86f1112-af5f-4972-819c-e5b8a2b35d7e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\vertexcompressor">
+      <UniqueIdentifier>{e3438778-a1ff-414a-8c16-fee3d43b29a6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
@@ -101,6 +104,9 @@
     </ClCompile>
     <ClCompile Include="source\shadercompiler\ShaderFile.cpp">
       <Filter>source\shadercompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="source\meshletbuilder\MeshletbuilderInterface.cpp">
+      <Filter>source\meshletbuilder</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

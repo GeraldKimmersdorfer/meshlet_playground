@@ -22,12 +22,7 @@ private:
 	uint32_t mTaskInvocations;
 	uint32_t mMeshInvocations;
 
-	std::vector<meshlet_native> mMeshletsNative;
-	std::vector<meshlet_redirect> mMeshletsRedirect;
 	avk::buffer mMeshletsBuffer;
-
-	
-	std::vector<uint32_t> mPackedIndices;
 	avk::buffer mPackedIndexBuffer;
 
 	std::pair<MCC_MESHLET_EXTENSION, MCC_MESHLET_EXTENSION> mMeshletExtension = { _NV, _NV };	// first ... avtive, second ... selected

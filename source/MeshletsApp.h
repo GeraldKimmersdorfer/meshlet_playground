@@ -5,8 +5,8 @@
 #include <functional>
 #include "pipelines/PipelineInterface.h"
 
-//#define STARTUP_FILE "../../assets/skinning_dummy/dummy.fbx"
-#define STARTUP_FILE "assets/two_seperate_triangles_2.glb"
+#define STARTUP_FILE "../../assets/skinning_dummy/dummy.fbx"
+//#define STARTUP_FILE "assets/two_seperate_triangles_2.glb"
 
 class PipelineInterface;
 
@@ -18,6 +18,16 @@ class MeshletsApp : public avk::invokee, public SharedData
 		int mNextPipelineID = -1;
 		std::string mNextFileName;
 		int mFrameWait = -1;
+	};
+
+	struct animation_data {
+		std::string mName;
+		double mDurationTicks;
+		double mDurationSeconds;
+		unsigned int mChannelCount;
+		double mTicksPerSecond;
+		avk::animation_clip_data mClip;
+		avk::animation mAnimation;
 	};
 
 public:
@@ -33,6 +43,8 @@ public:
 	void initReusableObjects();
 	virtual void uploadConfig() override;
 
+	virtual MeshletbuilderInterface* getCurrentMeshletBuilder() override;
+
 	void initialize() override;
 	void update() override;
 	void render() override;
@@ -46,6 +58,8 @@ private: // v== Member variables ==v
 
 	int mCurrentPipelineID = -1;
 	std::vector<std::unique_ptr<PipelineInterface>> mPipelines;
+	int mCurrentMeshletBuilderID = 0;
+	std::vector<std::unique_ptr<MeshletbuilderInterface>> mMeshletBuilder;
 
 	bool mInverseMeshRootFix = true;
 

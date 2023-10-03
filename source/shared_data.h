@@ -20,17 +20,7 @@
 #include <auto_vk_toolkit.hpp>
 #include <meshlet_helpers.hpp>
 #include "shared_structs.h"
-
-struct animation_data {
-	std::string mName;
-	double mDurationTicks;
-	double mDurationSeconds;
-	unsigned int mChannelCount;
-	double mTicksPerSecond;
-	avk::animation_clip_data mClip;
-	avk::animation mAnimation;
-};
-
+#include "meshletbuilder/MeshletbuilderInterface.h"
 
 /// <summary>
 /// All pipelines will have access to this data
@@ -72,5 +62,7 @@ public:
 	avk::updater* mSharedUpdater;
 
 	virtual void uploadConfig() = 0;
+
+	virtual MeshletbuilderInterface* getCurrentMeshletBuilder() = 0;
 
 };

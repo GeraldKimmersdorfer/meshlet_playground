@@ -6,11 +6,11 @@ class MeshoptimizerBuilder : public MeshletbuilderInterface {
 
 public:
 
-	MeshoptimizerBuilder() :
-		MeshletbuilderInterface("Meshoptimizer")
+	MeshoptimizerBuilder(SharedData* shared) :
+		MeshletbuilderInterface("Meshoptimizer", shared)
 	{};
 
-	virtual std::vector<meshlet_native> generate(std::vector<vertex_data>& vertexData, std::vector<uint32_t>& indexData, std::vector<mesh_data>& meshData, uint32_t aMaxVertices, uint32_t aMaxIndices) override;
+	virtual void generate(uint32_t aMaxVertices, uint32_t aMaxIndices) override;
 
 private:
 
