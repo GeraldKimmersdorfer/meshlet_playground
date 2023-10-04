@@ -1,18 +1,14 @@
 #pragma once
 
-#include "imgui.h"
-#include "imgui_manager.hpp"
+//#include "imgui.h"
+//#include "imgui_manager.hpp"
 #include "invokee.hpp"
 
 #include "meshlet_helpers.hpp"
 #include "model.hpp"
 #include "serializer.hpp"
 #include "sequential_invoker.hpp"
-#include "orbit_camera.hpp"
-#include "quake_camera.hpp"
 #include "vk_convenience_functions.hpp"
-#include "../meshoptimizer/src/meshoptimizer.h"
-#include "../ImGuiFileDialog/ImGuiFileDialog.h"
 #include <glm/glm.hpp>
 #include <avk/avk.hpp>
 #include "configure_and_compose.hpp"
@@ -20,7 +16,9 @@
 #include <auto_vk_toolkit.hpp>
 #include <meshlet_helpers.hpp>
 #include "shared_structs.h"
-#include "meshletbuilder/MeshletbuilderInterface.h"
+
+class MeshletbuilderInterface;
+class VertexCompressionInterface;
 
 /// <summary>
 /// All pipelines will have access to this data
@@ -59,10 +57,12 @@ public:
 	vk::PhysicalDeviceMeshShaderFeaturesEXT mFeaturesMeshShader;
 
 	// Updater:
-	avk::updater* mSharedUpdater;
+	avk::updater* mSharedUpdater; // Not necessary anymore
+	avk::descriptor_cache mDescriptorCache;
 
 	virtual void uploadConfig() = 0;
 
 	virtual MeshletbuilderInterface* getCurrentMeshletBuilder() = 0;
+	virtual VertexCompressionInterface* getCurrentVertexCompressor() = 0;
 
 };

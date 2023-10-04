@@ -1,7 +1,9 @@
 #include "VertexIndirectPipeline.h"
-#include "../shadercompiler/ShaderMetaCompiler.h"
 
-// its not in Auto-VK. Yet?
+#include "imgui.h"
+#include "../shadercompiler/ShaderMetaCompiler.h"
+#include "../avk_extensions.hpp"
+
 avk::command::action_type_command draw_indexed_indirect_nobind(const avk::buffer_t& aParametersBuffer, const avk::buffer_t& aIndexBuffer, uint32_t aNumberOfDraws, vk::DeviceSize aParametersOffset, uint32_t aParametersStride)
 {
 	using namespace avk::command;
@@ -13,7 +15,7 @@ avk::command::action_type_command draw_indexed_indirect_nobind(const avk::buffer
 			default: AVK_LOG_ERROR("The given size[" + std::to_string(indexMeta.sizeof_one_element()) + "] does not correspond to a valid vk::IndexType"); break;
 	}
 
-	return action_type_command{
+	return avk::command::action_type_command{
 		avk::sync::sync_hint {
 			{{ // DESTINATION dependencies for previous commands:
 				vk::PipelineStageFlagBits2KHR::eAllGraphics,
@@ -121,7 +123,7 @@ avk::command::action_type_command VertexIndirectPipeline::render(int64_t inFligh
 				command::conditional(
 					[this]() { return mVertexGatherType.first == _PUSH; },
 					[this, inFlightIndex]() {
-						return command::bind_descriptors(mPipeline->layout(), mDescriptorCache->get_or_create_descriptor_sets({
+						return command::bind_descriptors(mPipeline->layout(), mShared->mDescriptorCache->get_or_create_descriptor_sets({
 							descriptor_binding(0, 0, as_combined_image_samplers(mShared->mImageSamplers, layout::shader_read_only_optimal)),
 							descriptor_binding(0, 1, mShared->mViewProjBuffers[inFlightIndex]),
 							descriptor_binding(0, 2, mShared->mConfigurationBuffer),
@@ -131,7 +133,7 @@ avk::command::action_type_command VertexIndirectPipeline::render(int64_t inFligh
 						}));
 					},
 					[this, inFlightIndex]() {
-						return command::bind_descriptors(mPipeline->layout(), mDescriptorCache->get_or_create_descriptor_sets({
+						return command::bind_descriptors(mPipeline->layout(), mShared->mDescriptorCache->get_or_create_descriptor_sets({
 							descriptor_binding(0, 0, as_combined_image_samplers(mShared->mImageSamplers, layout::shader_read_only_optimal)),
 							descriptor_binding(0, 1, mShared->mViewProjBuffers[inFlightIndex]),
 							descriptor_binding(0, 2, mShared->mConfigurationBuffer),

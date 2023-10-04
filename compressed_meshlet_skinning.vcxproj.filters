@@ -111,6 +111,15 @@
     <ClCompile Include="source\meshletbuilder\AVKBuilder.cpp">
       <Filter>source\meshletbuilder</Filter>
     </ClCompile>
+    <ClCompile Include="source\vertexcompressor\NoCompression.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\VertexCompressionInterface.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\avk_extensions.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
@@ -154,6 +163,15 @@
     </ClInclude>
     <ClInclude Include="source\meshletbuilder\AVKBuilder.h">
       <Filter>source\meshletbuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="source\avk_extensions.hpp">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\NoCompression.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\VertexCompressionInterface.h">
+      <Filter>source\vertexcompressor</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

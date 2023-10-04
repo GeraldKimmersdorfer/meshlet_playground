@@ -1,9 +1,17 @@
 #pragma once
 
+#include "imgui.h"
+#include "imgui_manager.hpp"
+#include "invokee.hpp"
 
 #include "shared_data.h"
+#include "orbit_camera.hpp"
+#include "quake_camera.hpp"
 #include <functional>
+
 #include "pipelines/PipelineInterface.h"
+#include "vertexcompressor/VertexCompressionInterface.h"
+#include "meshletbuilder/MeshletbuilderInterface.h"
 
 #define STARTUP_FILE "../../assets/skinning_dummy/dummy.fbx"
 //#define STARTUP_FILE "assets/two_seperate_triangles_2.glb"
@@ -13,7 +21,7 @@ class PipelineInterface;
 class MeshletsApp : public avk::invokee, public SharedData
 {
 	struct FreeCMDBufferExecutionData {
-		enum FreeCMDBufferExecutionType { LOAD_NEW_FILE, CHANGE_PIPELINE, CHANGE_MESHLET_BUILDER };
+		enum FreeCMDBufferExecutionType { LOAD_NEW_FILE, CHANGE_PIPELINE, CHANGE_MESHLET_BUILDER, CHANGE_VERTEX_COMPRESSOR };
 		FreeCMDBufferExecutionType type;
 		std::string mNextFileName;
 		int mFrameWait = -1;
@@ -44,6 +52,8 @@ public:
 
 	virtual MeshletbuilderInterface* getCurrentMeshletBuilder() override;
 
+	virtual VertexCompressionInterface* getCurrentVertexCompressor() override;
+
 	void initialize() override;
 	void update() override;
 	void render() override;
@@ -61,13 +71,15 @@ private: // v== Member variables ==v
 	int mCurrentMeshletBuilderID = 0;
 	int mSelectedMeshBuilderID = 0;
 	std::vector<std::unique_ptr<MeshletbuilderInterface>> mMeshletBuilder;
+	int mCurrentVertexCompressorID = 0;
+	int mSelectedVertexCompressorID = 0;
+	std::vector<std::unique_ptr<VertexCompressionInterface>> mVertexCompressors;
 
 	bool mInverseMeshRootFix = true;
 
 	int mCurrentlyPlayingAnimationId = -1;	// negative if no animation currently
 
 	avk::queue* mQueue;
-	avk::descriptor_cache mDescriptorCache;
 	
 	std::vector<animation_data> mAnimations;
 

@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
+    <ClCompile Include="source\avk_extensions.cpp" />
     <ClCompile Include="source\meshletbuilder\AVKBuilder.cpp" />
     <ClCompile Include="source\meshletbuilder\MeshletbuilderInterface.cpp" />
     <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp" />
@@ -27,8 +28,11 @@
     <ClCompile Include="source\pipelines\VertexIndirectPipeline.cpp" />
     <ClCompile Include="source\shadercompiler\ShaderFile.cpp" />
     <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp" />
+    <ClCompile Include="source\vertexcompressor\NoCompression.cpp" />
+    <ClCompile Include="source\vertexcompressor\VertexCompressionInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\avk_extensions.hpp" />
     <ClInclude Include="source\meshletbuilder\AVKBuilder.h" />
     <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h" />
     <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h" />
@@ -43,6 +47,8 @@
     <ClInclude Include="source\shadercompiler\ShaderMetaConstant.h" />
     <ClInclude Include="source\shared_data.h" />
     <ClInclude Include="source\shared_structs.h" />
+    <ClInclude Include="source\vertexcompressor\NoCompression.h" />
+    <ClInclude Include="source\vertexcompressor\VertexCompressionInterface.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\metaball.fbx" />

@@ -1,22 +1,19 @@
 #include "MeshletsApp.h"
-#include "imgui.h"
+
 #include "configure_and_compose.hpp"
-#include "imgui_manager.hpp"
-#include "invokee.hpp"
 #include "material_image_helpers.hpp"
 #include "meshlet_helpers.hpp"
 #include "model.hpp"
 #include "serializer.hpp"
 #include "sequential_invoker.hpp"
-#include "orbit_camera.hpp"
-#include "quake_camera.hpp"
 #include "vk_convenience_functions.hpp"
-#include "../meshoptimizer/src/meshoptimizer.h"
 #include "../ImGuiFileDialog/ImGuiFileDialog.h"
+
 #include "pipelines/MeshPipeline.h"
 #include "pipelines/VertexIndirectPipeline.h"
 #include "meshletbuilder/MeshoptimizerBuilder.h"
 #include "meshletbuilder/AVKBuilder.h"
+#include "vertexcompressor/NoCompression.h"
 
 #include <functional>
 
@@ -33,6 +30,20 @@ void openDialogOptionPane(const char* vFilter, IGFDUserDatas vUserDatas, bool* v
 	ImGui::Separator();
 	//ImGui::Combo("Meshlet builder", (int*)(void*)&selectedMeshletInterpreter, "AVK-Default\0Meshoptimizer\0");
 	ImGui::Combo("Global transform", (int*)(void*)&selectedGlobalTransformPresetId, transformPresetsNames);
+}
+
+std::vector<std::string> AssetFolderNames = {
+	R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets)"
+};
+// Returns the first Asset folder thats available
+std::string getBestAvailableAssetFolder() {
+	for (int i = 0; i < AssetFolderNames.size(); i++) {
+		auto path = std::filesystem::path(AssetFolderNames[i]);
+		if (std::filesystem::exists(path) && std::filesystem::is_directory(path)) {
+			return AssetFolderNames[i];
+		}
+	}
+	return ".";
 }
 
 MeshletsApp::~MeshletsApp()
@@ -205,7 +216,7 @@ void MeshletsApp::initGUI()
 				ImGui::Text("%.1f FPS", io.Framerate);
 				ImGui::Separator();
 				if (ImGui::Button("Open File")) {
-					ImGuiFileDialog::Instance()->OpenDialogWithPane("open_file", "Choose File", "{.fbx,.obj,.dae,.ply,.gltf,.glb}", ".", "", std::bind(&openDialogOptionPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 300.0, 1, (IGFDUserDatas)nullptr, ImGuiFileDialogFlags_Modal);
+					ImGuiFileDialog::Instance()->OpenDialogWithPane("open_file", "Choose File", "{.fbx,.obj,.dae,.ply,.gltf,.glb}", getBestAvailableAssetFolder(), "", std::bind(&openDialogOptionPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 300.0, 1, (IGFDUserDatas)nullptr, ImGuiFileDialogFlags_Modal);
 				}
 
 				ImGui::Separator();
@@ -266,6 +277,22 @@ void MeshletsApp::initGUI()
 						ImGui::EndCombo();
 					}
 				}
+
+				ImGui::Separator();
+				if (ImGui::CollapsingHeader("Vertex-Compression", ImGuiTreeNodeFlags_DefaultOpen)) {
+					if (ImGui::BeginCombo("Compressor", mVertexCompressors[mSelectedVertexCompressorID]->getName().c_str())) {
+						for (int n = 0; n < mVertexCompressors.size(); n++) {
+							bool is_selected = (mSelectedVertexCompressorID == n);
+							if (ImGui::Selectable(mVertexCompressors[n]->getName().c_str(), is_selected)) {
+								mSelectedVertexCompressorID = n;
+								freeCommandBufferAndExecute({ .type = FreeCMDBufferExecutionData::CHANGE_VERTEX_COMPRESSOR });
+							}
+							if (is_selected) ImGui::SetItemDefaultFocus();
+						}
+						ImGui::EndCombo();
+					}
+				}
+
 
 				ImGui::Separator();
 				if (ImGui::CollapsingHeader("Pipeline-Selection", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -404,7 +431,12 @@ void MeshletsApp::uploadConfig()
 
 MeshletbuilderInterface* MeshletsApp::getCurrentMeshletBuilder()
 {
-	return static_cast<MeshletbuilderInterface*>(mMeshletBuilder[mCurrentMeshletBuilderID].get());
+	return mMeshletBuilder[mCurrentMeshletBuilderID].get();
+}
+
+VertexCompressionInterface* MeshletsApp::getCurrentVertexCompressor()
+{
+	return mVertexCompressors[mCurrentVertexCompressorID].get();
 }
 
 void MeshletsApp::initialize()
@@ -419,6 +451,8 @@ void MeshletsApp::initialize()
 
 	mMeshletBuilder.push_back(std::make_unique<MeshoptimizerBuilder>(this));
 	mMeshletBuilder.push_back(std::make_unique<AVKBuilder>(this));
+
+	mVertexCompressors.push_back(std::make_unique<NoCompression>(this));
 }
 
 void MeshletsApp::update()

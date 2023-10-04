@@ -2,6 +2,7 @@
 
 #include "PipelineInterface.h"
 #include "mcc.h"
+
 class SharedData;
 
 class MeshPipeline : public PipelineInterface {
@@ -24,6 +25,8 @@ private:
 
 	avk::buffer mMeshletsBuffer;
 	avk::buffer mPackedIndexBuffer;
+
+	std::vector<avk::binding_data> mAdditionalDescriptorBindings;
 
 	std::pair<MCC_MESHLET_EXTENSION, MCC_MESHLET_EXTENSION> mMeshletExtension = { _NV, _NV };	// first ... avtive, second ... selected
 	std::pair<MCC_MESHLET_TYPE, MCC_MESHLET_TYPE> mMeshletType = { _NATIVE, _NATIVE };			// first ... avtive, second ... selected

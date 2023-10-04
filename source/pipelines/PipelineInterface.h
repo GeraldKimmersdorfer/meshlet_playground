@@ -17,7 +17,6 @@ public:
 	/// Creates CPU/GPU Buffers, compresses vertex attributes,...
 	/// </summary>
 	void initialize(avk::queue* queue) {
-		mDescriptorCache = avk::context().create_descriptor_cache();
 		doInitialize(queue);
 		initCount++;
 	}
@@ -33,7 +32,6 @@ public:
 	/// </summary>
 	void destroy() {
 		doDestroy();
-		mDescriptorCache = avk::descriptor_cache();
 	}
 
 	/// <summary>
@@ -60,7 +58,6 @@ public:
 protected:
 
 	std::string mName;
-	avk::descriptor_cache mDescriptorCache;
 	SharedData* mShared;
 	int initCount = 0;
 
