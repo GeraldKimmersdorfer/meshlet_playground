@@ -12,6 +12,7 @@ void VertexCompressionInterface::destroy()
     mAdditionalDescriptorBindings.clear();
 }
 
+
 std::vector<avk::binding_data> VertexCompressionInterface::getBindings()
 {
     return mAdditionalDescriptorBindings;

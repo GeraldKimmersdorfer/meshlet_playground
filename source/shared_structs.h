@@ -24,6 +24,13 @@ struct vertex_data {
 	glm::vec4 mBoneWeights;
 };	// mind padding and alignment!
 
+struct vertex_data_bone_lookup {
+	glm::vec4 mPositionTxX;
+	glm::vec4 mTxYNormal;
+	glm::vec3 mBoneWeights;
+	uint32_t mBoneIndicesLUID;
+};
+
 struct config_data {
 	uint32_t mOverlayMeshlets = true;
 	uint32_t mMeshletsCount = 0;

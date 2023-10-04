@@ -120,6 +120,9 @@
     <ClCompile Include="source\avk_extensions.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
@@ -171,6 +174,9 @@
       <Filter>source\vertexcompressor</Filter>
     </ClInclude>
     <ClInclude Include="source\vertexcompressor\VertexCompressionInterface.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h">
       <Filter>source\vertexcompressor</Filter>
     </ClInclude>
   </ItemGroup>

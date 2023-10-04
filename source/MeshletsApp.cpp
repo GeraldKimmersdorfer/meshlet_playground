@@ -14,6 +14,7 @@
 #include "meshletbuilder/MeshoptimizerBuilder.h"
 #include "meshletbuilder/AVKBuilder.h"
 #include "vertexcompressor/NoCompression.h"
+#include "vertexcompressor/BoneLUTCompression.h"
 
 #include <functional>
 
@@ -453,6 +454,7 @@ void MeshletsApp::initialize()
 	mMeshletBuilder.push_back(std::make_unique<AVKBuilder>(this));
 
 	mVertexCompressors.push_back(std::make_unique<NoCompression>(this));
+	mVertexCompressors.push_back(std::make_unique<BoneLUTCompression>(this));
 }
 
 void MeshletsApp::update()
@@ -580,6 +582,12 @@ void MeshletsApp::executeWithFreeCommandBuffer()
 		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->destroy();
 		getCurrentMeshletBuilder()->destroy();
 		mCurrentMeshletBuilderID = mSelectedMeshBuilderID;
+		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->initialize(mQueue);
+	}
+	else if (mExecutionData.type == FreeCMDBufferExecutionData::CHANGE_VERTEX_COMPRESSOR) {
+		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->destroy();
+		getCurrentVertexCompressor()->destroy();
+		mCurrentVertexCompressorID = mSelectedVertexCompressorID;
 		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->initialize(mQueue);
 	}
 }

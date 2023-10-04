@@ -68,11 +68,11 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 	if (mMeshletType.first == _REDIR) {
 		mAdditionalDescriptorBindings.push_back(std::move(avk::descriptor_binding(4, 2, mPackedIndexBuffer)));
 	}
-	/*auto vCompressor = mShared->getCurrentVertexCompressor();
+	auto vCompressor = mShared->getCurrentVertexCompressor();
 	vCompressor->compress(queue);
 	
 	auto vertexBindings = vCompressor->getBindings();
-	mAdditionalDescriptorBindings.insert(mAdditionalDescriptorBindings.end(), vertexBindings.begin(), vertexBindings.end());*/
+	mAdditionalDescriptorBindings.insert(mAdditionalDescriptorBindings.end(), vertexBindings.begin(), vertexBindings.end());
 
 
 	for (auto& db : mAdditionalDescriptorBindings) {
@@ -93,7 +93,6 @@ avk::command::action_type_command MeshPipeline::render(int64_t inFlightIndex)
 					descriptor_binding(0, 2, mShared->mConfigurationBuffer),
 					descriptor_binding(1, 0, mShared->mMaterialsBuffer),
 					descriptor_binding(2, 0, mShared->mBoneTransformBuffers[inFlightIndex]),
-					descriptor_binding(3, 0, mShared->mVertexBuffer),
 					descriptor_binding(4, 0, mMeshletsBuffer),
 					descriptor_binding(4, 1, mShared->mMeshesBuffer)
 					}, mAdditionalDescriptorBindings)),
@@ -132,6 +131,7 @@ void MeshPipeline::compile()
 
 void MeshPipeline::doDestroy()
 {
+	mShared->getCurrentVertexCompressor()->destroy();
 	mPipeline = avk::graphics_pipeline();
 	mMeshletsBuffer = avk::buffer();
 	mPackedIndexBuffer = avk::buffer();

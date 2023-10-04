@@ -13,8 +13,9 @@
 #include "vertexcompressor/VertexCompressionInterface.h"
 #include "meshletbuilder/MeshletbuilderInterface.h"
 
-#define STARTUP_FILE "../../assets/skinning_dummy/dummy.fbx"
+//#define STARTUP_FILE "../../assets/skinning_dummy/dummy.fbx"
 //#define STARTUP_FILE "assets/two_seperate_triangles_2.glb"
+#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Single_noTexture.fbx)"
 
 class PipelineInterface;
 

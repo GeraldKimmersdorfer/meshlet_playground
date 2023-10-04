@@ -1,9 +1,9 @@
 #pragma once
 
 #include <string>
-#include <avk/avk.hpp>
+#include <vector>
+#include "../shared_data.h"
 
-class SharedData;
 
 class VertexCompressionInterface {
 public:
