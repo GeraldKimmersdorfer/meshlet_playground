@@ -108,6 +108,9 @@
     <ClCompile Include="source\meshletbuilder\MeshletbuilderInterface.cpp">
       <Filter>source\meshletbuilder</Filter>
     </ClCompile>
+    <ClCompile Include="source\meshletbuilder\AVKBuilder.cpp">
+      <Filter>source\meshletbuilder</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
@@ -148,6 +151,9 @@
     </ClInclude>
     <ClInclude Include="source\pipelines\mcc.h">
       <Filter>source\pipelines</Filter>
+    </ClInclude>
+    <ClInclude Include="source\meshletbuilder\AVKBuilder.h">
+      <Filter>source\meshletbuilder</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

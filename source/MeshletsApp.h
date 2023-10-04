@@ -13,9 +13,8 @@ class PipelineInterface;
 class MeshletsApp : public avk::invokee, public SharedData
 {
 	struct FreeCMDBufferExecutionData {
-		enum FreeCMDBufferExecutionType { LOAD_NEW_FILE, CHANGE_PIPELINE };
+		enum FreeCMDBufferExecutionType { LOAD_NEW_FILE, CHANGE_PIPELINE, CHANGE_MESHLET_BUILDER };
 		FreeCMDBufferExecutionType type;
-		int mNextPipelineID = -1;
 		std::string mNextFileName;
 		int mFrameWait = -1;
 	};
@@ -57,8 +56,10 @@ private: // v== Member variables ==v
 	void executeWithFreeCommandBuffer();
 
 	int mCurrentPipelineID = -1;
+	int mSelectedPipelineID = 0;
 	std::vector<std::unique_ptr<PipelineInterface>> mPipelines;
 	int mCurrentMeshletBuilderID = 0;
+	int mSelectedMeshBuilderID = 0;
 	std::vector<std::unique_ptr<MeshletbuilderInterface>> mMeshletBuilder;
 
 	bool mInverseMeshRootFix = true;

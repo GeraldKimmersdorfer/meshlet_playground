@@ -16,6 +16,7 @@
 #include "pipelines/MeshPipeline.h"
 #include "pipelines/VertexIndirectPipeline.h"
 #include "meshletbuilder/MeshoptimizerBuilder.h"
+#include "meshletbuilder/AVKBuilder.h"
 
 #include <functional>
 
@@ -37,6 +38,8 @@ void openDialogOptionPane(const char* vFilter, IGFDUserDatas vUserDatas, bool* v
 MeshletsApp::~MeshletsApp()
 {
 	mPipelines[mCurrentPipelineID]->destroy();
+	getCurrentMeshletBuilder()->destroy();
+	mMeshletBuilder.clear();
 	mPipelines.clear();
 }
 
@@ -251,11 +254,13 @@ void MeshletsApp::initGUI()
 
 				ImGui::Separator();
 				if (ImGui::CollapsingHeader("Meshlet-Building", ImGuiTreeNodeFlags_DefaultOpen)) {
-					static int mSelectedBuilderID = 0;
-					if (ImGui::BeginCombo("Builder", mMeshletBuilder[mSelectedBuilderID]->getName().c_str())) {
+					if (ImGui::BeginCombo("Builder", mMeshletBuilder[mSelectedMeshBuilderID]->getName().c_str())) {
 						for (int n = 0; n < mMeshletBuilder.size(); n++) {
-							bool is_selected = (mSelectedBuilderID == n);
-							if (ImGui::Selectable(mMeshletBuilder[n]->getName().c_str(), is_selected)) mSelectedBuilderID = n;
+							bool is_selected = (mSelectedMeshBuilderID == n);
+							if (ImGui::Selectable(mMeshletBuilder[n]->getName().c_str(), is_selected)) {
+								mSelectedMeshBuilderID = n;
+								freeCommandBufferAndExecute({ .type = FreeCMDBufferExecutionData::CHANGE_MESHLET_BUILDER });
+							}
 							if (is_selected) ImGui::SetItemDefaultFocus();
 						}
 						ImGui::EndCombo();
@@ -264,8 +269,7 @@ void MeshletsApp::initGUI()
 
 				ImGui::Separator();
 				if (ImGui::CollapsingHeader("Pipeline-Selection", ImGuiTreeNodeFlags_DefaultOpen)) {
-					static int mSelectedPipelineID = 0;
-					if (ImGui::BeginCombo("Pipeline", mPipelines[mSelectedPipelineID]->getName().c_str())) {
+					if (ImGui::BeginCombo("Pipeline", mSelectedPipelineID < 0 ? "Please select" : mPipelines[mSelectedPipelineID]->getName().c_str())) {
 						for (int n = 0; n < mPipelines.size(); n++) {
 							bool is_selected = (mSelectedPipelineID == n);
 							if (ImGui::Selectable(mPipelines[n]->getName().c_str(), is_selected)) mSelectedPipelineID = n;
@@ -288,8 +292,7 @@ void MeshletsApp::initGUI()
 						}
 						if (withoutError) {
 							freeCommandBufferAndExecute({
-								.type = FreeCMDBufferExecutionData::CHANGE_PIPELINE,
-								.mNextPipelineID = mSelectedPipelineID
+								.type = FreeCMDBufferExecutionData::CHANGE_PIPELINE
 							});
 						}
 					}
@@ -415,6 +418,7 @@ void MeshletsApp::initialize()
 	//mPipelines[mCurrentPipelineID]->initialize(mQueue);
 
 	mMeshletBuilder.push_back(std::make_unique<MeshoptimizerBuilder>(this));
+	mMeshletBuilder.push_back(std::make_unique<AVKBuilder>(this));
 }
 
 void MeshletsApp::update()
@@ -528,16 +532,20 @@ void MeshletsApp::freeCommandBufferAndExecute(FreeCMDBufferExecutionData execute
 void MeshletsApp::executeWithFreeCommandBuffer()
 {
 	if (mExecutionData.type == FreeCMDBufferExecutionData::LOAD_NEW_FILE) {
-		int nextPipeline = mExecutionData.mNextPipelineID >= 0 ? mExecutionData.mNextPipelineID : mCurrentPipelineID;
 		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->destroy();
 		load(mExecutionData.mNextFileName);
-		if (mCurrentPipelineID >= 0) mPipelines[nextPipeline]->initialize(mQueue);
-		mCurrentPipelineID = nextPipeline;
+		getCurrentMeshletBuilder()->generate();	// regenerate Meshlets
+		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->initialize(mQueue);
 	}
 	else if (mExecutionData.type == FreeCMDBufferExecutionData::CHANGE_PIPELINE) {
-		//if (mCurrentPipelineID == mExecutionData.mNextPipelineID) return;
 		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->destroy();
-		mCurrentPipelineID = mExecutionData.mNextPipelineID;
+		mCurrentPipelineID = mSelectedPipelineID;
 		mPipelines[mCurrentPipelineID]->initialize(mQueue);
+	}
+	else if (mExecutionData.type == FreeCMDBufferExecutionData::CHANGE_MESHLET_BUILDER) {
+		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->destroy();
+		getCurrentMeshletBuilder()->destroy();
+		mCurrentMeshletBuilderID = mSelectedMeshBuilderID;
+		if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->initialize(mQueue);
 	}
 }

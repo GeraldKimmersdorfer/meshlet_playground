@@ -10,7 +10,8 @@ public:
 		MeshletbuilderInterface("Meshoptimizer", shared)
 	{};
 
-	virtual void generate(uint32_t aMaxVertices, uint32_t aMaxIndices) override;
+protected:
+	virtual void doGenerate() override;
 
 private:
 

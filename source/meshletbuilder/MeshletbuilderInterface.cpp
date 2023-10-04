@@ -2,6 +2,22 @@
 #include "../shared_data.h"
 #include "../packing_helper.h"
 
+void MeshletbuilderInterface::generate()
+{
+	if (mShared->mIndices.size() != mGeneratedOnIndexCount) {
+		doGenerate();
+		mGeneratedOnIndexCount = mShared->mIndices.size();
+	}
+}
+
+void MeshletbuilderInterface::destroy()
+{
+	mMeshletsNative.clear();
+	mMeshletsRedirect.clear();
+	mRedirectPackedIndexData.clear();
+	mGeneratedOnIndexCount = 0;	// make sure it gets rebuild on next generate
+}
+
 const std::pair<std::vector<meshlet_redirect>, std::vector<uint32_t>> MeshletbuilderInterface::getMeshletsRedirect()
 {
 	return std::make_pair(mMeshletsRedirect, mRedirectPackedIndexData);

@@ -14,13 +14,18 @@ public:
 		mName(name), mShared(shared)
 	{};
 
-	virtual void generate(uint32_t aMaxVertices, uint32_t aMaxIndices) = 0;
+	void generate();
+	
+	void destroy();
 
 	const std::string& getName() { return mName; }
 	const std::pair<std::vector<meshlet_redirect>, std::vector<uint32_t>> getMeshletsRedirect();
 	const std::vector<meshlet_native>& getMeshletsNative();
 
 protected:
+
+	virtual void doGenerate() = 0;
+	virtual void doDestroy() {}
 
 	std::vector<meshlet_native> mMeshletsNative;
 	std::vector<meshlet_redirect> mMeshletsRedirect;
@@ -33,5 +38,6 @@ protected:
 	void generateRedirectedMeshletsFromNative();
 
 private:
-
+	// Buffer-Variable such that we can check when a model has been reloaded and meshlets need to be recreated
+	uint32_t mGeneratedOnIndexCount = 0;
 };

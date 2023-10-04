@@ -16,7 +16,7 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 		mShadersRecompiled = false;
 	}
 	auto builder = mShared->getCurrentMeshletBuilder();
-	builder->generate(sNumVertices, sNumIndices - ((sNumIndices / 3) % 4) * 3);
+	builder->generate();
 	if (mMeshletType.first == _NATIVE) {
 		auto& meshletsNative = builder->getMeshletsNative();
 		mMeshletsBuffer = avk::context().create_buffer(avk::memory_usage::device, {}, avk::storage_buffer_meta::create_from_data(meshletsNative));
@@ -40,10 +40,10 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 	if (mMeshletType.first == _NATIVE) {
 		mPipeline = avk::context().create_graphics_pipeline_for(
 			avk::task_shader(mPathTaskShader, "main", true)
-			.set_specialization_constant(0, mMeshletExtension.first == _NV ? mShared->mPropsMeshShaderNV.maxTaskWorkGroupInvocations : mShared->mPropsMeshShader.maxPreferredTaskWorkGroupInvocations),
+			.set_specialization_constant(0, mTaskInvocations),
 			avk::mesh_shader(mPathMeshShader, "main", true)
-			.set_specialization_constant(0, mMeshletExtension.first == _NV ? mShared->mPropsMeshShaderNV.maxTaskWorkGroupInvocations : mShared->mPropsMeshShader.maxPreferredTaskWorkGroupInvocations)
-			.set_specialization_constant(1, mMeshletExtension.first == _NV ? mShared->mPropsMeshShaderNV.maxMeshWorkGroupInvocations : mShared->mPropsMeshShader.maxPreferredMeshWorkGroupInvocations),
+			.set_specialization_constant(0, mTaskInvocations)
+			.set_specialization_constant(1, mMeshInvocations),
 			avk::fragment_shader(mPathFragmentShader, "main", true),
 			avk::cfg::front_face::define_front_faces_to_be_counter_clockwise(),
 			avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),
@@ -64,10 +64,10 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 	else if (mMeshletType.first == _REDIR) {
 		mPipeline = avk::context().create_graphics_pipeline_for(
 			avk::task_shader(mPathTaskShader, "main", true)
-			.set_specialization_constant(0, mMeshletExtension.first == _NV ? mShared->mPropsMeshShaderNV.maxTaskWorkGroupInvocations : mShared->mPropsMeshShader.maxPreferredTaskWorkGroupInvocations),
+			.set_specialization_constant(0, mTaskInvocations),
 			avk::mesh_shader(mPathMeshShader, "main", true)
-			.set_specialization_constant(0, mMeshletExtension.first == _NV ? mShared->mPropsMeshShaderNV.maxTaskWorkGroupInvocations : mShared->mPropsMeshShader.maxPreferredTaskWorkGroupInvocations)
-			.set_specialization_constant(1, mMeshletExtension.first == _NV ? mShared->mPropsMeshShaderNV.maxMeshWorkGroupInvocations : mShared->mPropsMeshShader.maxPreferredMeshWorkGroupInvocations),
+			.set_specialization_constant(0, mTaskInvocations)
+			.set_specialization_constant(1, mMeshInvocations), 
 			avk::fragment_shader(mPathFragmentShader, "main", true),
 			avk::cfg::front_face::define_front_faces_to_be_counter_clockwise(),
 			avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),

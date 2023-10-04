@@ -6,8 +6,11 @@
 
 #include "../shared_data.h"
 
-void MeshoptimizerBuilder::generate(uint32_t aMaxVertices, uint32_t aMaxIndices)
+void MeshoptimizerBuilder::doGenerate()
 {
+	uint32_t aMaxVertices = sNumVertices;
+	uint32_t aMaxIndices = sNumIndices - ((sNumIndices / 3) % 4) * 3;
+
 	size_t max_triangles = aMaxIndices / 3;
 	const float cone_weight = 0.0f;
 
