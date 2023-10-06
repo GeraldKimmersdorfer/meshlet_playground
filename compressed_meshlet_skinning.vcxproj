@@ -29,6 +29,7 @@
     <ClCompile Include="source\shadercompiler\ShaderFile.cpp" />
     <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp" />
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp" />
+    <ClCompile Include="source\vertexcompressor\lut_helper.cpp" />
     <ClCompile Include="source\vertexcompressor\NoCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\VertexCompressionInterface.cpp" />
   </ItemGroup>
@@ -49,6 +50,7 @@
     <ClInclude Include="source\shared_data.h" />
     <ClInclude Include="source\shared_structs.h" />
     <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h" />
+    <ClInclude Include="source\vertexcompressor\lut_helper.h" />
     <ClInclude Include="source\vertexcompressor\NoCompression.h" />
     <ClInclude Include="source\vertexcompressor\VertexCompressionInterface.h" />
   </ItemGroup>
@@ -64,6 +66,7 @@
     <None Include="shaders\include\glsl_helpers.glsl" />
     <None Include="shaders\include\mcc.glsl" />
     <None Include="shaders\include\shared_structs.glsl" />
+    <None Include="shaders\include\vertex_reconstruction.glsl" />
     <None Include="shaders\meshlet.mesh" />
     <None Include="shaders\meshlet.task" />
     <None Include="shaders\vertex.vert" />

@@ -31,6 +31,13 @@ struct vertex_data {
 	vec4 mBoneWeights;
 };
 
+struct vertex_data_bone_lookup {
+	vec4 mPositionTxX;
+	vec4 mTxYNormal;
+	vec3 mBoneWeights;
+	uint mBoneIndicesLUID;
+};
+
 struct bone_data {
 	mat4 transform;
 };

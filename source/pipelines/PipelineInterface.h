@@ -9,8 +9,8 @@ class PipelineInterface {
 
 public:
 
-	PipelineInterface(SharedData* shared, const std::string name) :
-		mShared(shared) , mName(name)
+	PipelineInterface(SharedData* shared, const std::string& name) :
+		mShared(shared), mName(name)
 	{};
 
 	/// <summary>

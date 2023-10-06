@@ -7,7 +7,7 @@ class BoneLUTCompression : public VertexCompressionInterface {
 public:
 
 	BoneLUTCompression(SharedData* shared)
-		: VertexCompressionInterface("Bone LUT (128bit)", shared)
+		: VertexCompressionInterface(shared, "Bone LUT (128bit)", "_LUT")
 	{}
 
 protected:
@@ -18,6 +18,8 @@ protected:
 	// Has to free all ressources
 	virtual void doDestroy() override;
 
+	void hud_config(bool& config_has_changed) override;
+
 
 private:
 	std::vector<vertex_data_bone_lookup> mVertexData;
@@ -25,6 +27,6 @@ private:
 	avk::buffer mVertexBuffer;
 	avk::buffer mBoneLUTBuffer;
 
-	void createLUT();
+	bool mWithShuffle = false;
 
 };

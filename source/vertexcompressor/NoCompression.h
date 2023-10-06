@@ -7,7 +7,7 @@ class NoCompression : public VertexCompressionInterface {
 public:
 
 	NoCompression(SharedData* shared)
-		: VertexCompressionInterface("No compression", shared)
+		: VertexCompressionInterface(shared, "No compression", "_NOCOMP")
 	{}
 
 protected:

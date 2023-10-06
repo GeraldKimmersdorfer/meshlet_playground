@@ -211,8 +211,10 @@ void MeshletsApp::initGUI()
 				bool config_has_changed = false;
 				ImGuiIO& io = ImGui::GetIO();
 
-				ImGui::Begin("Info & Settings");
-				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
+				// ================ MAIN MENU ======================
+				ImGui::Begin("Main Menu", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+				ImGui::SetWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+				ImGui::SetWindowSize({ -1, io.DisplaySize.y }, ImGuiCond_Always);
 				ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
 				ImGui::Text("%.1f FPS", io.Framerate);
 				ImGui::Separator();
@@ -233,16 +235,6 @@ void MeshletsApp::initGUI()
 				if (mCurrentlyPlayingAnimationId >= 0) {
 					ImGui::Checkbox("Inverse Mesh Root Fix", &mInverseMeshRootFix);
 				}
-				ImGui::Separator();
-				ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
-				lastFrameDurationMs = glm::mix(lastFrameDurationMs, mLastFrameDuration * 1e-6 * timestampPeriod, 0.05);
-				lastDrawMeshTasksDurationMs = glm::mix(lastDrawMeshTasksDurationMs, mLastDrawMeshTasksDuration * 1e-6 * timestampPeriod, 0.05);
-				ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "Frame time (timer queries): %.3lf ms", lastFrameDurationMs);
-				ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "drawMeshTasks took        : %.3lf ms", lastDrawMeshTasksDurationMs);
-				ImGui::Text("mPipelineStats[0]         : %llu", mPipelineStats[0]);
-				ImGui::Text("mPipelineStats[1]         : %llu", mPipelineStats[1]);
-				ImGui::Text("mPipelineStats[2]         : %llu", mPipelineStats[2]);
-
 				ImGui::Separator();
 				bool quakeCamEnabled = mQuakeCam.is_enabled();
 				if (ImGui::Checkbox("Enable Quake Camera", &quakeCamEnabled)) {
@@ -292,6 +284,8 @@ void MeshletsApp::initGUI()
 						}
 						ImGui::EndCombo();
 					}
+
+					mVertexCompressors[mSelectedVertexCompressorID]->hud_config(config_has_changed);
 				}
 
 
@@ -331,6 +325,26 @@ void MeshletsApp::initGUI()
 					if (mCurrentPipelineID >= 0) mPipelines[mCurrentPipelineID]->hud_config(config_has_changed);
 				}
 
+				ImGui::End();
+
+				// ================ STATS WINDOW ======================
+				ImGui::Begin("Statistics", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+				ImGui::SetWindowPos(ImVec2(io.DisplaySize.x - ImGui::GetWindowWidth(), 0.0f), ImGuiCond_Always);
+				ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
+				ImGui::Text("%.1f FPS", io.Framerate);
+				ImGui::Separator();
+
+				ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
+				lastFrameDurationMs = glm::mix(lastFrameDurationMs, mLastFrameDuration * 1e-6 * timestampPeriod, 0.05);
+				lastDrawMeshTasksDurationMs = glm::mix(lastDrawMeshTasksDurationMs, mLastDrawMeshTasksDuration * 1e-6 * timestampPeriod, 0.05);
+				ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "Frame time (timer queries): %.3lf ms", lastFrameDurationMs);
+				ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "drawMeshTasks took        : %.3lf ms", lastDrawMeshTasksDurationMs);
+				ImGui::Text("mPipelineStats[0]         : %llu", mPipelineStats[0]);
+				ImGui::Text("mPipelineStats[1]         : %llu", mPipelineStats[1]);
+				ImGui::Text("mPipelineStats[2]         : %llu", mPipelineStats[2]);
+				ImGui::End();
+
+				// ================ FILE OPEN DIALOG ======================
 				ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_FirstUseEver, { 0.5f, 0.5f });
 				ImGui::SetNextWindowSize({ 800, 400 }, ImGuiCond_FirstUseEver);
 				if (ImGuiFileDialog::Instance()->Display("open_file"))
@@ -345,6 +359,7 @@ void MeshletsApp::initGUI()
 					ImGuiFileDialog::Instance()->Close();
 				}
 
+				// ================ ERROR DIALOG ======================
 				ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_Always, { 0.5f, 0.5f });
 				ImGui::SetNextWindowSize({ 600, -1 }, ImGuiCond_Always);
 				ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0, 0.0, 0.0, 1.0));
@@ -359,7 +374,7 @@ void MeshletsApp::initGUI()
 				}
 				ImGui::PopStyleColor(2);
 
-				ImGui::End();
+				
 
 				if (config_has_changed) uploadConfig();
 			});
@@ -455,6 +470,8 @@ void MeshletsApp::initialize()
 
 	mVertexCompressors.push_back(std::make_unique<NoCompression>(this));
 	mVertexCompressors.push_back(std::make_unique<BoneLUTCompression>(this));
+
+	if (mAnimations.size() > 0) mCurrentlyPlayingAnimationId = 0;
 }
 
 void MeshletsApp::update()

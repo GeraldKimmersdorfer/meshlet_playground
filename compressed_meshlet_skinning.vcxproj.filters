@@ -73,6 +73,9 @@
     <None Include="shaders\include\shared_structs.glsl">
       <Filter>assets\shaders\include</Filter>
     </None>
+    <None Include="shaders\include\vertex_reconstruction.glsl">
+      <Filter>assets\shaders\include</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">
@@ -121,6 +124,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\lut_helper.cpp">
       <Filter>source\vertexcompressor</Filter>
     </ClCompile>
   </ItemGroup>
@@ -177,6 +183,9 @@
       <Filter>source\vertexcompressor</Filter>
     </ClInclude>
     <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\lut_helper.h">
       <Filter>source\vertexcompressor</Filter>
     </ClInclude>
   </ItemGroup>

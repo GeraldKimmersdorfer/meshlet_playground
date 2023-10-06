@@ -6,3 +6,6 @@
 
 #define _PUSH 0
 #define _PULL 1
+
+#define _NOCOMP 0
+#define _LUT 1

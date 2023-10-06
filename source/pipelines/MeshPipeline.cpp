@@ -15,6 +15,7 @@ MeshPipeline::MeshPipeline(SharedData* shared)
 
 void MeshPipeline::doInitialize(avk::queue* queue)
 {
+	compile(); // ToDo: This is stupid: I now compile two times when changing pipeline, but its necessary when changing vertex compressor. Better solution?
 	if (mShadersRecompiled) {
 		mMeshletExtension.first = mMeshletExtension.second;
 		mMeshletType.first = mMeshletType.second;
@@ -44,12 +45,14 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 
 	auto sharedPipelineConfig = avk::create_graphics_pipeline_config(
 		avk::task_shader(mPathTaskShader, "main", true)
-		.set_specialization_constant(0, mTaskInvocations), 
+		.set_specialization_constant(0, mTaskInvocations),
 		avk::mesh_shader(mPathMeshShader, "main", true)
 		.set_specialization_constant(0, mTaskInvocations)
 		.set_specialization_constant(1, mMeshInvocations),
 		avk::fragment_shader(mPathFragmentShader, "main", true),
 		avk::cfg::front_face::define_front_faces_to_be_counter_clockwise(),
+		//avk::cfg::culling_mode::disabled,
+		//avk::cfg::polygon_drawing::config_for_filling(),
 		avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),
 		avk::context().create_renderpass({
 			avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
@@ -123,7 +126,8 @@ void MeshPipeline::compile()
 		});
 	mPathMeshShader = ShaderMetaCompiler::precompile("meshlet.mesh", { 
 		{"MESHLET_EXTENSION", MCC_to_string(mMeshletExtension.second)},
-		{"MESHLET_TYPE", MCC_to_string(mMeshletType.second)}
+		{"MESHLET_TYPE", MCC_to_string(mMeshletType.second)},
+		{"VERTEX_COMPRESSION", mShared->getCurrentVertexCompressor()->getMccId()}
 		});
 	mPathFragmentShader = ShaderMetaCompiler::precompile("diffuse_shading_fixed_lightsource.frag", {});
 	mShadersRecompiled = true;
