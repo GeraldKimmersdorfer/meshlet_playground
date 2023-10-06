@@ -4,15 +4,63 @@
 #include <sequential_invoker.hpp>
 
 #include "MeshletsApp.h"
+/*
+#include "thirdparty/permutation_coding.h"
+
+unsigned int factorial(int n) {
+    if (n == 0 || n == 1) {
+        return 1;
+    } else {
+        return n * factorial(n - 1);
+    }
+}
+
+
+void test_permutation_coding(const std::string& name, uint32_t payload, uint32_t pvc, uint32_t wvc, glm::vec4 inWeights = glm::vec4(0.1, 0.2, 0.2, 0.5)) {
+	// SOME PERMUTATION CODING PLAYING AROUND:
+	float* weights = &inWeights[0];
+	uint32_t tuple_index = payload;
+	auto codec = blend_attribute_codec_t{
+		.entry_count = 3,
+		.weight_value_count = wvc,
+		.extra_value_counts = {1,1,1}
+	};
+	codec.payload_value_count_over_factorial = (unsigned int)ceil(pvc / factorial(codec.entry_count));
+	auto code = compress_blend_attributes(weights, tuple_index, codec);
+
+	int isValid; float weightsDecode[4]; uint32_t tupleDecode;
+	tupleDecode = decompress_blend_attributes(weightsDecode, &isValid, code, codec);
+	std::cout << std::endl << "====== TEST " << name << " ==============" << std::endl;
+	std::cout << "Compressed:    " << code << (code <= UINT32_MAX ? " UINT32" : " UINT64") << std::endl;
+	std::cout << "Original:      " << weights[0] << " | " << weights[1] << " | " << weights[2] << " | " << weights[3] << std::endl;
+	std::cout << "Reconstructed: " << weightsDecode[0] << " | " << weightsDecode[1] << " | " << weightsDecode[2] << " | " << weightsDecode[3] << std::endl;
+	std::cout << "Tuple Code:    " << (tupleDecode == tuple_index ? "OK " : "FALSCH ") << tupleDecode << " (Original: " << tuple_index << ")" << std::endl;
+	std::cout << "Is Valid:      " << (isValid ? "True" : "False") << std::endl;
+}*/
 
 int main() // <== Starting point ==
 {
+	/*
+	test_permutation_coding("Max8", UINT8_MAX, 2334, 19);
+	test_permutation_coding("Max16", UINT16_MAX - 1, 2334, 19);
+	test_permutation_coding("Max32", UINT32_MAX - 1, 2334, 19);
+
+	test_permutation_coding("Max8", UINT8_MAX, 2334, 2 ^ 16);
+	test_permutation_coding("Max16", UINT16_MAX - 1, 2334, 2 ^ 16);
+	test_permutation_coding("Max32", UINT32_MAX - 1, 2334, 2 ^ 16);
+
+	test_permutation_coding("Max8", UINT8_MAX, 0, 2 ^ 16);
+	test_permutation_coding("UINT16_MAX", UINT16_MAX, 0, 2 ^ 16);
+	test_permutation_coding("Max32", UINT32_MAX - 1, 0, 2 ^ 16);
+
+	return EXIT_SUCCESS;*/
+
 	int result = EXIT_FAILURE;
 	try {
 		// Create a window and open it
 		auto mainWnd = avk::context().create_window("Skinned Meshlet Playground");
 
-		mainWnd->set_resolution({ 1920, 1080 });
+		mainWnd->set_resolution({ 1280, 800 });
 		mainWnd->enable_resizing(true);
 		mainWnd->set_additional_back_buffer_attachments({
 			avk::attachment::declare(vk::Format::eD32Sfloat, avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)

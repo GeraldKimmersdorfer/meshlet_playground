@@ -49,6 +49,8 @@
     <ClInclude Include="source\shadercompiler\ShaderMetaConstant.h" />
     <ClInclude Include="source\shared_data.h" />
     <ClInclude Include="source\shared_structs.h" />
+    <ClInclude Include="source\thirdparty\blend_attribute_codec.h" />
+    <ClInclude Include="source\thirdparty\permutation_coding.h" />
     <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h" />
     <ClInclude Include="source\vertexcompressor\lut_helper.h" />
     <ClInclude Include="source\vertexcompressor\NoCompression.h" />

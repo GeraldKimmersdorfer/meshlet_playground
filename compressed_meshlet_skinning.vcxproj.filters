@@ -188,5 +188,11 @@
     <ClInclude Include="source\vertexcompressor\lut_helper.h">
       <Filter>source\vertexcompressor</Filter>
     </ClInclude>
+    <ClInclude Include="source\thirdparty\blend_attribute_codec.h">
+      <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="source\thirdparty\permutation_coding.h">
+      <Filter>thirdparty</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
