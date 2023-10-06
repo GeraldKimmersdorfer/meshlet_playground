@@ -14,4 +14,17 @@ namespace avk {
 		return config;
 	}
 
+	template<typename T>
+	std::vector<T> mergeVectors(const std::vector<T>& first) {
+		return first;
+	}
+
+	template<typename T, typename... Args>
+	std::vector<T> mergeVectors(const std::vector<T>& first, const Args&... rest) {
+		std::vector<T> merged = first;
+		const std::vector<T> others = mergeVectors(rest...);
+		merged.insert(merged.end(), others.begin(), others.end());
+		return merged;
+	}
+
 }

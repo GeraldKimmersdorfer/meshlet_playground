@@ -4,7 +4,7 @@
 #include "imgui_manager.hpp"
 #include "invokee.hpp"
 
-#include "shared_data.h"
+#include "SharedData.h"
 #include "orbit_camera.hpp"
 #include "quake_camera.hpp"
 #include <functional>

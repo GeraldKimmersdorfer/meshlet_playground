@@ -31,8 +31,8 @@ void BoneLUTCompression::doCompress(avk::queue* queue)
 	);
 	avk::context().record_and_submit_with_fence({ mBoneLUTBuffer->fill(mBoneLUTData.data(), 0) }, *queue)->wait_until_signalled();
 
-	mAdditionalDescriptorBindings.push_back(avk::descriptor_binding(3, 0, mVertexBuffer));
-	mAdditionalDescriptorBindings.push_back(avk::descriptor_binding(3, 1, mBoneLUTBuffer));
+	mAdditionalStaticDescriptorBindings.push_back(avk::descriptor_binding(3, 0, mVertexBuffer));
+	mAdditionalStaticDescriptorBindings.push_back(avk::descriptor_binding(3, 1, mBoneLUTBuffer));
 }
 
 void BoneLUTCompression::doDestroy()

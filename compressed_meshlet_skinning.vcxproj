@@ -28,6 +28,7 @@
     <ClCompile Include="source\pipelines\VertexIndirectPipeline.cpp" />
     <ClCompile Include="source\shadercompiler\ShaderFile.cpp" />
     <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp" />
+    <ClCompile Include="source\SharedData.cpp" />
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\lut_helper.cpp" />
     <ClCompile Include="source\vertexcompressor\NoCompression.cpp" />
@@ -47,7 +48,7 @@
     <ClInclude Include="source\shadercompiler\ShaderFile.h" />
     <ClInclude Include="source\shadercompiler\ShaderMetaCompiler.h" />
     <ClInclude Include="source\shadercompiler\ShaderMetaConstant.h" />
-    <ClInclude Include="source\shared_data.h" />
+    <ClInclude Include="source\SharedData.h" />
     <ClInclude Include="source\shared_structs.h" />
     <ClInclude Include="source\thirdparty\blend_attribute_codec.h" />
     <ClInclude Include="source\thirdparty\permutation_coding.h" />

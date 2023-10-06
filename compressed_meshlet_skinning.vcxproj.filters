@@ -129,12 +129,15 @@
     <ClCompile Include="source\vertexcompressor\lut_helper.cpp">
       <Filter>source\vertexcompressor</Filter>
     </ClCompile>
+    <ClCompile Include="source\SharedData.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
       <Filter>source</Filter>
     </ClInclude>
-    <ClInclude Include="source\shared_data.h">
+    <ClInclude Include="source\SharedData.h">
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\pipelines\MeshPipeline.h">

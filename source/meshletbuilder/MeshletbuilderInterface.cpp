@@ -1,5 +1,5 @@
 #include "MeshletbuilderInterface.h"
-#include "../shared_data.h"
+#include "../SharedData.h"
 #include "../packing_helper.h"
 
 void MeshletbuilderInterface::generate()

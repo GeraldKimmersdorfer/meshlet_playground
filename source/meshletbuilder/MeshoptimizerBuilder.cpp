@@ -4,7 +4,7 @@
 #include "../../meshoptimizer/src/meshoptimizer.h"
 #include "../packing_helper.h"
 
-#include "../shared_data.h"
+#include "../SharedData.h"
 
 void MeshoptimizerBuilder::doGenerate()
 {

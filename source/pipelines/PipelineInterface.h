@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../shared_data.h"
+#include "../SharedData.h"
 
 /// <summary>
 /// This is the abstract interface of a pipeline object.

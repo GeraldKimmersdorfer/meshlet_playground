@@ -1,9 +1,6 @@
 #pragma once
 
-//#include "imgui.h"
-//#include "imgui_manager.hpp"
 #include "invokee.hpp"
-
 #include "meshlet_helpers.hpp"
 #include "model.hpp"
 #include "serializer.hpp"
@@ -64,5 +61,15 @@ public:
 
 	virtual MeshletbuilderInterface* getCurrentMeshletBuilder() = 0;
 	virtual VertexCompressionInterface* getCurrentVertexCompressor() = 0;
+
+	void attachSharedPipelineConfiguration(avk::graphics_pipeline_config* pipeConfig, std::vector<avk::binding_data>* staticDescriptors);
+	std::vector<avk::binding_data> getDynamicDescriptorBindings(int64_t inFlightIndex);
+
+protected:
+	void hudSharedConfiguration(bool& config_has_changed);
+
+private:
+	avk::cfg::culling_mode mCullingMode = avk::cfg::culling_mode::cull_back_faces;
+	avk::cfg::polygon_drawing_mode mDrawingMode = avk::cfg::polygon_drawing_mode::fill;
 
 };

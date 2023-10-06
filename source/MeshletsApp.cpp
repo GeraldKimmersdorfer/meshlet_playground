@@ -29,7 +29,6 @@ void openDialogOptionPane(const char* vFilter, IGFDUserDatas vUserDatas, bool* v
 {
 	ImGui::Text("IMPORT OPTIONS");
 	ImGui::Separator();
-	//ImGui::Combo("Meshlet builder", (int*)(void*)&selectedMeshletInterpreter, "AVK-Default\0Meshoptimizer\0");
 	ImGui::Combo("Global transform", (int*)(void*)&selectedGlobalTransformPresetId, transformPresetsNames);
 }
 
@@ -255,6 +254,10 @@ void MeshletsApp::initGUI()
 				if (imguiManager->begin_wanting_to_occupy_mouse() && mOrbitCam.is_enabled()) mOrbitCam.disable();
 				if (imguiManager->end_wanting_to_occupy_mouse() && !mQuakeCam.is_enabled()) mOrbitCam.enable();
 				ImGui::Separator();
+
+				if (ImGui::CollapsingHeader("Shared Configuration", ImGuiTreeNodeFlags_DefaultOpen)) {
+					hudSharedConfiguration(config_has_changed);
+				}
 
 				ImGui::Separator();
 				if (ImGui::CollapsingHeader("Meshlet-Building", ImGuiTreeNodeFlags_DefaultOpen)) {

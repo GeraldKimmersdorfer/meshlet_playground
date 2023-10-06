@@ -2,18 +2,18 @@
 
 void VertexCompressionInterface::compress(avk::queue* queue)
 {
-    mAdditionalDescriptorBindings.clear();
+    mAdditionalStaticDescriptorBindings.clear();
     doCompress(queue);
 }
 
 void VertexCompressionInterface::destroy()
 {
     doDestroy();
-    mAdditionalDescriptorBindings.clear();
+    mAdditionalStaticDescriptorBindings.clear();
 }
 
 
 std::vector<avk::binding_data> VertexCompressionInterface::getBindings()
 {
-    return mAdditionalDescriptorBindings;
+    return mAdditionalStaticDescriptorBindings;
 }

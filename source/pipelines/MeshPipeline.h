@@ -26,7 +26,7 @@ private:
 	avk::buffer mMeshletsBuffer;
 	avk::buffer mPackedIndexBuffer;
 
-	std::vector<avk::binding_data> mAdditionalDescriptorBindings;
+	std::vector<avk::binding_data> mAdditionalStaticDescriptorBindings;
 
 	std::pair<MCC_MESHLET_EXTENSION, MCC_MESHLET_EXTENSION> mMeshletExtension = { _NV, _NV };	// first ... avtive, second ... selected
 	std::pair<MCC_MESHLET_TYPE, MCC_MESHLET_TYPE> mMeshletType = { _NATIVE, _NATIVE };			// first ... avtive, second ... selected

@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include "../shared_data.h"
+#include "../SharedData.h"
 
 
 class VertexCompressionInterface {
@@ -35,7 +35,7 @@ protected:
 	std::string mName;
 	std::string mMccId;	// e.g. _NOCOMP
 	SharedData* mShared;
-	std::vector<avk::binding_data> mAdditionalDescriptorBindings;
+	std::vector<avk::binding_data> mAdditionalStaticDescriptorBindings;
 
 private:
 
