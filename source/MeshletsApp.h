@@ -66,14 +66,11 @@ private: // v== Member variables ==v
 	void freeCommandBufferAndExecute(FreeCMDBufferExecutionData executeAfterwards);
 	void executeWithFreeCommandBuffer();
 
-	int mCurrentPipelineID = -1;
-	int mSelectedPipelineID = 0;
+	std::pair<int, int> mPipelineID = { -1, 0 };
 	std::vector<std::unique_ptr<PipelineInterface>> mPipelines;
-	int mCurrentMeshletBuilderID = 0;
-	int mSelectedMeshBuilderID = 0;
+	std::pair<int, int> mMeshletBuilderID = { 0, 0 };
 	std::vector<std::unique_ptr<MeshletbuilderInterface>> mMeshletBuilder;
-	int mCurrentVertexCompressorID = 0;
-	int mSelectedVertexCompressorID = 0;
+	std::pair<int, int> mVertexCompressorID = { 0, 0 };
 	std::vector<std::unique_ptr<VertexCompressionInterface>> mVertexCompressors;
 
 	bool mInverseMeshRootFix = true;

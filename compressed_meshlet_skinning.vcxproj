@@ -17,12 +17,13 @@
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\avk_extensions.cpp" />
+    <ClCompile Include="source\helpers\hud_helpers.cpp" />
+    <ClCompile Include="source\helpers\packing_helper.cpp" />
     <ClCompile Include="source\meshletbuilder\AVKBuilder.cpp" />
     <ClCompile Include="source\meshletbuilder\MeshletbuilderInterface.cpp" />
     <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp" />
     <ClCompile Include="source\MeshletsApp.cpp" />
     <ClCompile Include="source\main.cpp" />
-    <ClCompile Include="source\packing_helper.cpp" />
     <ClCompile Include="source\pipelines\MeshPipeline.cpp" />
     <ClCompile Include="source\pipelines\PipelineInterface.cpp" />
     <ClCompile Include="source\pipelines\VertexIndirectPipeline.cpp" />
@@ -36,11 +37,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\avk_extensions.hpp" />
+    <ClInclude Include="source\helpers\hud_helpers.h" />
+    <ClInclude Include="source\helpers\packing_helper.h" />
     <ClInclude Include="source\meshletbuilder\AVKBuilder.h" />
     <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h" />
     <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h" />
     <ClInclude Include="source\MeshletsApp.h" />
-    <ClInclude Include="source\packing_helper.h" />
     <ClInclude Include="source\pipelines\mcc.h" />
     <ClInclude Include="source\pipelines\MeshPipeline.h" />
     <ClInclude Include="source\pipelines\PipelineInterface.h" />

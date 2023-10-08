@@ -35,6 +35,9 @@
     <Filter Include="source\vertexcompressor">
       <UniqueIdentifier>{e3438778-a1ff-414a-8c16-fee3d43b29a6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\helpers">
+      <UniqueIdentifier>{a24af862-f4cf-4ae9-973c-2d1e40e6a5f8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
@@ -99,9 +102,6 @@
     <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp">
       <Filter>source\meshletbuilder</Filter>
     </ClCompile>
-    <ClCompile Include="source\packing_helper.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp">
       <Filter>source\shadercompiler</Filter>
     </ClCompile>
@@ -132,6 +132,12 @@
     <ClCompile Include="source\SharedData.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="source\helpers\hud_helpers.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\packing_helper.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
@@ -157,9 +163,6 @@
     </ClInclude>
     <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h">
       <Filter>source\meshletbuilder</Filter>
-    </ClInclude>
-    <ClInclude Include="source\packing_helper.h">
-      <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\shadercompiler\ShaderMetaCompiler.h">
       <Filter>source\shadercompiler</Filter>
@@ -196,6 +199,12 @@
     </ClInclude>
     <ClInclude Include="source\thirdparty\permutation_coding.h">
       <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\hud_helpers.h">
+      <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\packing_helper.h">
+      <Filter>source\helpers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -2,7 +2,6 @@
 
 #include "imgui.h"
 #include <vk_convenience_functions.hpp>
-#include "../packing_helper.h"
 #include "../shadercompiler/ShaderMetaCompiler.h"
 #include "../avk_extensions.hpp"
 #include "../meshletbuilder/MeshletbuilderInterface.h"

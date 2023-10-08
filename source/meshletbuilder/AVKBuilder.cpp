@@ -1,7 +1,7 @@
 
 #include "AVKBuilder.h"
-#include "../packing_helper.h"
 #include "../SharedData.h"
+#include "../helpers/packing_helper.h"
 
 void AVKBuilder::doGenerate()
 {
