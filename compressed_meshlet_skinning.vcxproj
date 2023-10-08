@@ -60,13 +60,8 @@
     <ClInclude Include="source\vertexcompressor\VertexCompressionInterface.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="assets\metaball.fbx" />
+    <None Include="assets\mixamo_single_no_texture.fbx" />
     <None Include="assets\tools\glslangValidator.exe" />
-    <None Include="assets\two_objects_in_one.fbx" />
-    <None Include="assets\two_seperate_triangles_2.glb" />
-    <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
-      <FileType>Document</FileType>
-    </None>
     <None Include="shaders\diffuse_shading_fixed_lightsource.frag" />
     <None Include="shaders\include\glsl_helpers.glsl" />
     <None Include="shaders\include\mcc.glsl" />

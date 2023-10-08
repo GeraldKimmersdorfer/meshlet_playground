@@ -31,6 +31,20 @@ struct vertex_data_bone_lookup {
 	uint32_t mBoneIndicesLUID;
 };
 
+struct vertex_data_permutation_coding {
+	uint64_t mPosition;
+	uint32_t mNormal;
+	uint32_t mTexCoords;
+	uint32_t mBoneData;
+};
+
+struct vertex_data_meshlet_coding {
+	uint32_t mPositionXY;
+	uint32_t mNormal;
+	uint32_t mTexCoords;
+	uint32_t mWeightsPositionZ;
+};
+
 struct config_data {
 	uint32_t mOverlayMeshlets = true;
 	uint32_t mMeshletsCount = 0;

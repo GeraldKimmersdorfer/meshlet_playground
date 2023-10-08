@@ -40,18 +40,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="auto_vk_toolkit\assets\3rd_party\models\stanford_bunny\stanford_bunny.obj">
-      <Filter>assets</Filter>
-    </None>
-    <None Include="assets\metaball.fbx">
-      <Filter>assets</Filter>
-    </None>
-    <None Include="assets\two_objects_in_one.fbx">
-      <Filter>assets</Filter>
-    </None>
-    <None Include="assets\two_seperate_triangles_2.glb">
-      <Filter>assets</Filter>
-    </None>
     <None Include="assets\tools\glslangValidator.exe">
       <Filter>assets\tools</Filter>
     </None>
@@ -78,6 +66,9 @@
     </None>
     <None Include="shaders\include\vertex_reconstruction.glsl">
       <Filter>assets\shaders\include</Filter>
+    </None>
+    <None Include="assets\mixamo_single_no_texture.fbx">
+      <Filter>assets</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
