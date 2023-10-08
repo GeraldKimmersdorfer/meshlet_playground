@@ -20,12 +20,9 @@ public:
 
 private:
 	avk::buffer mIndirectDrawCommandBuffer;
-	avk::buffer mPositionsBuffer;
-	avk::buffer mTexCoordsBuffer;
-	avk::buffer mNormalsBuffer;
-	avk::buffer mBoneIndicesBuffer;
-	avk::buffer mBoneWeightsBuffer;
 	avk::graphics_pipeline mPipeline;
+
+	std::vector<avk::binding_data> mAdditionalStaticDescriptorBindings;
 
 	std::pair<MCC_VERTEX_GATHER_TYPE, MCC_VERTEX_GATHER_TYPE> mVertexGatherType = { _PUSH, _PUSH };	// first ... avtive, second ... selected
 

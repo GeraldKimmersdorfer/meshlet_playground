@@ -46,6 +46,7 @@ VertexIndirectPipeline::VertexIndirectPipeline(SharedData* shared)
 
 void VertexIndirectPipeline::doInitialize(avk::queue* queue)
 {
+	compile();
 	if (mShadersRecompiled) {
 		mVertexGatherType.first = mVertexGatherType.second;
 		mShadersRecompiled = false;
@@ -66,53 +67,44 @@ void VertexIndirectPipeline::doInitialize(avk::queue* queue)
 	);
 	avk::context().record_and_submit_with_fence({ mIndirectDrawCommandBuffer->fill(gpuDrawCommands.data(), 0)}, *queue)->wait_until_signalled();
 
+	avk::graphics_pipeline_config pipelineConfig;
+
 	if (mVertexGatherType.first == _PUSH) {
 		auto offsetForTexcoord = sizeof(glm::vec3);
 		auto offsetForNormal = offsetForTexcoord + sizeof(glm::vec2);
 		auto offsetForBoneIndices = offsetForNormal + sizeof(glm::vec3);
 		auto offsetForBoneWeight = offsetForBoneIndices + sizeof(glm::uvec4);
 
-		mPipeline = avk::context().create_graphics_pipeline_for(
+		pipelineConfig = avk::create_graphics_pipeline_config(
 			avk::vertex_shader(mPathVertexShader),
 			avk::fragment_shader(mPathFragmentShader),
-			avk::from_buffer_binding(0)->stream_per_vertex(0, vk::Format::eR32G32B32Sfloat, sizeof(vertex_data))->to_location(0), //stream_per_vertex<glm::vec3>()->to_location(0),
+			avk::from_buffer_binding(0)->stream_per_vertex(0, vk::Format::eR32G32B32Sfloat, sizeof(vertex_data))->to_location(0),
 			avk::from_buffer_binding(0)->stream_per_vertex(offsetForTexcoord, vk::Format::eR32G32Sfloat, sizeof(vertex_data))->to_location(1),
 			avk::from_buffer_binding(0)->stream_per_vertex(offsetForNormal, vk::Format::eR32G32B32Sfloat, sizeof(vertex_data))->to_location(2),
 			avk::from_buffer_binding(0)->stream_per_vertex(offsetForBoneIndices, vk::Format::eR32G32B32A32Uint, sizeof(vertex_data))->to_location(3),
-			avk::from_buffer_binding(0)->stream_per_vertex(offsetForBoneWeight, vk::Format::eR32G32B32A32Sfloat, sizeof(vertex_data))->to_location(4),
-			avk::cfg::front_face::define_front_faces_to_be_counter_clockwise(),
-			avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),
-			avk::context().create_renderpass({
-				avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
-				avk::attachment::declare(avk::format_from_window_depth_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
-				}, avk::context().main_window()->renderpass_reference().subpass_dependencies()),
-			avk::descriptor_binding(0, 0, avk::as_combined_image_samplers(mShared->mImageSamplers, avk::layout::shader_read_only_optimal)),
-			avk::descriptor_binding(0, 1, mShared->mViewProjBuffers[0]),
-			avk::descriptor_binding(0, 2, mShared->mConfigurationBuffer),
-			avk::descriptor_binding(1, 0, mShared->mMaterialsBuffer),
-			avk::descriptor_binding(2, 0, mShared->mBoneTransformBuffers[0]),
-			avk::descriptor_binding(4, 1, mShared->mMeshesBuffer)
+			avk::from_buffer_binding(0)->stream_per_vertex(offsetForBoneWeight, vk::Format::eR32G32B32A32Sfloat, sizeof(vertex_data))->to_location(4)
 		);
 	}
 	else if (mVertexGatherType.first == _PULL) {
-		mPipeline = avk::context().create_graphics_pipeline_for(
+		pipelineConfig = avk::create_graphics_pipeline_config(
 			avk::vertex_shader(mPathVertexShader),
-			avk::fragment_shader(mPathFragmentShader),
-			avk::cfg::front_face::define_front_faces_to_be_counter_clockwise(),
-			avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),
-			avk::context().create_renderpass({
-				avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
-				avk::attachment::declare(avk::format_from_window_depth_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
-				}, avk::context().main_window()->renderpass_reference().subpass_dependencies()),
-			avk::descriptor_binding(0, 0, avk::as_combined_image_samplers(mShared->mImageSamplers, avk::layout::shader_read_only_optimal)),
-			avk::descriptor_binding(0, 1, mShared->mViewProjBuffers[0]),
-			avk::descriptor_binding(0, 2, mShared->mConfigurationBuffer),
-			avk::descriptor_binding(1, 0, mShared->mMaterialsBuffer),
-			avk::descriptor_binding(2, 0, mShared->mBoneTransformBuffers[0]),
-			avk::descriptor_binding(3, 0, mShared->mVertexBuffer),
-			avk::descriptor_binding(4, 1, mShared->mMeshesBuffer)
+			avk::fragment_shader(mPathFragmentShader)
 		);
+		mAdditionalStaticDescriptorBindings.push_back(std::move(avk::descriptor_binding(3, 0, mShared->mVertexBuffer)));
 	}
+	mShared->attachSharedPipelineConfiguration(&pipelineConfig, &mAdditionalStaticDescriptorBindings);
+
+	//auto vCompressor = mShared->getCurrentVertexCompressor();
+	//vCompressor->compress(queue);
+	//auto vertexBindings = vCompressor->getBindings();
+	//mAdditionalStaticDescriptorBindings.insert(mAdditionalStaticDescriptorBindings.end(), vertexBindings.begin(), vertexBindings.end());
+	// Add static descriptor bindings to pipeline definition
+
+	for (auto& db : mAdditionalStaticDescriptorBindings) {
+		pipelineConfig.mResourceBindings.push_back(std::move(db));
+	}
+	mPipeline = avk::context().create_graphics_pipeline(std::move(pipelineConfig));
+
 }
 
 avk::command::action_type_command VertexIndirectPipeline::render(int64_t inFlightIndex)
@@ -120,30 +112,14 @@ avk::command::action_type_command VertexIndirectPipeline::render(int64_t inFligh
 	using namespace avk;
 	return command::render_pass(mPipeline->renderpass_reference(), context().main_window()->current_backbuffer_reference(), {
 				command::bind_pipeline(mPipeline.as_reference()),
-				command::conditional(
-					[this]() { return mVertexGatherType.first == _PUSH; },
-					[this, inFlightIndex]() {
-						return command::bind_descriptors(mPipeline->layout(), mShared->mDescriptorCache->get_or_create_descriptor_sets({
-							descriptor_binding(0, 0, as_combined_image_samplers(mShared->mImageSamplers, layout::shader_read_only_optimal)),
-							descriptor_binding(0, 1, mShared->mViewProjBuffers[inFlightIndex]),
-							descriptor_binding(0, 2, mShared->mConfigurationBuffer),
-							descriptor_binding(1, 0, mShared->mMaterialsBuffer),
-							descriptor_binding(2, 0, mShared->mBoneTransformBuffers[inFlightIndex]),
-							descriptor_binding(4, 1, mShared->mMeshesBuffer)
-						}));
-					},
-					[this, inFlightIndex]() {
-						return command::bind_descriptors(mPipeline->layout(), mShared->mDescriptorCache->get_or_create_descriptor_sets({
-							descriptor_binding(0, 0, as_combined_image_samplers(mShared->mImageSamplers, layout::shader_read_only_optimal)),
-							descriptor_binding(0, 1, mShared->mViewProjBuffers[inFlightIndex]),
-							descriptor_binding(0, 2, mShared->mConfigurationBuffer),
-							descriptor_binding(1, 0, mShared->mMaterialsBuffer),
-							descriptor_binding(2, 0, mShared->mBoneTransformBuffers[inFlightIndex]),
-							descriptor_binding(3, 0, mShared->mVertexBuffer),
-							descriptor_binding(4, 1, mShared->mMeshesBuffer)
-						}));
-					}
-				),
+				command::bind_descriptors(mPipeline->layout(), mShared->mDescriptorCache->get_or_create_descriptor_sets(
+					avk::mergeVectors(
+						std::vector<avk::binding_data>{
+							std::move(avk::descriptor_binding(0, 0, avk::as_combined_image_samplers(mShared->mImageSamplers, avk::layout::shader_read_only_optimal))), // I CANT MOVE THAT TO mShared->getDynamicDescriptorBindings and its making me mad...
+						},
+						mAdditionalStaticDescriptorBindings,
+						mShared->getDynamicDescriptorBindings(inFlightIndex)
+					))),
 				command::conditional(
 					[this]() { return mVertexGatherType.first == _PUSH; },
 					[this]() { return command::draw_indexed_indirect(mIndirectDrawCommandBuffer.as_reference(), mShared->mIndexBuffer.as_reference(), mShared->mMeshData.size(), mShared->mVertexBuffer.as_reference()); },
@@ -173,10 +149,6 @@ void VertexIndirectPipeline::compile()
 
 void VertexIndirectPipeline::doDestroy()
 {
+	mAdditionalStaticDescriptorBindings.clear();
 	mIndirectDrawCommandBuffer = avk::buffer();
-	mPositionsBuffer = avk::buffer();
-	mTexCoordsBuffer = avk::buffer();
-	mNormalsBuffer = avk::buffer();
-	mBoneIndicesBuffer = avk::buffer();
-	mBoneWeightsBuffer = avk::buffer();
 }

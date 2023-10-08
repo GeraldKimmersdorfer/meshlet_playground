@@ -2,9 +2,6 @@
 
 #include <imgui.h>
 
-//#include <vk_convenience_functions.hpp>
-//#include <material_image_helpers.hpp>
-
 void SharedData::attachSharedPipelineConfiguration(avk::graphics_pipeline_config* pipeConfig, std::vector<avk::binding_data>* staticDescriptors)
 {
 	pipeConfig->mFrontFaceWindingOrder = avk::cfg::front_face::define_front_faces_to_be_counter_clockwise();

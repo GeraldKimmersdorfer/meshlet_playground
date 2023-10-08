@@ -49,9 +49,7 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 		avk::fragment_shader(mPathFragmentShader, "main", true)
 	);
 
-	mAdditionalStaticDescriptorBindings = {
-		avk::descriptor_binding(4, 0, mMeshletsBuffer)
-	};
+	mAdditionalStaticDescriptorBindings.push_back(std::move(avk::descriptor_binding(4, 0, mMeshletsBuffer)));
 	if (mMeshletType.first == _REDIR) {
 		mAdditionalStaticDescriptorBindings.push_back(std::move(avk::descriptor_binding(4, 2, mPackedIndexBuffer)));
 	}
@@ -76,7 +74,8 @@ avk::command::action_type_command MeshPipeline::render(int64_t inFlightIndex)
 	using namespace avk;
 	return command::render_pass(mPipeline->renderpass_reference(), context().main_window()->current_backbuffer_reference(), {
 				command::bind_pipeline(mPipeline.as_reference()),
-				command::bind_descriptors(mPipeline->layout(), mShared->mDescriptorCache->get_or_create_descriptor_sets(avk::mergeVectors(
+				command::bind_descriptors(mPipeline->layout(), mShared->mDescriptorCache->get_or_create_descriptor_sets(
+					avk::mergeVectors(
 						std::vector<avk::binding_data>{
 							descriptor_binding(0, 0, as_combined_image_samplers(mShared->mImageSamplers, layout::shader_read_only_optimal))
 						},
@@ -122,4 +121,5 @@ void MeshPipeline::doDestroy()
 	mPipeline = avk::graphics_pipeline();
 	mMeshletsBuffer = avk::buffer();
 	mPackedIndexBuffer = avk::buffer();
+	mAdditionalStaticDescriptorBindings.clear();
 }
