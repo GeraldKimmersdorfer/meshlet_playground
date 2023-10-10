@@ -70,7 +70,6 @@ bool cmpIndexVectorEqual(const glm::uvec4& a, const glm::uvec4& b) {
 
 // Returns true with respect to doesn't matter values (UINT32_MAX). e.g. a={0,2,3,UINT32_MAX}; b={0,2,3,4} returns true
 bool cmpIndexVectorGoodEnough(const glm::uvec4& a, const glm::uvec4& b) {
-
 	for (int i = 0; i < 4; i++) {
 		if (a[i] != UINT32_MAX && b[i] != UINT32_MAX && a[i] != b[i]) return false;
 	}
@@ -112,6 +111,7 @@ void createBoneIndexLUT(bool withShuffling, const std::vector<vertex_data>& vert
 	vertexLUIndexTable->resize(vertexData.size());
 	if (vertexLUPermutation) vertexLUPermutation->resize(vertexData.size());
 
+	// NOTE: I WOULD ASSUME THIS IS TERRIBLY SLOW
 	for (size_t vID = 0; vID < vertexData.size(); vID++) {
 		glm::uvec4 bIndices = vertexData[vID].mBoneIndices;
 		for (glm::length_t i = 0; i < 4; i++) if (vertexData[vID].mBoneWeights[i] <= 0.000001f) bIndices[i] = UINT32_MAX;

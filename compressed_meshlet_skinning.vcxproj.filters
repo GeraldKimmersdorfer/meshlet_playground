@@ -76,6 +76,9 @@
     <None Include="shaders\include\blend_attribute_compression.glsl">
       <Filter>assets\shaders\include</Filter>
     </None>
+    <None Include="assets\skinning_dummy\weight_meshlet_creation_test.fbx">
+      <Filter>assets</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">
@@ -140,6 +143,9 @@
     </ClCompile>
     <ClCompile Include="source\vertexcompressor\PermutationCodec.cpp">
       <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\meshletbuilder\BoneLUTDependentBuilder.cpp">
+      <Filter>source\meshletbuilder</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -214,6 +220,9 @@
     </ClInclude>
     <ClInclude Include="source\vertexcompressor\PermutationCodec.h">
       <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\meshletbuilder\BoneLUTDependentBuilder.h">
+      <Filter>source\meshletbuilder</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

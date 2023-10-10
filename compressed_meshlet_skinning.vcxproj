@@ -20,6 +20,7 @@
     <ClCompile Include="source\helpers\hud_helpers.cpp" />
     <ClCompile Include="source\helpers\packing_helper.cpp" />
     <ClCompile Include="source\meshletbuilder\AVKBuilder.cpp" />
+    <ClCompile Include="source\meshletbuilder\BoneLUTDependentBuilder.cpp" />
     <ClCompile Include="source\meshletbuilder\MeshletbuilderInterface.cpp" />
     <ClCompile Include="source\meshletbuilder\MeshoptimizerBuilder.cpp" />
     <ClCompile Include="source\MeshletsApp.cpp" />
@@ -42,6 +43,7 @@
     <ClInclude Include="source\helpers\hud_helpers.h" />
     <ClInclude Include="source\helpers\packing_helper.h" />
     <ClInclude Include="source\meshletbuilder\AVKBuilder.h" />
+    <ClInclude Include="source\meshletbuilder\BoneLUTDependentBuilder.h" />
     <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h" />
     <ClInclude Include="source\meshletbuilder\MeshoptimizerBuilder.h" />
     <ClInclude Include="source\MeshletsApp.h" />
@@ -65,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\mixamo_single_no_texture.fbx" />
+    <None Include="assets\skinning_dummy\weight_meshlet_creation_test.fbx" />
     <None Include="assets\tools\glslangValidator.exe" />
     <None Include="shaders\diffuse_shading_fixed_lightsource.frag" />
     <None Include="shaders\include\blend_attribute_codec.glsl" />

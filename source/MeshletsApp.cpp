@@ -13,6 +13,7 @@
 #include "pipelines/VertexIndirectPipeline.h"
 #include "meshletbuilder/MeshoptimizerBuilder.h"
 #include "meshletbuilder/AVKBuilder.h"
+#include "meshletbuilder/BoneLUTDependentBuilder.h"
 #include "vertexcompressor/NoCompression.h"
 #include "vertexcompressor/BoneLUTCompression.h"
 #include "vertexcompressor/MeshletRiggedCompression.h"
@@ -505,6 +506,7 @@ void MeshletsApp::initialize()
 
 	mMeshletBuilder.push_back(std::make_unique<MeshoptimizerBuilder>(this));
 	mMeshletBuilder.push_back(std::make_unique<AVKBuilder>(this));
+	mMeshletBuilder.push_back(std::make_unique<BoneLUTDependentBuilder>(this));
 
 	mVertexCompressors.push_back(std::make_unique<NoCompression>(this));
 	mVertexCompressors.push_back(std::make_unique<BoneLUTCompression>(this));
