@@ -4,17 +4,12 @@
 #include <sequential_invoker.hpp>
 
 #include "MeshletsApp.h"
+#include "helpers/packing_helper.h"
+#include <glm/gtx/string_cast.hpp>
+
 /*
-#include "thirdparty/permutation_coding.h"
-
-unsigned int factorial(int n) {
-    if (n == 0 || n == 1) {
-        return 1;
-    } else {
-        return n * factorial(n - 1);
-    }
-}
-
+//#include "thirdparty/permutation_coding.h"
+#include "vertexcompressor/PermutationCodec.h"
 
 void test_permutation_coding(const std::string& name, uint32_t payload, uint32_t pvc, uint32_t wvc, glm::vec4 inWeights = glm::vec4(0.1, 0.2, 0.2, 0.5)) {
 	// SOME PERMUTATION CODING PLAYING AROUND:
@@ -23,7 +18,7 @@ void test_permutation_coding(const std::string& name, uint32_t payload, uint32_t
 	auto codec = blend_attribute_codec_t{
 		.entry_count = 3,
 		.weight_value_count = wvc,
-		.extra_value_counts = {1,1,1}
+		.extra_value_counts = {1,1,2}
 	};
 	codec.payload_value_count_over_factorial = (unsigned int)ceil(pvc / factorial(codec.entry_count));
 	auto code = compress_blend_attributes(weights, tuple_index, codec);
@@ -52,6 +47,12 @@ int main() // <== Starting point ==
 	test_permutation_coding("Max8", UINT8_MAX, 0, 2 ^ 16);
 	test_permutation_coding("UINT16_MAX", UINT16_MAX, 0, 2 ^ 16);
 	test_permutation_coding("Max32", UINT32_MAX - 1, 0, 2 ^ 16);
+
+	test_permutation_coding("T1", UINT16_MAX + 0x1F, 0, 19);
+	//test_permutation_coding("UINT16_MAX", UINT16_MAX, 0, 19);
+	//test_permutation_coding("Max32", UINT32_MAX - 1, 0, 19);
+
+	PermutationCodec::test();
 
 	return EXIT_SUCCESS;*/
 

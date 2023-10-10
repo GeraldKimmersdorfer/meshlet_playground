@@ -15,6 +15,8 @@ struct meshlet_redirected {
 
 struct mesh_data {
 	mat4 mTransformationMatrix;
+	vec4 mPositionNormalizationInvScale;
+	vec4 mPositionNormalizationInvTranslation;
 	uint mVertexOffset;		// Offset to first item in Positions Texel-Buffer
 	uint mVertexCount;
 	uint mIndexOffset;		// Offset to first item in Indices Texel-Buffer
@@ -25,6 +27,14 @@ struct mesh_data {
 };
 
 struct vertex_data {
+	vec3 mPosition;
+	vec3 mNormal;
+	vec2 mTexCoord;
+	uvec4 mBoneIndices;
+	vec4 mBoneWeights;
+};
+
+struct vertex_data_no_compression {
 	vec4 mPositionTxX;
 	vec4 mTxYNormal;
 	uvec4 mBoneIndices;
@@ -36,6 +46,14 @@ struct vertex_data_bone_lookup {
 	vec4 mTxYNormal;
 	vec3 mBoneWeights;
 	uint mBoneIndicesLUID;
+};
+
+struct vertex_data_meshlet_coding {
+	uvec4 mPosition;
+	vec4 mNormal;
+	vec4 mTexCoord;
+	vec4 mBoneWeights;
+	uvec4 mBoneIndicesLUID;
 };
 
 struct bone_data {

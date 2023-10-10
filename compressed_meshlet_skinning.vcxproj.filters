@@ -70,6 +70,12 @@
     <None Include="assets\mixamo_single_no_texture.fbx">
       <Filter>assets</Filter>
     </None>
+    <None Include="shaders\include\blend_attribute_codec.glsl">
+      <Filter>assets\shaders\include</Filter>
+    </None>
+    <None Include="shaders\include\blend_attribute_compression.glsl">
+      <Filter>assets\shaders\include</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">
@@ -128,6 +134,12 @@
     </ClCompile>
     <ClCompile Include="source\helpers\packing_helper.cpp">
       <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\MeshletRiggedCompression.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\PermutationCodec.cpp">
+      <Filter>source\vertexcompressor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -196,6 +208,12 @@
     </ClInclude>
     <ClInclude Include="source\helpers\packing_helper.h">
       <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\MeshletRiggedCompression.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\PermutationCodec.h">
+      <Filter>source\vertexcompressor</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

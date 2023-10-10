@@ -48,6 +48,9 @@ void main() {
 	vec3 nrmMshSp = inNormal;
 	vec2 texCoord = inTexCoord;
 #endif
+	vec3 posLocal = posMshSp.xyz * vec3(mesh.mPositionNormalizationInvScale) + vec3(mesh.mPositionNormalizationInvTranslation);
+
+	posMshSp = vec4(posLocal, 1.0);
 
 	if (mesh.mAnimated) {
 #if MCC_VERTEX_GATHER_TYPE == _PULL

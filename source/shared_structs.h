@@ -8,6 +8,8 @@ static constexpr size_t sNumPackedIndices = 95; //avk::div_ceil(sNumIndices, 4);
 
 struct mesh_data {
 	glm::mat4 mTransformationMatrix;
+	glm::vec4 mPositionNormalizationInvScale;
+	glm::vec4 mPositionNormalizationInvTranslation;
 	uint32_t mVertexOffset;			// Offset to first item in general Vertex-Buffer
 	uint32_t mVertexCount;			// Amount of vertices in general Vertex-Buffer
 	uint32_t mIndexOffset;			// Offset to first item in general Indices-Buffer
@@ -39,11 +41,20 @@ struct vertex_data_permutation_coding {
 };
 
 struct vertex_data_meshlet_coding {
+	glm::uvec4 mPosition;
+	glm::vec4 mNormal;
+	glm::vec4 mTexCoord;
+	glm::vec4 mBoneWeights;
+	glm::uvec4 mBoneIndicesLUID;
+};
+
+/*
+struct vertex_data_meshlet_coding {
 	uint32_t mPositionXY;
 	uint32_t mNormal;
 	uint32_t mTexCoords;
 	uint32_t mWeightsPositionZ;
-};
+};*/
 
 struct config_data {
 	uint32_t mOverlayMeshlets = true;

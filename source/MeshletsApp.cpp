@@ -15,8 +15,11 @@
 #include "meshletbuilder/AVKBuilder.h"
 #include "vertexcompressor/NoCompression.h"
 #include "vertexcompressor/BoneLUTCompression.h"
+#include "vertexcompressor/MeshletRiggedCompression.h"
 
 #include <functional>
+
+#include <glm/gtx/string_cast.hpp>
 
 std::vector<glm::mat4> globalTransformPresets = {
 	glm::mat4(1.0),				// none
@@ -64,6 +67,25 @@ void MeshletsApp::reset()
 	mBoneTransforms.clear(); 
 	mBoneTransformBuffers.clear();
 	mImageSamplers.clear();
+}
+
+/// Transforms all positions into the range [0,1] 
+void normalizePositions(std::vector<glm::vec3>& positions, glm::vec4& invTranslation, glm::vec4& invScale) {
+	glm::vec3 aabbMax = glm::vec3(FLT_MIN); glm::vec3 aabbMin(FLT_MAX);
+	for (int i = 0; i < positions.size(); i++) {
+		aabbMax = glm::max(aabbMax, positions[i]);
+		aabbMin = glm::min(aabbMin, positions[i]);
+	}
+	// Calculate scale and translation such that we end up with all positions in between [0,1]
+	glm::vec3 aabbSize = aabbMax - aabbMin;
+	// Translation should be aabbMin and Scale should be aabbSize (BE AWARE: THATS A NON-UNIFORM SCALE!)
+	// To transform the points translate -aabbMin and scale 1.0 / Scale
+	glm::mat4 pointTransform = glm::scale(1.0f / aabbSize) * glm::translate(-aabbMin);
+	for (int i = 0; i < positions.size(); i++) {
+		positions[i] = pointTransform * glm::vec4(positions[i], 1.0f);
+	}
+	invTranslation = glm::vec4(aabbMin, 1.0);
+	invScale = glm::vec4(aabbSize, 1.0);
 }
 
 void MeshletsApp::load(const std::string& filename)
@@ -117,6 +139,8 @@ void MeshletsApp::load(const std::string& filename)
 			.mAnimated = static_cast<int32_t>(amesh->HasBones()),
 			});
 
+		
+
 		// Find and assign the correct material in the allMatConfigs vector
 		for (auto pair : distinctMaterials) {
 			if (std::end(pair.second) != std::ranges::find(pair.second, meshIndex)) break;
@@ -129,6 +153,14 @@ void MeshletsApp::load(const std::string& filename)
 		auto meshTexCoords = avk::get_2d_texture_coordinates(selection, 0);
 		auto meshBoneIndices = avk::get_bone_indices_for_single_target_buffer(selection, meshIndicesInOrder);
 		auto meshBoneWeights = avk::get_bone_weights(selection);
+
+		// NOTE: Problem! Normalizing positions and integrating the inverse inside the transformation matrix
+		// works fine with static meshes, but with rigged meshes I would have
+		// to adapt various bone-data aswell. Since the animation code and bone code etc. is already integrated
+		// in the AVKToolkit and I don't intend on changing this I use a workaround where the shader first has
+		// to undo the normalization as an extra step. For that purpose I could save the invTransform inside the
+		// Mesh-Struct, but I'll use scale and translation since it should be faster.
+		normalizePositions(meshPositions, mesh.mPositionNormalizationInvTranslation, mesh.mPositionNormalizationInvScale);
 
 		mesh.mIndexCount = meshIndices.size();
 		mesh.mVertexCount = meshPositions.size();
@@ -261,11 +293,11 @@ void MeshletsApp::initGUI()
 
 				ImGui::Separator();
 				if (ImGui::CollapsingHeader("Meshlet-Building", ImGuiTreeNodeFlags_DefaultOpen)) {
-					if (ImGui::BeginCombo("Builder", mMeshletBuilder[mPipelineID.second]->getName().c_str())) {
+					if (ImGui::BeginCombo("Builder", mMeshletBuilder[mMeshletBuilderID.second]->getName().c_str())) {
 						for (int n = 0; n < mMeshletBuilder.size(); n++) {
-							bool is_selected = (mPipelineID.second == n);
+							bool is_selected = (mMeshletBuilderID.second == n);
 							if (ImGui::Selectable(mMeshletBuilder[n]->getName().c_str(), is_selected)) {
-								mPipelineID.second = n;
+								mMeshletBuilderID.second = n;
 								freeCommandBufferAndExecute({ .type = FreeCMDBufferExecutionData::CHANGE_MESHLET_BUILDER });
 							}
 							if (is_selected) ImGui::SetItemDefaultFocus();
@@ -476,7 +508,7 @@ void MeshletsApp::initialize()
 
 	mVertexCompressors.push_back(std::make_unique<NoCompression>(this));
 	mVertexCompressors.push_back(std::make_unique<BoneLUTCompression>(this));
-
+	mVertexCompressors.push_back(std::make_unique<MeshletRiggedCompression>(this));
 	if (mAnimations.size() > 0) mCurrentlyPlayingAnimationId = 0;
 }
 
@@ -519,9 +551,11 @@ void MeshletsApp::render()
 
 		animation.animate(clip, time, [this, &animation, targetMemory](mesh_bone_info aInfo, const glm::mat4& aInverseMeshRootMatrix, const glm::mat4& aTransformMatrix, const glm::mat4& aInverseBindPoseMatrix, const glm::mat4& aLocalTransformMatrix, size_t aAnimatedNodeIndex, size_t aBoneMeshTargetIndex, double aAnimationTimeInTicks) {
 			glm::mat4 result;
-			if (mInverseMeshRootFix) result = aInverseMeshRootMatrix * aTransformMatrix * aInverseBindPoseMatrix;
-			else result = aTransformMatrix * aInverseBindPoseMatrix;
-			targetMemory[aInfo.mGlobalBoneIndexOffset + aInfo.mMeshLocalBoneIndex] = result;
+			uint32_t index = aInfo.mGlobalBoneIndexOffset + aInfo.mMeshLocalBoneIndex;
+			glm::mat4 inverseMeshRootMatrix { 1.0 };
+			if (mInverseMeshRootFix) inverseMeshRootMatrix = aInverseMeshRootMatrix;
+			result = inverseMeshRootMatrix * aTransformMatrix * aInverseBindPoseMatrix; // *mInverseLocalPointTransforms[aInfo.mMeshIndexInModel];
+			targetMemory[index] = result;
 			}
 		);
 	}

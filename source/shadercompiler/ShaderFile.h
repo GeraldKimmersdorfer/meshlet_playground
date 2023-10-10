@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include <filesystem>
+#include <chrono>
 #include "ShaderMetaConstant.h"
 
 class ShaderFile {
@@ -28,7 +29,7 @@ public:
 	std::string compile(const std::vector<ShaderMetaConstant>& constants);
 
 private:
-	std::filesystem::file_time_type mLastModifiedTime;
+	std::vector<std::pair<std::filesystem::path, std::filesystem::file_time_type>> mDependencies; // A vector with all include files and their respective last change time.
 	std::filesystem::path mPath;
 
 	std::string mBaseCode = "";
@@ -37,6 +38,11 @@ private:
 	std::set<std::string> mValidShaderVariants;
 
 	void extractConstants();
+
+	/// <summary>
+	/// Starting with the given file this function searches for all includes and adds them to the dependency list
+	/// </summary>
+	void loadDependencies(const std::filesystem::path& path);
 	std::filesystem::path getTemporaryPathName(const std::string& ufid);
 	std::filesystem::path getSpvPathName(const std::string& ufid);
 

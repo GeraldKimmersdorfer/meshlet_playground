@@ -10,6 +10,7 @@
 #include "ShaderMetaCompiler.h"
 
 const std::regex rConstantsSearch(R"(\n\s*(#define\s+MCC_([\w\d_]+)\s+([\w\d]+)))");
+const std::regex rIncludesSearch(R"(\n\s*(?:#include\s+\"([\w\d\.\/ _]+)\"))");
 
 // Convert an UTF8 string to a wide Unicode String
 std::wstring to_wstring(const std::string& str)
@@ -42,6 +43,16 @@ void replaceAll(std::string& inputStr, const std::string& searchStr, const std::
 		if (++i == maxReplacements) break;
 		pos = inputStr.find(searchStr, pos + replaceStr.length());
 	}
+}
+
+std::string readWholeFileAsString(const std::filesystem::path& path) {
+	std::string returnBuffer;
+	std::ifstream t(path);
+	if (!t.is_open()) throw std::runtime_error("Couldnt open file '" + path.string() + "' for reading.");
+	std::stringstream buffer;
+	buffer << t.rdbuf();
+	returnBuffer = buffer.str();
+	return std::move(returnBuffer);
 }
 
 
@@ -127,27 +138,30 @@ ShaderFile::ShaderFile(const std::string& path)
 
 void ShaderFile::reload()
 {
+	// Checks wether the file itself or one of the includes was changed since last reload:
+	bool somethingChanged = false;
+	for (auto& pair : mDependencies) {
+		if (!std::filesystem::exists(pair.first)) {
+			somethingChanged = true; break;	// A dependency is not found anymore. Thats a change
+		}
+		if (std::filesystem::last_write_time(pair.first) > pair.second) {
+			somethingChanged = true; break; // A file in the dependency list has been changed
+		}
+	}
 	auto p = std::filesystem::path(mPath);
-	std::filesystem::file_time_type ftime = std::filesystem::last_write_time(p);
-	if (mBaseCode.empty() || ftime > mLastModifiedTime) {
+	if (mBaseCode.empty() || somethingChanged) {
 		mValidShaderVariants.clear();
+		mDependencies.clear();
+		mDependencies.push_back(std::make_pair(p, std::filesystem::last_write_time(p))); // Add at least the file itself as a dependency
 
 		// LOAD BASE CODE:
-		std::ifstream t(mPath);
-		if (t.is_open()) {
-			std::stringstream buffer;
-			buffer << t.rdbuf();
-			mBaseCode = buffer.str();
+		mBaseCode = readWholeFileAsString(mPath);
 
-			// GET ALL POSSIBLE CONSTANTS:
-			extractConstants();
+		// LOAD DEPENDENCIES RECURSIVELY
+		loadDependencies(mPath);
 
-		}
-		else {
-			std::cerr << "Couldnt open file " << mPath << " for reading." << std::endl;
-		}
-
-		mLastModifiedTime = ftime;
+		// GET ALL POSSIBLE CONSTANTS:
+		extractConstants();
 	}
 }
 
@@ -264,6 +278,38 @@ void ShaderFile::extractConstants()
 
         ++it;
     }
+}
+
+void ShaderFile::loadDependencies(const std::filesystem::path& path)
+{
+	// Read file:
+	std::string content = readWholeFileAsString(path);
+
+	std::sregex_iterator it(content.begin(), content.end(), rIncludesSearch);
+	std::sregex_iterator end;
+
+	auto basePath = path.parent_path();
+
+	// Iterate over matches and their groups
+	while (it != end) {
+		std::smatch match = *it;
+		std::string includeFileRelativeFromPath = match[1];
+		auto filePath = basePath / includeFileRelativeFromPath;
+		// Check if already in list: Otherwise for cross dependencies we'd never terminate
+		bool alreadyInList = false;
+		for (const auto& alreadyAddedPair : mDependencies) {
+			if (alreadyAddedPair.first == filePath) {
+				alreadyInList = true;
+				break;
+			}
+		}
+		if (!alreadyInList) {
+			mDependencies.push_back(std::make_pair(filePath, std::filesystem::last_write_time(filePath)));
+			// Now lets recursively add all the dependencies of that file:
+			loadDependencies(filePath);
+		}
+		++it;
+	}
 }
 
 std::filesystem::path ShaderFile::getTemporaryPathName(const std::string& ufid)

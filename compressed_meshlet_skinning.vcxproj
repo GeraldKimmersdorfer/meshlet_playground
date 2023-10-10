@@ -32,7 +32,9 @@
     <ClCompile Include="source\SharedData.cpp" />
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\lut_helper.cpp" />
+    <ClCompile Include="source\vertexcompressor\MeshletRiggedCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\NoCompression.cpp" />
+    <ClCompile Include="source\vertexcompressor\PermutationCodec.cpp" />
     <ClCompile Include="source\vertexcompressor\VertexCompressionInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -56,13 +58,17 @@
     <ClInclude Include="source\thirdparty\permutation_coding.h" />
     <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h" />
     <ClInclude Include="source\vertexcompressor\lut_helper.h" />
+    <ClInclude Include="source\vertexcompressor\MeshletRiggedCompression.h" />
     <ClInclude Include="source\vertexcompressor\NoCompression.h" />
+    <ClInclude Include="source\vertexcompressor\PermutationCodec.h" />
     <ClInclude Include="source\vertexcompressor\VertexCompressionInterface.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\mixamo_single_no_texture.fbx" />
     <None Include="assets\tools\glslangValidator.exe" />
     <None Include="shaders\diffuse_shading_fixed_lightsource.frag" />
+    <None Include="shaders\include\blend_attribute_codec.glsl" />
+    <None Include="shaders\include\blend_attribute_compression.glsl" />
     <None Include="shaders\include\glsl_helpers.glsl" />
     <None Include="shaders\include\mcc.glsl" />
     <None Include="shaders\include\shared_structs.glsl" />
