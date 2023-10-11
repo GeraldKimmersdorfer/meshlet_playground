@@ -23,7 +23,7 @@ protected:
 
 private:
 	std::vector<vertex_data_meshlet_coding> mVertexData;
-	std::vector<glm::uvec4> mBoneLUTData;
+	std::vector<glm::u16vec4> mBoneLUTData;
 	avk::buffer mVertexBuffer;
 	avk::buffer mBoneLUTBuffer;
 

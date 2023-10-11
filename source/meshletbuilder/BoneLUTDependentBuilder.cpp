@@ -3,7 +3,7 @@
 #include <span>
 #include "../../meshoptimizer/src/meshoptimizer.h"
 #include "../helpers/packing_helper.h"
-
+#include "../vertexcompressor/lut_helper.h"
 #include "../SharedData.h"
 
 void BoneLUTDependentBuilder::doGenerate()
@@ -18,6 +18,14 @@ void BoneLUTDependentBuilder::doGenerate()
 	auto vertexPriorityCalculation = [this](uint32_t vIDSource, uint32_t vIDNew) {
 		return 0.5;
 		};
+	
+	// Calculate LUT indices:
+	std::vector<glm::u16vec4> lut; std::vector<uint16_t> vertexLUIndexTable; std::vector<uint8_t> vertexLUPermutation;
+	createBoneIndexLUT(true, true, mShared->mVertexData, lut, &vertexLUIndexTable, &vertexLUPermutation);
+	std::vector<uint32_t> vertexLUIndexTable32;
+	vertexLUIndexTable32.reserve(vertexLUIndexTable.size());
+	for (const auto& value : vertexLUIndexTable) vertexLUIndexTable32.push_back(static_cast<uint32_t>(value));
+
 	for (uint32_t midx = 0; midx < mShared->mMeshData.size(); midx++) {
 		auto& mesh = mShared->mMeshData[midx];
 		std::span<uint32_t> indices{ &(mShared->mIndices[mesh.mIndexOffset]), mesh.mIndexCount };
@@ -32,7 +40,7 @@ void BoneLUTDependentBuilder::doGenerate()
 		// let meshoptimizer build the meshlets for us
 		size_t meshlet_count = meshopt_buildMeshlets_feedback(meshlets.data(), meshlet_vertices.data(), meshlet_triangles.data(),
 			indices.data(), indices.size(), &vertices[0].mPositionTxX[0], vertices.size(), sizeof(vertex_data),
-			aMaxVertices, max_triangles, cone_weight, vertexPriorityCalculation);
+			aMaxVertices, max_triangles, cone_weight, &vertexLUIndexTable32[0], 1);
 
 		std::vector<meshlet_native> generatedMeshlets(meshlet_count);
 		for (int mltx = 0; mltx < meshlet_count; mltx++) {

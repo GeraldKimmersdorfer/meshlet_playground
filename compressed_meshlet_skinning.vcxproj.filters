@@ -147,6 +147,9 @@
     <ClCompile Include="source\meshletbuilder\BoneLUTDependentBuilder.cpp">
       <Filter>source\meshletbuilder</Filter>
     </ClCompile>
+    <ClCompile Include="source\helpers\csv_helpers.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
@@ -223,6 +226,9 @@
     </ClInclude>
     <ClInclude Include="source\meshletbuilder\BoneLUTDependentBuilder.h">
       <Filter>source\meshletbuilder</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\csv_helpers.h">
+      <Filter>source\helpers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@
 void MeshletRiggedCompression::doCompress(avk::queue* queue)
 {
 	std::vector<uint16_t> vertexLUIndexTable; std::vector<uint8_t> vertexLUPermutation;
-	createBoneIndexLUT(false, mShared->mVertexData, mBoneLUTData, &vertexLUIndexTable, &vertexLUPermutation);
+	createBoneIndexLUT(false, false, mShared->mVertexData, mBoneLUTData, &vertexLUIndexTable, &vertexLUPermutation);
 
 	mVertexData.reserve(mShared->mVertexData.size());
 	for (uint32_t vid = 0; vid < mShared->mVertexData.size(); vid++) {

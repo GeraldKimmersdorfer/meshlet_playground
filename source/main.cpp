@@ -7,13 +7,10 @@
 #include "helpers/packing_helper.h"
 #include <glm/gtx/string_cast.hpp>
 
+#include "vertexcompressor/lut_helper.h"
+
 int main() // <== Starting point ==
 {
-	/*
-	PermutationCodec::test();
-
-	return EXIT_SUCCESS;*/
-
 	int result = EXIT_FAILURE;
 	try {
 		// Create a window and open it

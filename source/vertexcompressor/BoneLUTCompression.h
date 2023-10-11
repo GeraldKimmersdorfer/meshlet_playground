@@ -23,10 +23,11 @@ protected:
 
 private:
 	std::vector<vertex_data_bone_lookup> mVertexData;
-	std::vector<glm::uvec4> mBoneLUTData;
+	std::vector<glm::u16vec4> mBoneLUTData;
 	avk::buffer mVertexBuffer;
 	avk::buffer mBoneLUTBuffer;
 
 	bool mWithShuffle = false;
+	bool mWithMerge = false;
 
 };

@@ -17,6 +17,7 @@
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\avk_extensions.cpp" />
+    <ClCompile Include="source\helpers\csv_helpers.cpp" />
     <ClCompile Include="source\helpers\hud_helpers.cpp" />
     <ClCompile Include="source\helpers\packing_helper.cpp" />
     <ClCompile Include="source\meshletbuilder\AVKBuilder.cpp" />
@@ -40,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\avk_extensions.hpp" />
+    <ClInclude Include="source\helpers\csv_helpers.h" />
     <ClInclude Include="source\helpers\hud_helpers.h" />
     <ClInclude Include="source\helpers\packing_helper.h" />
     <ClInclude Include="source\meshletbuilder\AVKBuilder.h" />

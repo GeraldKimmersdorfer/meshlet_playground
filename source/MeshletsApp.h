@@ -13,8 +13,8 @@
 #include "vertexcompressor/VertexCompressionInterface.h"
 #include "meshletbuilder/MeshletbuilderInterface.h"
 
-//#define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
-#define STARTUP_FILE R"(assets/weight_meshlet_creation_test.fbx)"
+#define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
+//#define STARTUP_FILE R"(assets/weight_meshlet_creation_test.fbx)"
 
 class PipelineInterface;
 

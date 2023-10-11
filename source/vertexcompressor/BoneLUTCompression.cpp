@@ -6,7 +6,7 @@
 void BoneLUTCompression::doCompress(avk::queue* queue)
 {
 	std::vector<uint16_t> vertexLUIndexTable; std::vector<uint8_t> vertexLUPermutation;
-	createBoneIndexLUT(mWithShuffle, mShared->mVertexData, mBoneLUTData, &vertexLUIndexTable, &vertexLUPermutation);
+	createBoneIndexLUT(mWithShuffle, mWithMerge,  mShared->mVertexData, mBoneLUTData, &vertexLUIndexTable, &vertexLUPermutation);
 
 	mVertexData.reserve(mShared->mVertexData.size());
 	for (uint32_t vid = 0; vid < mShared->mVertexData.size(); vid++) {
@@ -46,4 +46,7 @@ void BoneLUTCompression::doDestroy()
 void BoneLUTCompression::hud_config(bool& config_has_changed)
 {
 	ImGui::Checkbox("LUT with ID-Shuffle", &mWithShuffle);
+	if (mWithShuffle) {
+		ImGui::Checkbox("LUT with Merging", &mWithMerge);
+	}
 }
