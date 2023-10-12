@@ -1,5 +1,5 @@
 #include "MeshletRiggedCompression.h"
-#include "lut_helper.h"
+#include "../helpers/lut_helper.h"
 #include <imgui.h>
 #include "../helpers/packing_helper.h"
 #include "PermutationCodec.h"

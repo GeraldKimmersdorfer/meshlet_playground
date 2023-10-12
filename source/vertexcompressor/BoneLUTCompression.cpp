@@ -1,5 +1,5 @@
 #include "BoneLUTCompression.h"
-#include "lut_helper.h"
+#include "../helpers/lut_helper.h"
 #include <imgui.h>
 
 

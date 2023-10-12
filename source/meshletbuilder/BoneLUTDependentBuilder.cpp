@@ -3,7 +3,7 @@
 #include <span>
 #include "../../meshoptimizer/src/meshoptimizer.h"
 #include "../helpers/packing_helper.h"
-#include "../vertexcompressor/lut_helper.h"
+#include "../helpers/lut_helper.h"
 #include "../SharedData.h"
 
 void BoneLUTDependentBuilder::doGenerate()

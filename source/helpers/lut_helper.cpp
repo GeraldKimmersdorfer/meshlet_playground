@@ -112,22 +112,14 @@ glm::uvec4 sortUvec4(const glm::uvec4& src, uint8_t& permutation) {
 
 LuidChangeMap mergeChangeMaps(const LuidChangeMap& m1, const LuidChangeMap& m2) {
 	LuidChangeMap result;
-	std::set<uint16_t> markForIgnoreInM2;
 	for (const auto& pair : m1) {
 		auto it = m2.find(pair.second);
-		if (it != m2.end()) {
-			// The changed value, should be changed again according to M2, mark that the entry in M2 was already handled
-			result[pair.first] = it->second;
-			markForIgnoreInM2.insert(it->first);
-		}
-		else {
-			result.insert(pair);
-		}
+		if (it != m2.end()) result[pair.first] = it->second; // The changed value, should be changed again according to M2
+		else result.insert(pair);
 	}
 	for (const auto& pair : m2) {
-		// Now add all elements in m2 that were not changed in m1
-		if (!markForIgnoreInM2.contains(pair.first))
-			result.insert(pair);
+		// Now add all elements in m2 that were not already processed
+		if (result.find(pair.first) == result.end()) result.insert(pair);
 	}
 	return std::move(result);
 }
@@ -267,8 +259,6 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 		}
 	}
 
-	//writeAndOpenCSV(luids);
-
 	// We have to protocol all changes to the luid numbers in this map, such that we efficiently can change them for all the vertices at the end
 	LuidChangeMap luidChanges;
 
@@ -343,7 +333,6 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 			if (freeSlots > 0) bins[freeSlots-1].push_back(pair.second);
 		}
 
-		// Lets do some kind of greedy approach: First fill the "big" ones meaning with three empty fields and the biggest one to fill (one empty field) and so on
 		for (int currentGroup = 2; currentGroup > 0; currentGroup--) {
 			while (!bins[currentGroup].empty()) {
 				auto itmToFillID = bins[currentGroup].back();
@@ -371,10 +360,15 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 						}
 					}
 
+					// TODO DEBUG:
+					if (bestPartner == 424 || itmToFillID == 424) {
+						std::cout << "asd";
+					}
+
 					// By now we definitely found a partner, so merge by putting item inside partner (as partner has more valid ids and is MAYBE more important)
 					// Theres only a few possible permutations that are possible given the source group and destination group
 					uint8_t permutation;
-					glm::u8vec4 newVec = reducedIndicesWithID[bestPartner].first;
+					glm::u16vec4 newVec = reducedIndicesWithID[bestPartner].first;
 					if (currentGroup == 2) {
 						if (partnerGroup == 0) {			// itm: 10 X X X ; partner: 0 1 2 X ; res: 0 1 2 10
 							permutation = 18;				// 0 1 2 10 -> 10 X X X
@@ -387,7 +381,7 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 							removeFromUintVector(bins[partnerGroup], bestPartner);
 							bins[0].push_back(bestPartner);
 						}
-						else if (partnerGroup == 2) {		// itm: 10 X X X ; partner: 0 X X X ; res: 0 10 X X // NOTE: NEVER EXPLICIT TESTED BECAUSE NOT IN TESTDATA
+						else if (partnerGroup == 2) {		// itm: 10 X X X ; partner: 0 X X X ; res: 0 10 X X // NOTE: NEVER EXPLICITLY TESTED BECAUSE NOT IN TESTDATA
 							permutation = 6;				// 0 10 X X -> 10 X X X
 							newVec.y = itmToFill.first.x;
 							removeFromUintVector(bins[partnerGroup], bestPartner);
@@ -401,7 +395,7 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 							newVec.w = itmToFill.first.y;
 							removeFromUintVector(bins[partnerGroup], bestPartner);
 						}
-						else if (partnerGroup == 2) {		// itm: 10 11 X X ; partner: 0 X X X ; res: 0 10 11 X // NOTE: NEVER EXPLICIT TESTED BECAUSE NOT IN TESTDATA
+						else if (partnerGroup == 2) {		// itm: 10 11 X X ; partner: 0 X X X ; res: 0 10 11 X // NOTE: NEVER EXPLICITLY TESTED BECAUSE NOT IN TESTDATA
 							permutation = 8;				// 0 10 11 X -> 10 11 X X
 							newVec.y = itmToFill.first.x;
 							newVec.z = itmToFill.first.y;
@@ -460,20 +454,31 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 				}
 
 				auto bIndices = adoptedBoneIndexVectors[vid];
-				uint8_t permutation;
-				bIndices = sortUvec4(bIndices, permutation);
-				permutation = combinePermutations(permutation, basePermut);
-				(*vertexLUPermutation)[vid] = permutation;
-				std::cout << glm::to_string(vertexData[vid].mBoneIndices) << " and " << glm::to_string(vertexData[vid].mBoneWeights) << " with " << glm::to_string(applyPermutationInverse(reducedIndicesWithID[luid].first, permutation)) << std::endl;
-				
-				//DEBUG CHECK:
+				uint8_t sortPermut;
+				bIndices = sortUvec4(bIndices, sortPermut);
+				auto finalPermut = combinePermutations(sortPermut, basePermut);
+				(*vertexLUPermutation)[vid] = finalPermut;
+
+				/*//DEBUG CHECK:
 				auto original = adoptedBoneIndexVectors[vid];
 				auto fromlut = reducedIndicesWithID[luid].first;
-				//auto fromlutWithPermutation = applyPermutation
-				if (vid % 100 == 0) {
+				auto fromlutAfterPermu = applyPermutation(fromlut, finalPermut);
+				auto fromlutAfterInvPermu = applyPermutationInverse(fromlut, finalPermut);
+				auto fromLutAfterBasePermu = applyPermutation(fromlut, basePermut);
+				auto fromLutAfterSortPermu = applyPermutation(fromlut, sortPermut);
 
-					std::cout << "Pause" << std::endl;
-				}
+				if (!cmpIndexVectorGoodEnough(original, fromlutAfterInvPermu)) {
+					std::cerr << "Fehler bei Vertex       " << vid << " with permut " << (int)basePermut << " | " << (int)sortPermut << " | " << (int)finalPermut << std::endl;
+					std::cout << "Original:               " << glm::to_string(vertexData[vid].mBoneIndices) << " with weights " << glm::to_string(vertexData[vid].mBoneWeights) << std::endl;
+					std::cout << "Adopted:                " << glm::to_string(original) << std::endl;
+					std::cout << "From LUT:               " << glm::to_string(fromlut) << std::endl;
+
+					std::cout << "After Final Permu:      " << glm::to_string(fromlutAfterPermu) << std::endl;
+					std::cout << "After Final Permu Inv.: " << glm::to_string(fromlutAfterInvPermu) << std::endl;
+
+					std::cout << "After Base Permu:       " << glm::to_string(fromLutAfterBasePermu) << std::endl;
+					std::cout << "After Sort Permu:       " << glm::to_string(fromLutAfterSortPermu) << std::endl;
+				} */
 			}
 		}
 		else {

@@ -38,6 +38,9 @@
     <Filter Include="source\helpers">
       <UniqueIdentifier>{a24af862-f4cf-4ae9-973c-2d1e40e6a5f8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="assets\shaders\background">
+      <UniqueIdentifier>{4b7f8ad6-087b-424e-8a9c-bd626b95d287}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\tools\glslangValidator.exe">
@@ -78,6 +81,15 @@
     </None>
     <None Include="assets\skinning_dummy\weight_meshlet_creation_test.fbx">
       <Filter>assets</Filter>
+    </None>
+    <None Include="assets\tools\CSVFileView.exe">
+      <Filter>assets\tools</Filter>
+    </None>
+    <None Include="shaders\background\solid_color.frag">
+      <Filter>assets\shaders\background</Filter>
+    </None>
+    <None Include="shaders\background\screen_pass.vert">
+      <Filter>assets\shaders\background</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -126,9 +138,6 @@
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp">
       <Filter>source\vertexcompressor</Filter>
     </ClCompile>
-    <ClCompile Include="source\vertexcompressor\lut_helper.cpp">
-      <Filter>source\vertexcompressor</Filter>
-    </ClCompile>
     <ClCompile Include="source\SharedData.cpp">
       <Filter>source</Filter>
     </ClCompile>
@@ -149,6 +158,12 @@
     </ClCompile>
     <ClCompile Include="source\helpers\csv_helpers.cpp">
       <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\lut_helper.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\thirdparty\imgui_spectrum.h">
+      <Filter>thirdparty</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -203,9 +218,6 @@
     <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h">
       <Filter>source\vertexcompressor</Filter>
     </ClInclude>
-    <ClInclude Include="source\vertexcompressor\lut_helper.h">
-      <Filter>source\vertexcompressor</Filter>
-    </ClInclude>
     <ClInclude Include="source\thirdparty\blend_attribute_codec.h">
       <Filter>thirdparty</Filter>
     </ClInclude>
@@ -228,6 +240,9 @@
       <Filter>source\meshletbuilder</Filter>
     </ClInclude>
     <ClInclude Include="source\helpers\csv_helpers.h">
+      <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\lut_helper.h">
       <Filter>source\helpers</Filter>
     </ClInclude>
   </ItemGroup>

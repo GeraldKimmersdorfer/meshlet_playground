@@ -17,7 +17,7 @@ void SharedData::attachSharedPipelineConfiguration(avk::graphics_pipeline_config
 	}
 	pipeConfig->mViewportDepthConfig.push_back(avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)));
 	auto rp = avk::context().create_renderpass({
-		avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
+		avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::load, avk::usage::color(0)     , avk::on_store::store),
 		avk::attachment::declare(avk::format_from_window_depth_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
 		}, avk::context().main_window()->renderpass_reference().subpass_dependencies());
 	pipeConfig->mRenderPassSubpass = std::move(std::make_tuple(std::move(rp), 0));

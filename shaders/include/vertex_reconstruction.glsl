@@ -4,11 +4,12 @@
 #if MCC_VERTEX_COMPRESSION == _NOCOMP
 layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data_no_compression vertices[]; };
 #elif MCC_VERTEX_COMPRESSION == _LUT
+#extension EXT_shader_explicit_arithmetic_types : enable
 layout(set = 3, binding = 0, scalar) buffer VertexBuffer { vertex_data_bone_lookup vertices[]; };
-layout(set = 3, binding = 1) buffer BoneIndicesLUT { uvec4 bone_indices_lut[]; };
+layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[]; };
 #elif MCC_VERTEX_COMPRESSION == _MLTR
 layout(set = 3, binding = 0, scalar) buffer VertexBuffer { vertex_data_meshlet_coding vertices[]; };
-layout(set = 3, binding = 1) buffer BoneIndicesLUT { uvec4 bone_indices_lut[]; };
+layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[]; };
 #extension GL_EXT_control_flow_attributes : enable
 #include "blend_attribute_compression.glsl"
 #endif
@@ -30,7 +31,7 @@ vertex_data getVertexData(uint vid) {
     ret.mPosition = vertices[vid].mPositionTxX.xyz;
     ret.mNormal = vertices[vid].mTxYNormal.yzw;
     ret.mTexCoord = vec2(vertices[vid].mPositionTxX.w, vertices[vid].mTxYNormal.x);
-    ret.mBoneIndices = bone_indices_lut[vertices[vid].mBoneIndicesLUID];
+    ret.mBoneIndices = uvec4(bone_indices_lut[vertices[vid].mBoneIndicesLUID]);
     ret.mBoneWeights = vec4(vertices[vid].mBoneWeights, 1.0);
     ret.mBoneWeights.w = 1.0 - ( ret.mBoneWeights.x + ret.mBoneWeights.y + ret.mBoneWeights.z );
     return ret;
@@ -82,7 +83,7 @@ vertex_data getVertexData(uint vid) {
     ret.mBoneWeights.z = out_weights[1];
     ret.mBoneWeights.y = out_weights[2];
     ret.mBoneWeights.x = out_weights[3]; 
-    ret.mBoneIndices = bone_indices_lut[tuple_index];
+    ret.mBoneIndices = uvec4(bone_indices_lut[tuple_index]);
     //ret.mBoneIndices = bone_indices_lut[vertices[vid].mBoneIndicesLUID.x];
     //ret.mBoneWeights = vertices[vid].mBoneWeights;
     //ret.mBoneWeights.w = 1.0 - ( ret.mBoneWeights.x + ret.mBoneWeights.y + ret.mBoneWeights.z );

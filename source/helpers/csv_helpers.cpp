@@ -38,6 +38,6 @@ void writeAndOpenCSV(std::vector<std::vector<std::string>> data)
     }
     outputFile.close();
 
-    HINSTANCE result = ShellExecute(NULL, L"open", fileName.wstring().c_str(), NULL, NULL, SW_SHOWNORMAL);
+    HINSTANCE result = ShellExecute(NULL, L"open", CSV_VIEWER_EXE, fileName.wstring().c_str(), NULL, SW_SHOWNORMAL);
     if (!(reinterpret_cast<int>(result) > 32)) throw std::runtime_error("Failed to open the file using shell execute.");
 }

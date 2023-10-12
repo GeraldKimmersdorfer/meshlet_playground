@@ -19,6 +19,7 @@
     <ClCompile Include="source\avk_extensions.cpp" />
     <ClCompile Include="source\helpers\csv_helpers.cpp" />
     <ClCompile Include="source\helpers\hud_helpers.cpp" />
+    <ClCompile Include="source\helpers\lut_helper.cpp" />
     <ClCompile Include="source\helpers\packing_helper.cpp" />
     <ClCompile Include="source\meshletbuilder\AVKBuilder.cpp" />
     <ClCompile Include="source\meshletbuilder\BoneLUTDependentBuilder.cpp" />
@@ -32,8 +33,8 @@
     <ClCompile Include="source\shadercompiler\ShaderFile.cpp" />
     <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp" />
     <ClCompile Include="source\SharedData.cpp" />
+    <ClCompile Include="source\thirdparty\imgui_spectrum.h" />
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp" />
-    <ClCompile Include="source\vertexcompressor\lut_helper.cpp" />
     <ClCompile Include="source\vertexcompressor\MeshletRiggedCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\NoCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\PermutationCodec.cpp" />
@@ -43,6 +44,7 @@
     <ClInclude Include="source\avk_extensions.hpp" />
     <ClInclude Include="source\helpers\csv_helpers.h" />
     <ClInclude Include="source\helpers\hud_helpers.h" />
+    <ClInclude Include="source\helpers\lut_helper.h" />
     <ClInclude Include="source\helpers\packing_helper.h" />
     <ClInclude Include="source\meshletbuilder\AVKBuilder.h" />
     <ClInclude Include="source\meshletbuilder\BoneLUTDependentBuilder.h" />
@@ -61,7 +63,6 @@
     <ClInclude Include="source\thirdparty\blend_attribute_codec.h" />
     <ClInclude Include="source\thirdparty\permutation_coding.h" />
     <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h" />
-    <ClInclude Include="source\vertexcompressor\lut_helper.h" />
     <ClInclude Include="source\vertexcompressor\MeshletRiggedCompression.h" />
     <ClInclude Include="source\vertexcompressor\NoCompression.h" />
     <ClInclude Include="source\vertexcompressor\PermutationCodec.h" />
@@ -70,7 +71,10 @@
   <ItemGroup>
     <None Include="assets\mixamo_single_no_texture.fbx" />
     <None Include="assets\skinning_dummy\weight_meshlet_creation_test.fbx" />
+    <None Include="assets\tools\CSVFileView.exe" />
     <None Include="assets\tools\glslangValidator.exe" />
+    <None Include="shaders\background\screen_pass.vert" />
+    <None Include="shaders\background\solid_color.frag" />
     <None Include="shaders\diffuse_shading_fixed_lightsource.frag" />
     <None Include="shaders\include\blend_attribute_codec.glsl" />
     <None Include="shaders\include\blend_attribute_compression.glsl" />

@@ -13,7 +13,8 @@
 #include "vertexcompressor/VertexCompressionInterface.h"
 #include "meshletbuilder/MeshletbuilderInterface.h"
 
-#define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
+//#define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
+#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Mixamo-Group-No-Materials.fbx)"
 //#define STARTUP_FILE R"(assets/weight_meshlet_creation_test.fbx)"
 
 class PipelineInterface;
@@ -95,6 +96,8 @@ private: // v== Member variables ==v
 
 	avk::query_pool mPipelineStatsPool;
 	std::array<uint64_t, 3> mPipelineStats;
+
+	avk::graphics_pipeline mBackgroundPipeline;
 
 	std::string mLastErrorMessage = "";
 

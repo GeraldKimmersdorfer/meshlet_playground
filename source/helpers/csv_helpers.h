@@ -1,5 +1,6 @@
 #pragma once
 
+#define CSV_VIEWER_EXE L"assets\\tools\\CSVFileView.exe"
 #define TEMP_FILE_FOLDER L"temp"
 #define CSV_SEPARATOR ','
 

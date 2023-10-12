@@ -7,7 +7,7 @@
 #include "helpers/packing_helper.h"
 #include <glm/gtx/string_cast.hpp>
 
-#include "vertexcompressor/lut_helper.h"
+#include "helpers/lut_helper.h"
 
 int main() // <== Starting point ==
 {
@@ -16,7 +16,7 @@ int main() // <== Starting point ==
 		// Create a window and open it
 		auto mainWnd = avk::context().create_window("Skinned Meshlet Playground");
 
-		mainWnd->set_resolution({ 1280, 800 });
+		mainWnd->set_resolution({ 1600, 900 });
 		mainWnd->enable_resizing(true);
 		mainWnd->set_additional_back_buffer_attachments({
 			avk::attachment::declare(vk::Format::eD32Sfloat, avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)

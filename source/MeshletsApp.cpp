@@ -21,6 +21,8 @@
 #include <functional>
 
 #include <glm/gtx/string_cast.hpp>
+#include "shadercompiler/ShaderMetaCompiler.h"
+#include "helpers/hud_helpers.h"
 
 std::vector<glm::mat4> globalTransformPresets = {
 	glm::mat4(1.0),				// none
@@ -63,9 +65,9 @@ void MeshletsApp::reset()
 	mIndices.clear();
 	mMeshData.clear();
 	mVertexData.clear();
-	mAnimations.clear(); 
+	mAnimations.clear();
 	mBoneTransformBuffers.clear();
-	mBoneTransforms.clear(); 
+	mBoneTransforms.clear();
 	mBoneTransformBuffers.clear();
 	mImageSamplers.clear();
 }
@@ -98,11 +100,11 @@ void MeshletsApp::load(const std::string& filename)
 	mCurrentlyPlayingAnimationId = -1;
 
 	const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();
-	const auto &globalTransform = globalTransformPresets[selectedGlobalTransformPresetId];
+	const auto& globalTransform = globalTransformPresets[selectedGlobalTransformPresetId];
 
 	// get all the meshlet indices of the model
 	const auto meshIndicesInOrder = model->select_all_meshes();
-	auto distinctMaterials = model->distinct_material_configs(); 
+	auto distinctMaterials = model->distinct_material_configs();
 	// add all the materials of the model
 	for (auto& pair : distinctMaterials) allMatConfigs.push_back(pair.first);
 
@@ -124,7 +126,7 @@ void MeshletsApp::load(const std::string& filename)
 
 	// Fill the bone transforms array with init data
 	mBoneTransforms.resize(model->num_bone_matrices(meshIndicesInOrder)); //OMG... num_bone_matrices returns fake bones for meshes. I DONT WANT THAT!!!
-	
+
 	// ToDo: Gather init pose
 
 	for (size_t mpos = 0; mpos < meshIndicesInOrder.size(); mpos++) {
@@ -140,7 +142,7 @@ void MeshletsApp::load(const std::string& filename)
 			.mAnimated = static_cast<int32_t>(amesh->HasBones()),
 			});
 
-		
+
 
 		// Find and assign the correct material in the allMatConfigs vector
 		for (auto pair : distinctMaterials) {
@@ -158,7 +160,7 @@ void MeshletsApp::load(const std::string& filename)
 		// NOTE: Problem! Normalizing positions and integrating the inverse inside the transformation matrix
 		// works fine with static meshes, but with rigged meshes I would have
 		// to adapt various bone-data aswell. Since the animation code and bone code etc. is already integrated
-		// in the AVKToolkit and I don't intend on changing this I use a workaround where the shader first has
+		// in the AVKToolkit and I don't intend on changing this. I use a workaround where the shader first has
 		// to undo the normalization as an extra step. For that purpose I could save the invTransform inside the
 		// Mesh-Struct, but I'll use scale and translation since it should be faster.
 		normalizePositions(meshPositions, mesh.mPositionNormalizationInvTranslation, mesh.mPositionNormalizationInvScale);
@@ -167,20 +169,20 @@ void MeshletsApp::load(const std::string& filename)
 		mesh.mVertexCount = meshPositions.size();
 
 		for (int i = 0; i < meshPositions.size(); i++) {
-			auto& vd = mVertexData.emplace_back(vertex_data{ 
-				.mPositionTxX = glm::vec4(meshPositions[i], meshTexCoords[i].x), 
+			auto& vd = mVertexData.emplace_back(vertex_data{
+				.mPositionTxX = glm::vec4(meshPositions[i], meshTexCoords[i].x),
 				.mTxYNormal = glm::vec4(meshTexCoords[i].y, meshNormals[i]),
 				.mBoneIndices = meshBoneIndices[i],
 				.mBoneWeights = meshBoneWeights[i]
-			});
+				});
 		}
 
 		mIndices.insert(mIndices.end(), meshIndices.begin(), meshIndices.end());
-	} 
+	}
 
 
 	// ======== START UPLOADING TO GPU =============
-	mVertexBuffer = avk::context().create_buffer(avk::memory_usage::device, 
+	mVertexBuffer = avk::context().create_buffer(avk::memory_usage::device,
 		VULKAN_HPP_NAMESPACE::BufferUsageFlagBits::eVertexBuffer,
 		avk::storage_buffer_meta::create_from_data(mVertexData)
 	);
@@ -198,8 +200,7 @@ void MeshletsApp::load(const std::string& filename)
 		avk::index_buffer_meta::create_from_data(mIndices).describe_only_member(mIndices[0], avk::content_description::index),
 		avk::storage_buffer_meta::create_from_data(mIndices)
 	);
-	avk::context().record_and_submit_with_fence({ mIndexBuffer->fill(mIndices.data(), 0) }, * mQueue)->wait_until_signalled();
-
+	avk::context().record_and_submit_with_fence({ mIndexBuffer->fill(mIndices.data(), 0) }, *mQueue)->wait_until_signalled();
 
 	mMeshesBuffer = avk::context().create_buffer(
 		avk::memory_usage::device, {},
@@ -211,7 +212,7 @@ void MeshletsApp::load(const std::string& filename)
 		allMatConfigs, false, false,
 		avk::image_usage::general_texture,
 		avk::filter_mode::trilinear
-	);
+		);
 
 	avk::context().record_and_submit_with_fence({
 		matCommands
@@ -235,79 +236,80 @@ void MeshletsApp::initGUI()
 				timestampPeriod = std::invoke([]() {
 				// get timestamp period from physical device, could be different for other GPUs
 				auto props = avk::context().physical_device().getProperties();
-				return static_cast<double>(props.limits.timestampPeriod);
+			return static_cast<double>(props.limits.timestampPeriod);
 					}),
 				lastFrameDurationMs = 0.0,
-				lastDrawMeshTasksDurationMs = 0.0
-		]() mutable { 
+						lastDrawMeshTasksDurationMs = 0.0
+		]() mutable {
 				bool config_has_changed = false;
-				ImGuiIO& io = ImGui::GetIO();
+					bool open_error_popup = false;
+					ImGuiIO& io = ImGui::GetIO();
 
-				// ================ MAIN MENU ======================
-				ImGui::Begin("Main Menu", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-				ImGui::SetWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
-				ImGui::SetWindowSize({ -1, io.DisplaySize.y }, ImGuiCond_Always);
-				ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
-				ImGui::Text("%.1f FPS", io.Framerate);
-				ImGui::Separator();
-				if (ImGui::Button("Open File")) {
-					ImGuiFileDialog::Instance()->OpenDialogWithPane("open_file", "Choose File", "{.fbx,.obj,.dae,.ply,.gltf,.glb}", getBestAvailableAssetFolder(), "", std::bind(&openDialogOptionPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 300.0, 1, (IGFDUserDatas)nullptr, ImGuiFileDialogFlags_Modal);
-				}
-
-				ImGui::Separator();
-				if (ImGui::BeginCombo("Animation", mCurrentlyPlayingAnimationId >= 0 ? mAnimations[mCurrentlyPlayingAnimationId].mName.c_str(): "None")) {
-					if (ImGui::Selectable("None", mCurrentlyPlayingAnimationId < 0)) mCurrentlyPlayingAnimationId = -1;
-					for (int n = 0; n < mAnimations.size(); n++) {
-						bool is_selected = (mCurrentlyPlayingAnimationId == n);
-						if (ImGui::Selectable(mAnimations[n].mName.c_str(), is_selected)) mCurrentlyPlayingAnimationId = n;
-						if (is_selected) ImGui::SetItemDefaultFocus();
+					// ================ MAIN MENU ======================
+					ImGui::Begin("Main Menu", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+					ImGui::SetWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+					ImGui::SetWindowSize({ -1, io.DisplaySize.y }, ImGuiCond_Always);
+					ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
+					ImGui::Text("%.1f FPS", io.Framerate);
+					ImGui::Separator();
+					if (ImGui::Button("Open File")) {
+						ImGuiFileDialog::Instance()->OpenDialogWithPane("open_file", "Choose File", "{.fbx,.obj,.dae,.ply,.gltf,.glb}", getBestAvailableAssetFolder(), "", std::bind(&openDialogOptionPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 300.0, 1, (IGFDUserDatas)nullptr, ImGuiFileDialogFlags_Modal);
 					}
-					ImGui::EndCombo();
-				}
-				if (mCurrentlyPlayingAnimationId >= 0) {
-					ImGui::Checkbox("Inverse Mesh Root Fix", &mInverseMeshRootFix);
-				}
-				ImGui::Separator();
-				bool quakeCamEnabled = mQuakeCam.is_enabled();
-				if (ImGui::Checkbox("Enable Quake Camera", &quakeCamEnabled)) {
-					if (quakeCamEnabled) { // => should be enabled
-						mQuakeCam.set_matrix(mOrbitCam.matrix());
-						mQuakeCam.enable();
-						mOrbitCam.disable();
-					}
-				}
-				if (quakeCamEnabled) {
-					ImGui::TextColored(ImVec4(0.f, .6f, .8f, 1.f), "[F1] to exit Quake Camera navigation.");
-					if (avk::input().key_pressed(avk::key_code::f1)) {
-						mOrbitCam.set_matrix(mQuakeCam.matrix());
-						mOrbitCam.enable();
-						mQuakeCam.disable();
-					}
-				}
-				if (imguiManager->begin_wanting_to_occupy_mouse() && mOrbitCam.is_enabled()) mOrbitCam.disable();
-				if (imguiManager->end_wanting_to_occupy_mouse() && !mQuakeCam.is_enabled()) mOrbitCam.enable();
-				ImGui::Separator();
 
-				if (ImGui::CollapsingHeader("Shared Configuration", ImGuiTreeNodeFlags_DefaultOpen)) {
-					hudSharedConfiguration(config_has_changed);
-				}
-
-				ImGui::Separator();
-				if (ImGui::CollapsingHeader("Meshlet-Building", ImGuiTreeNodeFlags_DefaultOpen)) {
-					if (ImGui::BeginCombo("Builder", mMeshletBuilder[mMeshletBuilderID.second]->getName().c_str())) {
-						for (int n = 0; n < mMeshletBuilder.size(); n++) {
-							bool is_selected = (mMeshletBuilderID.second == n);
-							if (ImGui::Selectable(mMeshletBuilder[n]->getName().c_str(), is_selected)) {
-								mMeshletBuilderID.second = n;
-								freeCommandBufferAndExecute({ .type = FreeCMDBufferExecutionData::CHANGE_MESHLET_BUILDER });
-							}
+					ImGui::Separator();
+					if (ImGui::BeginCombo("Animation", mCurrentlyPlayingAnimationId >= 0 ? mAnimations[mCurrentlyPlayingAnimationId].mName.c_str() : "None")) {
+						if (ImGui::Selectable("None", mCurrentlyPlayingAnimationId < 0)) mCurrentlyPlayingAnimationId = -1;
+						for (int n = 0; n < mAnimations.size(); n++) {
+							bool is_selected = (mCurrentlyPlayingAnimationId == n);
+							if (ImGui::Selectable(mAnimations[n].mName.c_str(), is_selected)) mCurrentlyPlayingAnimationId = n;
 							if (is_selected) ImGui::SetItemDefaultFocus();
 						}
 						ImGui::EndCombo();
 					}
-				}
+					if (mCurrentlyPlayingAnimationId >= 0) {
+						ImGui::Checkbox("Inverse Mesh Root Fix", &mInverseMeshRootFix);
+					}
+					ImGui::Separator();
+					bool quakeCamEnabled = mQuakeCam.is_enabled();
+					if (ImGui::Checkbox("Enable Quake Camera", &quakeCamEnabled)) {
+						if (quakeCamEnabled) { // => should be enabled
+							mQuakeCam.set_matrix(mOrbitCam.matrix());
+							mQuakeCam.enable();
+							mOrbitCam.disable();
+						}
+					}
+					if (quakeCamEnabled) {
+						ImGui::TextColored(ImVec4(0.f, .6f, .8f, 1.f), "[F1] to exit Quake Camera navigation.");
+						if (avk::input().key_pressed(avk::key_code::f1)) {
+							mOrbitCam.set_matrix(mQuakeCam.matrix());
+							mOrbitCam.enable();
+							mQuakeCam.disable();
+						}
+					}
+					if (imguiManager->begin_wanting_to_occupy_mouse() && mOrbitCam.is_enabled()) mOrbitCam.disable();
+					if (imguiManager->end_wanting_to_occupy_mouse() && !mQuakeCam.is_enabled()) mOrbitCam.enable();
+					ImGui::Separator();
 
-				ImGui::Separator();
+					if (ImGui::CollapsingHeader("Shared Configuration", ImGuiTreeNodeFlags_DefaultOpen)) {
+						hudSharedConfiguration(config_has_changed);
+					}
+
+					ImGui::Separator();
+					if (ImGui::CollapsingHeader("Meshlet-Building", ImGuiTreeNodeFlags_DefaultOpen)) {
+						if (ImGui::BeginCombo("Builder", mMeshletBuilder[mMeshletBuilderID.second]->getName().c_str())) {
+							for (int n = 0; n < mMeshletBuilder.size(); n++) {
+								bool is_selected = (mMeshletBuilderID.second == n);
+								if (ImGui::Selectable(mMeshletBuilder[n]->getName().c_str(), is_selected)) {
+									mMeshletBuilderID.second = n;
+									freeCommandBufferAndExecute({ .type = FreeCMDBufferExecutionData::CHANGE_MESHLET_BUILDER });
+								}
+								if (is_selected) ImGui::SetItemDefaultFocus();
+							}
+							ImGui::EndCombo();
+						}
+					}
+
+					ImGui::Separator();
 					if (ImGui::BeginCombo("Compressor", mVertexCompressors[mVertexCompressorID.second]->getName().c_str())) {
 						for (int n = 0; n < mVertexCompressors.size(); n++) {
 							bool is_selected = (mVertexCompressorID.second == n);
@@ -318,104 +320,106 @@ void MeshletsApp::initGUI()
 							if (is_selected) ImGui::SetItemDefaultFocus();
 						}
 						ImGui::EndCombo();
-				}
-
-				mVertexCompressors[mVertexCompressorID.second]->hud_config(config_has_changed);
-
-				ImGui::Separator();
-				if (ImGui::CollapsingHeader("Pipeline-Selection", ImGuiTreeNodeFlags_DefaultOpen)) {
-					ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0, 0.0, 0.0, 1.0));
-					ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, { 1.0f });
-					bool isOpen = ImGui::BeginCombo("Pipeline", mPipelineID.second < 0 ? "Please select" : mPipelines[mPipelineID.second]->getName().c_str());
-					ImGui::PopStyleColor(1);
-					ImGui::PopStyleVar(1);
-					if (isOpen) {
-						for (int n = 0; n < mPipelines.size(); n++) {
-							bool is_selected = (mPipelineID.second == n);
-							if (ImGui::Selectable(mPipelines[n]->getName().c_str(), is_selected)) mPipelineID.second = n;
-							if (is_selected) ImGui::SetItemDefaultFocus();
-						}
-						ImGui::EndCombo();
 					}
 
+					mVertexCompressors[mVertexCompressorID.second]->hud_config(config_has_changed);
 
-					mPipelines[mPipelineID.second]->hud_setup(config_has_changed);
+					ImGui::Separator();
+					if (ImGui::CollapsingHeader("Pipeline-Selection", ImGuiTreeNodeFlags_DefaultOpen)) {
+						ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0, 0.0, 0.0, 1.0));
+						ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, { 1.0f });
+						bool isOpen = ImGui::BeginCombo("Pipeline", mPipelineID.second < 0 ? "Please select" : mPipelines[mPipelineID.second]->getName().c_str());
+						ImGui::PopStyleColor(1);
+						ImGui::PopStyleVar(1);
+						if (isOpen) {
+							for (int n = 0; n < mPipelines.size(); n++) {
+								bool is_selected = (mPipelineID.second == n);
+								if (ImGui::Selectable(mPipelines[n]->getName().c_str(), is_selected)) mPipelineID.second = n;
+								if (is_selected) ImGui::SetItemDefaultFocus();
+							}
+							ImGui::EndCombo();
+						}
 
-					if (ImGui::Button("Compile & Load Pipeline")) {
-						bool withoutError = false;
-						try {
-							mPipelines[mPipelineID.second]->compile();
-							withoutError = true;
-						}
-						catch (const std::exception& e) {
-							mLastErrorMessage = e.what();
-							ImGui::OpenPopup("Compile Error");
-						}
-						if (withoutError) {
-							freeCommandBufferAndExecute({
-								.type = FreeCMDBufferExecutionData::CHANGE_PIPELINE
-							});
+
+						mPipelines[mPipelineID.second]->hud_setup(config_has_changed);
+
+						if (ImGui::Button("Compile & Load Pipeline")) {
+							bool withoutError = false;
+
+							try {
+								mPipelines[mPipelineID.second]->compile();
+								withoutError = true;
+							}
+							catch (const std::exception& e) {
+								mLastErrorMessage = e.what();
+								open_error_popup = true;
+							}
+							if (withoutError) {
+								freeCommandBufferAndExecute({
+									.type = FreeCMDBufferExecutionData::CHANGE_PIPELINE
+									});
+							}
 						}
 					}
-				}
 
-				ImGui::Separator();
-				if (ImGui::CollapsingHeader("Pipeline-Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-					if (mPipelineID.first >= 0) mPipelines[mPipelineID.first]->hud_config(config_has_changed);
-				}
+					ImGui::Separator();
+					if (ImGui::CollapsingHeader("Pipeline-Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+						if (mPipelineID.first >= 0) mPipelines[mPipelineID.first]->hud_config(config_has_changed);
+					}
 
-				ImGui::End();
+					ImGui::End();
 
-				// ================ STATS WINDOW ======================
-				ImGui::Begin("Statistics", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
-				ImGui::SetWindowPos(ImVec2(io.DisplaySize.x - ImGui::GetWindowWidth(), 0.0f), ImGuiCond_Always);
-				ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
-				ImGui::Text("%.1f FPS", io.Framerate);
-				ImGui::Separator();
+					// ================ STATS WINDOW ======================
+					ImGui::Begin("Statistics", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+					ImGui::SetWindowPos(ImVec2(io.DisplaySize.x - ImGui::GetWindowWidth(), 0.0f), ImGuiCond_Always);
+					ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
+					ImGui::Text("%.1f FPS", io.Framerate);
+					ImGui::Separator();
 
-				ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
-				lastFrameDurationMs = glm::mix(lastFrameDurationMs, mLastFrameDuration * 1e-6 * timestampPeriod, 0.05);
-				lastDrawMeshTasksDurationMs = glm::mix(lastDrawMeshTasksDurationMs, mLastDrawMeshTasksDuration * 1e-6 * timestampPeriod, 0.05);
-				ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "Frame time (timer queries): %.3lf ms", lastFrameDurationMs);
-				ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "drawMeshTasks took        : %.3lf ms", lastDrawMeshTasksDurationMs);
-				ImGui::Text("mPipelineStats[0]         : %llu", mPipelineStats[0]);
-				ImGui::Text("mPipelineStats[1]         : %llu", mPipelineStats[1]);
-				ImGui::Text("mPipelineStats[2]         : %llu", mPipelineStats[2]);
-				ImGui::End();
+					ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
+					lastFrameDurationMs = glm::mix(lastFrameDurationMs, mLastFrameDuration * 1e-6 * timestampPeriod, 0.05);
+					lastDrawMeshTasksDurationMs = glm::mix(lastDrawMeshTasksDurationMs, mLastDrawMeshTasksDuration * 1e-6 * timestampPeriod, 0.05);
+					ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "Frame time (timer queries): %.3lf ms", lastFrameDurationMs);
+					ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "drawMeshTasks took        : %.3lf ms", lastDrawMeshTasksDurationMs);
+					ImGui::Text("mPipelineStats[0]         : %llu", mPipelineStats[0]);
+					ImGui::Text("mPipelineStats[1]         : %llu", mPipelineStats[1]);
+					ImGui::Text("mPipelineStats[2]         : %llu", mPipelineStats[2]);
+					ImGui::End();
 
-				// ================ FILE OPEN DIALOG ======================
-				ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_FirstUseEver, { 0.5f, 0.5f });
-				ImGui::SetNextWindowSize({ 800, 400 }, ImGuiCond_FirstUseEver);
-				if (ImGuiFileDialog::Instance()->Display("open_file"))
-				{
-					if (ImGuiFileDialog::Instance()->IsOk())
+					// ================ FILE OPEN DIALOG ======================
+					ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_FirstUseEver, { 0.5f, 0.5f });
+					ImGui::SetNextWindowSize({ 800, 400 }, ImGuiCond_FirstUseEver);
+					if (ImGuiFileDialog::Instance()->Display("open_file"))
 					{
-						freeCommandBufferAndExecute({
-							.type = FreeCMDBufferExecutionData::LOAD_NEW_FILE,
-							.mNextFileName = ImGuiFileDialog::Instance()->GetFilePathName()
-							});
+						if (ImGuiFileDialog::Instance()->IsOk())
+						{
+							freeCommandBufferAndExecute({
+								.type = FreeCMDBufferExecutionData::LOAD_NEW_FILE,
+								.mNextFileName = ImGuiFileDialog::Instance()->GetFilePathName()
+								});
+						}
+						ImGuiFileDialog::Instance()->Close();
 					}
-					ImGuiFileDialog::Instance()->Close();
-				}
 
-				// ================ ERROR DIALOG ======================
-				ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_Always, { 0.5f, 0.5f });
-				ImGui::SetNextWindowSize({ 600, -1 }, ImGuiCond_Always);
-				ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0, 0.0, 0.0, 1.0));
-				ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0, 0.0, 0.0, 0.1));
-				if (ImGui::BeginPopupModal("Compile Error", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
-				{
-					ImGui::TextWrapped(mLastErrorMessage.c_str());
-					ImGui::NewLine();
-					ImGui::SameLine(ImGui::GetWindowWidth() - 80);
-					if (ImGui::Button("Got it.")) ImGui::CloseCurrentPopup();
-					ImGui::EndPopup();
-				}
-				ImGui::PopStyleColor(2);
+					// ================ ERROR DIALOG ======================
+					if (open_error_popup) ImGui::OpenPopup("Compilation Error");
+					ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_Always, { 0.5f, 0.5f });
+					ImGui::SetNextWindowSize({ 600, -1 }, ImGuiCond_Always);
+					ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0, 0.0, 0.0, 1.0));
+					ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0, 0.0, 0.0, 0.1));
+					if (ImGui::BeginPopupModal("Compilation Error", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
+					{
+						ImGui::TextWrapped(mLastErrorMessage.c_str());
+						ImGui::NewLine();
+						ImGui::SameLine(ImGui::GetWindowWidth() - 80);
+						if (ImGui::Button("Got it.")) ImGui::CloseCurrentPopup();
+						ImGui::EndPopup();
+					}
+					ImGui::PopStyleColor(2);
 
-				
 
-				if (config_has_changed) uploadConfig();
+
+					if (config_has_changed) uploadConfig();
 			});
 	}
 }
@@ -432,11 +436,22 @@ void MeshletsApp::initReusableObjects()
 	avk::current_composition()->add_element(mQuakeCam);
 	mQuakeCam.disable();
 
+	// ===== BACKGROUND PIPELINE ====
+	mBackgroundPipeline = avk::context().create_graphics_pipeline_for(
+		avk::vertex_shader(ShaderMetaCompiler::precompile("background/screen_pass.vert", {})),
+		avk::fragment_shader(ShaderMetaCompiler::precompile("background/solid_color.frag", {})),
+		avk::cfg::front_face::define_front_faces_to_be_clockwise(),
+		avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),
+		avk::context().main_window()->renderpass()
+	);
+
 	// ===== CPU UPDATER ==== 
 	mSharedUpdater = &mUpdater.emplace();
 	mUpdater->on(avk::swapchain_resized_event(avk::context().main_window())).invoke([this]() {
 		this->mQuakeCam.set_aspect_ratio(avk::context().main_window()->aspect_ratio());
-		});
+		this->mOrbitCam.set_aspect_ratio(avk::context().main_window()->aspect_ratio());
+		if (this->mPipelineID.first >= 0) freeCommandBufferAndExecute({ .type = FreeCMDBufferExecutionData::CHANGE_PIPELINE }); // Recreate pipeline
+		}).update(mBackgroundPipeline);
 
 	// ===== DESCRIPTOR CACHE ====
 	mDescriptorCache = avk::context().create_descriptor_cache();
@@ -514,6 +529,7 @@ void MeshletsApp::initialize()
 	if (mAnimations.size() > 0) mCurrentlyPlayingAnimationId = 0;
 }
 
+static long update_call_count = 0;
 void MeshletsApp::update()
 {
 	using namespace avk;
@@ -532,12 +548,14 @@ void MeshletsApp::update()
 		if (mExecutionData.mFrameWait-- == 0)
 			executeWithFreeCommandBuffer();
 	}
+	// The ImGui-Context had to be already created and theres no other callback, thats why its here
+	if (update_call_count++ == 0) StyleColorsSpectrum();// activateImGuiStyle(true, 0.8);
 }
 
 void MeshletsApp::render()
 {
 	if (mExecutionData.mFrameWait >= 0) return;	// We want to free the commandPool such that we can load a new file
-	if (mPipelineID.first < 0) return;	// No pipeline selected
+	//if (mPipelineID.first < 0) return;	// No pipeline selected
 	using namespace avk;
 
 	auto mainWnd = context().main_window();
@@ -553,11 +571,11 @@ void MeshletsApp::render()
 
 		animation.animate(clip, time, [this, &animation, targetMemory](mesh_bone_info aInfo, const glm::mat4& aInverseMeshRootMatrix, const glm::mat4& aTransformMatrix, const glm::mat4& aInverseBindPoseMatrix, const glm::mat4& aLocalTransformMatrix, size_t aAnimatedNodeIndex, size_t aBoneMeshTargetIndex, double aAnimationTimeInTicks) {
 			glm::mat4 result;
-			uint32_t index = aInfo.mGlobalBoneIndexOffset + aInfo.mMeshLocalBoneIndex;
-			glm::mat4 inverseMeshRootMatrix { 1.0 };
-			if (mInverseMeshRootFix) inverseMeshRootMatrix = aInverseMeshRootMatrix;
-			result = inverseMeshRootMatrix * aTransformMatrix * aInverseBindPoseMatrix; // *mInverseLocalPointTransforms[aInfo.mMeshIndexInModel];
-			targetMemory[index] = result;
+		uint32_t index = aInfo.mGlobalBoneIndexOffset + aInfo.mMeshLocalBoneIndex;
+		glm::mat4 inverseMeshRootMatrix{ 1.0 };
+		if (mInverseMeshRootFix) inverseMeshRootMatrix = aInverseMeshRootMatrix;
+		result = inverseMeshRootMatrix * aTransformMatrix * aInverseBindPoseMatrix; // *mInverseLocalPointTransforms[aInfo.mMeshIndexInModel];
+		targetMemory[index] = result;
 			}
 		);
 	}
@@ -582,7 +600,7 @@ void MeshletsApp::render()
 	{
 		auto timers = mTimestampPool->get_results<uint64_t, 2>(
 			firstQueryIndex, 2, vk::QueryResultFlagBits::e64 // | vk::QueryResultFlagBits::eWait // => ensure that the results are available (shouldnt be necessary)
-		);
+			);
 		mLastDrawMeshTasksDuration = timers[1] - timers[0];
 		mLastFrameDuration = timers[1] - mLastTimestamp;
 		mLastTimestamp = timers[1];
@@ -602,18 +620,28 @@ void MeshletsApp::render()
 
 			sync::global_memory_barrier(stage::all_commands >> stage::all_commands, access::memory_write >> access::memory_write | access::memory_read),
 
-			mPipelines[mPipelineID.first]->render(inFlightIndex),
+			avk::command::render_pass(mBackgroundPipeline->renderpass_reference(), avk::context().main_window()->current_backbuffer_reference(), {
+			// And within, bind a pipeline and draw three vertices:
+			avk::command::bind_pipeline(mBackgroundPipeline.as_reference()),
+			avk::command::draw(6u, 1u, 0u, 0u)
+		}),
+		command::conditional([this] { 
+			return this->mPipelineID.first >= 0 && mExecutionData.mFrameWait <= 0;
+			}, [this, inFlightIndex] {
+			return mPipelines[mPipelineID.first]->render(inFlightIndex);
+
+}),
 
 			mTimestampPool->write_timestamp(firstQueryIndex + 1, stage::mesh_shader),
 			mPipelineStatsPool->end_query(inFlightIndex)
 		})
 		.into_command_buffer(cmdBfr)
-		.then_submit_to(*mQueue)
-		// Do not start to render before the image has become available:
-		.waiting_for(imageAvailableSemaphore >> stage::color_attachment_output)
-		.submit();
+	.then_submit_to(*mQueue)
+	// Do not start to render before the image has become available:
+	.waiting_for(imageAvailableSemaphore >> stage::color_attachment_output)
+	.submit();
 
-	mainWnd->handle_lifetime(std::move(cmdBfr));
+mainWnd->handle_lifetime(std::move(cmdBfr));
 
 }
 
