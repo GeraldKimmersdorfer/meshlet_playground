@@ -14,8 +14,8 @@
 #include "meshletbuilder/MeshletbuilderInterface.h"
 
 //#define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
-#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Mixamo-Group-No-Materials.fbx)"
-//#define STARTUP_FILE R"(assets/weight_meshlet_creation_test.fbx)"
+//#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Mixamo-Group-No-Materials.fbx)"
+#define STARTUP_FILE R"(assets/weight_meshlet_creation_test.fbx)"
 
 class PipelineInterface;
 
@@ -66,6 +66,8 @@ private: // v== Member variables ==v
 	void freeCommandBufferAndExecute(FreeCMDBufferExecutionData executeAfterwards);
 	void executeWithFreeCommandBuffer();
 
+	void compileAndLoadNextPipeline();
+
 	std::pair<int, int> mPipelineID = { -1, 0 };
 	std::vector<std::unique_ptr<PipelineInterface>> mPipelines;
 	std::pair<int, int> mMeshletBuilderID = { 0, 0 };
@@ -99,6 +101,9 @@ private: // v== Member variables ==v
 
 	avk::graphics_pipeline mBackgroundPipeline;
 
+	bool mOpenErrorPopup = false;
 	std::string mLastErrorMessage = "";
+
+	bool mVSyncEnabled = true;
 
 };

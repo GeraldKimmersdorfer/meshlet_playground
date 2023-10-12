@@ -162,9 +162,6 @@
     <ClCompile Include="source\helpers\lut_helper.cpp">
       <Filter>source\helpers</Filter>
     </ClCompile>
-    <ClCompile Include="source\thirdparty\imgui_spectrum.h">
-      <Filter>thirdparty</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">

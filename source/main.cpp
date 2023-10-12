@@ -21,7 +21,7 @@ int main() // <== Starting point ==
 		mainWnd->set_additional_back_buffer_attachments({
 			avk::attachment::declare(vk::Format::eD32Sfloat, avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
 			});
-		mainWnd->set_presentaton_mode(avk::presentation_mode::mailbox);
+		mainWnd->set_presentaton_mode(avk::presentation_mode::fifo);
 		mainWnd->set_number_of_concurrent_frames(3u);
 		mainWnd->open();
 

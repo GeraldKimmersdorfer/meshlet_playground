@@ -242,21 +242,19 @@ void MeshletsApp::initGUI()
 						lastDrawMeshTasksDurationMs = 0.0
 		]() mutable {
 				bool config_has_changed = false;
-					bool open_error_popup = false;
 					ImGuiIO& io = ImGui::GetIO();
 
 					// ================ MAIN MENU ======================
 					ImGui::Begin("Main Menu", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 					ImGui::SetWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
 					ImGui::SetWindowSize({ -1, io.DisplaySize.y }, ImGuiCond_Always);
-					ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
-					ImGui::Text("%.1f FPS", io.Framerate);
-					ImGui::Separator();
-					if (ImGui::Button("Open File")) {
+
+					if (ImGui::Button("Open File", ImVec2(ImGui::GetWindowSize().x * 0.96, 0.0f))) {
 						ImGuiFileDialog::Instance()->OpenDialogWithPane("open_file", "Choose File", "{.fbx,.obj,.dae,.ply,.gltf,.glb}", getBestAvailableAssetFolder(), "", std::bind(&openDialogOptionPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 300.0, 1, (IGFDUserDatas)nullptr, ImGuiFileDialogFlags_Modal);
 					}
 
 					ImGui::Separator();
+
 					if (ImGui::BeginCombo("Animation", mCurrentlyPlayingAnimationId >= 0 ? mAnimations[mCurrentlyPlayingAnimationId].mName.c_str() : "None")) {
 						if (ImGui::Selectable("None", mCurrentlyPlayingAnimationId < 0)) mCurrentlyPlayingAnimationId = -1;
 						for (int n = 0; n < mAnimations.size(); n++) {
@@ -271,19 +269,17 @@ void MeshletsApp::initGUI()
 					}
 					ImGui::Separator();
 					bool quakeCamEnabled = mQuakeCam.is_enabled();
-					if (ImGui::Checkbox("Enable Quake Camera", &quakeCamEnabled)) {
+					if (ImGui::Checkbox("Enable Quake Camera [F5]", &quakeCamEnabled)) {
 						if (quakeCamEnabled) { // => should be enabled
-							mQuakeCam.set_matrix(mOrbitCam.matrix());
-							mQuakeCam.enable();
-							mOrbitCam.disable();
+							mQuakeCam.set_matrix(mOrbitCam.matrix()); mQuakeCam.enable(); mOrbitCam.disable();
 						}
 					}
-					if (quakeCamEnabled) {
-						ImGui::TextColored(ImVec4(0.f, .6f, .8f, 1.f), "[F1] to exit Quake Camera navigation.");
-						if (avk::input().key_pressed(avk::key_code::f1)) {
-							mOrbitCam.set_matrix(mQuakeCam.matrix());
-							mOrbitCam.enable();
-							mQuakeCam.disable();
+					if (avk::input().key_pressed(avk::key_code::f5)) {
+						if (quakeCamEnabled) {
+							mOrbitCam.set_matrix(mQuakeCam.matrix()); mOrbitCam.enable(); mQuakeCam.disable();
+						}
+						else {
+							mQuakeCam.set_matrix(mOrbitCam.matrix()); mQuakeCam.enable(); mOrbitCam.disable();
 						}
 					}
 					if (imguiManager->begin_wanting_to_occupy_mouse() && mOrbitCam.is_enabled()) mOrbitCam.disable();
@@ -340,27 +336,14 @@ void MeshletsApp::initGUI()
 							ImGui::EndCombo();
 						}
 
-
 						mPipelines[mPipelineID.second]->hud_setup(config_has_changed);
 
-						if (ImGui::Button("Compile & Load Pipeline")) {
-							bool withoutError = false;
-
-							try {
-								mPipelines[mPipelineID.second]->compile();
-								withoutError = true;
-							}
-							catch (const std::exception& e) {
-								mLastErrorMessage = e.what();
-								open_error_popup = true;
-							}
-							if (withoutError) {
-								freeCommandBufferAndExecute({
-									.type = FreeCMDBufferExecutionData::CHANGE_PIPELINE
-									});
-							}
-						}
+						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8, 0.4, 0.4, 1.0));
+						if (ImGui::Button("Compile & Load Pipeline [F1]", ImVec2(ImGui::GetWindowSize().x * 0.96, 0.0f))) compileAndLoadNextPipeline();
+						ImGui::PopStyleColor(1);
 					}
+
+					if (avk::input().key_pressed(avk::key_code::f1)) compileAndLoadNextPipeline();
 
 					ImGui::Separator();
 					if (ImGui::CollapsingHeader("Pipeline-Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -374,6 +357,10 @@ void MeshletsApp::initGUI()
 					ImGui::SetWindowPos(ImVec2(io.DisplaySize.x - ImGui::GetWindowWidth(), 0.0f), ImGuiCond_Always);
 					ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
 					ImGui::Text("%.1f FPS", io.Framerate);
+					if (ImGui::Checkbox("VSync (FIFO Presentation Mode)", &mVSyncEnabled)) {
+						if (mVSyncEnabled) avk::context().main_window()->set_presentaton_mode(avk::presentation_mode::fifo);
+						else avk::context().main_window()->set_presentaton_mode(avk::presentation_mode::mailbox);
+					}
 					ImGui::Separator();
 
 					ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
@@ -402,11 +389,14 @@ void MeshletsApp::initGUI()
 					}
 
 					// ================ ERROR DIALOG ======================
-					if (open_error_popup) ImGui::OpenPopup("Compilation Error");
+					if (mOpenErrorPopup) {
+						ImGui::OpenPopup("Compilation Error");
+						mOpenErrorPopup = false;
+					}
 					ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_Always, { 0.5f, 0.5f });
 					ImGui::SetNextWindowSize({ 600, -1 }, ImGuiCond_Always);
-					ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0, 0.0, 0.0, 1.0));
-					ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0, 0.0, 0.0, 0.1));
+					ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8, 0.4, 0.4, 1.0));
+					ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.8, 0.4, 0.4, 0.8));
 					if (ImGui::BeginPopupModal("Compilation Error", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
 					{
 						ImGui::TextWrapped(mLastErrorMessage.c_str());
@@ -449,49 +439,49 @@ void MeshletsApp::initReusableObjects()
 	mSharedUpdater = &mUpdater.emplace();
 	mUpdater->on(avk::swapchain_resized_event(avk::context().main_window())).invoke([this]() {
 		this->mQuakeCam.set_aspect_ratio(avk::context().main_window()->aspect_ratio());
-		this->mOrbitCam.set_aspect_ratio(avk::context().main_window()->aspect_ratio());
-		if (this->mPipelineID.first >= 0) freeCommandBufferAndExecute({ .type = FreeCMDBufferExecutionData::CHANGE_PIPELINE }); // Recreate pipeline
+	this->mOrbitCam.set_aspect_ratio(avk::context().main_window()->aspect_ratio());
+	if (this->mPipelineID.first >= 0) freeCommandBufferAndExecute({ .type = FreeCMDBufferExecutionData::CHANGE_PIPELINE }); // Recreate pipeline
 		}).update(mBackgroundPipeline);
 
-	// ===== DESCRIPTOR CACHE ====
-	mDescriptorCache = avk::context().create_descriptor_cache();
+		// ===== DESCRIPTOR CACHE ====
+		mDescriptorCache = avk::context().create_descriptor_cache();
 
-	// ==== FETCH DEVICE PROPERTIES AND FEATURES ===
-	mNvPipelineSupport = avk::context().supports_mesh_shader_nv(avk::context().physical_device());
-	mFeatures2.pNext = &mFeaturesMeshShader; // get all in one swoop
-	avk::context().physical_device().getFeatures2(&mFeatures2);
-	mProps2.pNext = &mPropsMeshShader; mPropsMeshShader.pNext = &mPropsSubgroup;  // get all in one swoop
-	if (mNvPipelineSupport) mPropsSubgroup.pNext = &mPropsMeshShaderNV;
-	avk::context().physical_device().getProperties2(&mProps2);
-	LOG_INFO(std::format("Max. preferred task threads is {}, mesh threads is {}, subgroup size is {}.", mPropsMeshShader.maxPreferredTaskWorkGroupInvocations, mPropsMeshShader.maxPreferredMeshWorkGroupInvocations, mPropsSubgroup.subgroupSize));
-	LOG_INFO(std::format("This device supports the following subgroup operations: {}", vk::to_string(mPropsSubgroup.supportedOperations)));
-	LOG_INFO(std::format("This device supports subgroup operations in the following stages: {}", vk::to_string(mPropsSubgroup.supportedStages)));
-	mTaskInvocationsExt = mPropsMeshShader.maxPreferredTaskWorkGroupInvocations;
+		// ==== FETCH DEVICE PROPERTIES AND FEATURES ===
+		mNvPipelineSupport = avk::context().supports_mesh_shader_nv(avk::context().physical_device());
+		mFeatures2.pNext = &mFeaturesMeshShader; // get all in one swoop
+		avk::context().physical_device().getFeatures2(&mFeatures2);
+		mProps2.pNext = &mPropsMeshShader; mPropsMeshShader.pNext = &mPropsSubgroup;  // get all in one swoop
+		if (mNvPipelineSupport) mPropsSubgroup.pNext = &mPropsMeshShaderNV;
+		avk::context().physical_device().getProperties2(&mProps2);
+		LOG_INFO(std::format("Max. preferred task threads is {}, mesh threads is {}, subgroup size is {}.", mPropsMeshShader.maxPreferredTaskWorkGroupInvocations, mPropsMeshShader.maxPreferredMeshWorkGroupInvocations, mPropsSubgroup.subgroupSize));
+		LOG_INFO(std::format("This device supports the following subgroup operations: {}", vk::to_string(mPropsSubgroup.supportedOperations)));
+		LOG_INFO(std::format("This device supports subgroup operations in the following stages: {}", vk::to_string(mPropsSubgroup.supportedStages)));
+		mTaskInvocationsExt = mPropsMeshShader.maxPreferredTaskWorkGroupInvocations;
 
-	// ===== GPU QUERY POOLS ====
-	mTimestampPool = avk::context().create_query_pool_for_timestamp_queries(
-		static_cast<uint32_t>(avk::context().main_window()->number_of_frames_in_flight()) * 2
-	);
-	mPipelineStatsPool = avk::context().create_query_pool_for_pipeline_statistics_queries(
-		vk::QueryPipelineStatisticFlagBits::eFragmentShaderInvocations | vk::QueryPipelineStatisticFlagBits::eMeshShaderInvocationsEXT | vk::QueryPipelineStatisticFlagBits::eTaskShaderInvocationsEXT,
-		avk::context().main_window()->number_of_frames_in_flight()
-	);
+		// ===== GPU QUERY POOLS ====
+		mTimestampPool = avk::context().create_query_pool_for_timestamp_queries(
+			static_cast<uint32_t>(avk::context().main_window()->number_of_frames_in_flight()) * 2
+		);
+		mPipelineStatsPool = avk::context().create_query_pool_for_pipeline_statistics_queries(
+			vk::QueryPipelineStatisticFlagBits::eFragmentShaderInvocations | vk::QueryPipelineStatisticFlagBits::eMeshShaderInvocationsEXT | vk::QueryPipelineStatisticFlagBits::eTaskShaderInvocationsEXT,
+			avk::context().main_window()->number_of_frames_in_flight()
+		);
 
-	// ===== GPU CAMERA BUFFER ====
-	const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();
-	for (int i = 0; i < concurrentFrames; ++i) {
-		mViewProjBuffers.push_back(avk::context().create_buffer(
+		// ===== GPU CAMERA BUFFER ====
+		const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();
+		for (int i = 0; i < concurrentFrames; ++i) {
+			mViewProjBuffers.push_back(avk::context().create_buffer(
+				avk::memory_usage::host_coherent, {},
+				avk::uniform_buffer_meta::create_from_data(glm::mat4())
+			));
+		}
+
+		// ===== GPU CONFIG BUFFER ====
+		mConfigurationBuffer = avk::context().create_buffer(
 			avk::memory_usage::host_coherent, {},
-			avk::uniform_buffer_meta::create_from_data(glm::mat4())
-		));
-	}
-
-	// ===== GPU CONFIG BUFFER ====
-	mConfigurationBuffer = avk::context().create_buffer(
-		avk::memory_usage::host_coherent, {},
-		avk::uniform_buffer_meta::create_from_data(mConfig)
-	);
-	uploadConfig();
+			avk::uniform_buffer_meta::create_from_data(mConfig)
+		);
+		uploadConfig();
 }
 
 void MeshletsApp::uploadConfig()
@@ -549,12 +539,12 @@ void MeshletsApp::update()
 			executeWithFreeCommandBuffer();
 	}
 	// The ImGui-Context had to be already created and theres no other callback, thats why its here
-	if (update_call_count++ == 0) StyleColorsSpectrum();// activateImGuiStyle(true, 0.8);
+	if (update_call_count++ == 0)  activateImGuiStyle(false, 0.9); //StyleColorsSpectrum();
 }
 
 void MeshletsApp::render()
 {
-	if (mExecutionData.mFrameWait >= 0) return;	// We want to free the commandPool such that we can load a new file
+	//if (mExecutionData.mFrameWait >= 0) return;	// We want to free the commandPool such that we can load a new file
 	//if (mPipelineID.first < 0) return;	// No pipeline selected
 	using namespace avk;
 
@@ -604,7 +594,6 @@ void MeshletsApp::render()
 		mLastDrawMeshTasksDuration = timers[1] - timers[0];
 		mLastFrameDuration = timers[1] - mLastTimestamp;
 		mLastTimestamp = timers[1];
-
 		mPipelineStats = mPipelineStatsPool->get_results<uint64_t, 3>(inFlightIndex, 1, vk::QueryResultFlagBits::e64);
 	}
 
@@ -616,21 +605,23 @@ void MeshletsApp::render()
 
 			// Upload the updated bone matrices into the buffer for the current frame (considering that we have cConcurrentFrames-many concurrent frames):
 			mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
-			mBoneTransformBuffers[inFlightIndex]->fill(mBoneTransforms.data(), 0),
+			command::conditional([this] {
+				return mExecutionData.mFrameWait < 0;
+			}, [this, inFlightIndex] {
+				return mBoneTransformBuffers[inFlightIndex]->fill(mBoneTransforms.data(), 0);
+			}),
 
 			sync::global_memory_barrier(stage::all_commands >> stage::all_commands, access::memory_write >> access::memory_write | access::memory_read),
 
 			avk::command::render_pass(mBackgroundPipeline->renderpass_reference(), avk::context().main_window()->current_backbuffer_reference(), {
-			// And within, bind a pipeline and draw three vertices:
-			avk::command::bind_pipeline(mBackgroundPipeline.as_reference()),
-			avk::command::draw(6u, 1u, 0u, 0u)
-		}),
-		command::conditional([this] { 
-			return this->mPipelineID.first >= 0 && mExecutionData.mFrameWait <= 0;
+				avk::command::bind_pipeline(mBackgroundPipeline.as_reference()),
+				avk::command::draw(6u, 1u, 0u, 0u)
+			}),
+			command::conditional([this] {
+				return this->mPipelineID.first >= 0 && mExecutionData.mFrameWait < 0;
 			}, [this, inFlightIndex] {
-			return mPipelines[mPipelineID.first]->render(inFlightIndex);
-
-}),
+				return mPipelines[mPipelineID.first]->render(inFlightIndex);
+			}),
 
 			mTimestampPool->write_timestamp(firstQueryIndex + 1, stage::mesh_shader),
 			mPipelineStatsPool->end_query(inFlightIndex)
@@ -676,5 +667,24 @@ void MeshletsApp::executeWithFreeCommandBuffer()
 		getCurrentVertexCompressor()->destroy();
 		mVertexCompressorID.first = mVertexCompressorID.second;
 		if (mPipelineID.first >= 0) mPipelines[mPipelineID.first]->initialize(mQueue);
+	}
+}
+
+void MeshletsApp::compileAndLoadNextPipeline()
+{
+	bool withoutError = false;
+
+	try {
+		mPipelines[mPipelineID.second]->compile();
+		withoutError = true;
+	}
+	catch (const std::exception& e) {
+		mLastErrorMessage = e.what();
+		mOpenErrorPopup = true;
+	}
+	if (withoutError) {
+		freeCommandBufferAndExecute({
+			.type = FreeCMDBufferExecutionData::CHANGE_PIPELINE
+			});
 	}
 }

@@ -27,7 +27,9 @@ void main()
 	int matIndex = v_in.materialIndex;
 
 	int diffuseTexIndex = matSsbo.materials[matIndex].mDiffuseTexIndex;
-    vec3 color = texture(textures[diffuseTexIndex], v_in.texCoord).rgb;
+    vec4 colora = texture(textures[diffuseTexIndex], v_in.texCoord);
+	if (colora.a < 0.2) discard;
+	vec3 color = colora.rgb;
 	
 	float ambient = 0.1;
 	vec3 diffuse = matSsbo.materials[matIndex].mDiffuseReflectivity.rgb;
