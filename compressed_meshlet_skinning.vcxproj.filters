@@ -251,7 +251,9 @@
     <Image Include="assets\icon_small.png">
       <Filter>assets</Filter>
     </Image>
-    <Image Include="..\..\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\icon_big.ico" />
+    <Image Include="assets\icon_big.ico">
+      <Filter>assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="compressed_meshlet_skinning.rc" />

@@ -96,7 +96,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\icon_big.ico" />
+    <Image Include="assets\icon_big.ico" />
     <Image Include="assets\icon_small.png" />
   </ItemGroup>
   <ItemGroup>
