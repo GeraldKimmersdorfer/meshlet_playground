@@ -25,6 +25,14 @@ int main() // <== Starting point ==
 		mainWnd->set_number_of_concurrent_frames(3u);
 		mainWnd->open();
 
+		// Change Icon of the Window
+		if (std::filesystem::exists({ "assets/icon_small.png" })) {
+			GLFWimage images[1];
+			images[0].pixels = stbi_load("assets/icon_small.png", &images[0].width, &images[0].height, 0, 4);
+			glfwSetWindowIcon(mainWnd->handle()->mHandle, 1, images);
+			stbi_image_free(images[0].pixels);
+		}
+
 		auto& singleQueue = avk::context().create_queue({}, avk::queue_selection_preference::versatile_queue, mainWnd);
 		mainWnd->set_queue_family_ownership(singleQueue.family_index());
 		mainWnd->set_present_queue(singleQueue);

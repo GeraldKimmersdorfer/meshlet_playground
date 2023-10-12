@@ -54,7 +54,7 @@ std::string getBestAvailableAssetFolder() {
 
 MeshletsApp::~MeshletsApp()
 {
-	mPipelines[mPipelineID.first]->destroy();
+	if (mPipelineID.first >= 0) mPipelines[mPipelineID.first]->destroy();
 	getCurrentMeshletBuilder()->destroy();
 	mMeshletBuilder.clear();
 	mPipelines.clear();

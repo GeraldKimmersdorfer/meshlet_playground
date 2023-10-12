@@ -245,5 +245,15 @@
     <ClInclude Include="source\helpers\lut_helper.h">
       <Filter>source\helpers</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\icon_small.png">
+      <Filter>assets</Filter>
+    </Image>
+    <Image Include="..\..\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\icon_big.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="compressed_meshlet_skinning.rc" />
   </ItemGroup>
 </Project>

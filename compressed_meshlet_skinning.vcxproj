@@ -41,6 +41,7 @@
     <ClCompile Include="source\vertexcompressor\VertexCompressionInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="source\avk_extensions.hpp" />
     <ClInclude Include="source\helpers\csv_helpers.h" />
     <ClInclude Include="source\helpers\hud_helpers.h" />
@@ -93,6 +94,13 @@
     <ProjectReference Include="meshoptimizer\build\meshoptimizer.vcxproj">
       <Project>{1aa77a78-5ead-3ed7-b8de-8f2fc0302c40}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\icon_big.ico" />
+    <Image Include="assets\icon_small.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="compressed_meshlet_skinning.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
