@@ -1,39 +1,56 @@
 #include "hud_helpers.h"
 #include <imgui.h>
+#include <cstdint>
+
+static inline ImVec4 rgba8(uint8_t r, uint8_t g, uint8_t b, float a) {
+    return ImVec4(
+        r / (float)UINT8_MAX,
+        g / (float)UINT8_MAX,
+        b / (float)UINT8_MAX,
+        a
+    );
+}
 
 void activateImGuiStyle(bool darkMode, float alpha)
 {
     ImGuiStyle& style = ImGui::GetStyle();
+
+    //https://colorhunt.co/palette/faf1e4cedebd9eb384435334
+    auto COL_BACKGROUND = rgba8(250, 241, 228, 0.8f);
+    auto COL_ACCENT = rgba8(206, 222, 189, 0.9f);
+    auto COL_ACCENT_DARKER = rgba8(158, 179, 132, 0.9f);
+    auto COL_ACCENT_EVEN_DARKER = rgba8(67, 83, 52, 0.9f);
 
     // light style from Pacôme Danhiez (user itamago) https://github.com/ocornut/imgui/pull/511#issuecomment-175719267
     style.Alpha = 1.0f;
     style.FrameRounding = 3.0f;
     style.Colors[ImGuiCol_Text] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
     style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
-    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.94f, 0.94f, 0.94f, 0.94f);
-    style.Colors[ImGuiCol_PopupBg] = ImVec4(1.00f, 1.00f, 1.00f, 0.94f);
+    style.Colors[ImGuiCol_WindowBg] = COL_BACKGROUND;
+    style.Colors[ImGuiCol_PopupBg] = COL_BACKGROUND;
     style.Colors[ImGuiCol_Border] = ImVec4(0.00f, 0.00f, 0.00f, 0.39f);
     style.Colors[ImGuiCol_BorderShadow] = ImVec4(1.00f, 1.00f, 1.00f, 0.10f);
-    style.Colors[ImGuiCol_FrameBg] = ImVec4(1.00f, 1.00f, 1.00f, 0.94f);
-    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
-    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
-    style.Colors[ImGuiCol_TitleBg] = ImVec4(0.96f, 0.96f, 0.96f, 1.00f);
-    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 1.00f, 1.00f, 0.51f);
-    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.82f, 0.82f, 0.82f, 1.00f);
-    style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.98f, 0.98f, 0.98f, 0.53f);
-    style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.69f, 0.69f, 0.69f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.59f, 0.59f, 0.59f, 1.00f);
-    style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.49f, 0.49f, 0.49f, 1.00f);
-    style.Colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.24f, 0.52f, 0.88f, 1.00f);
-    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_Button] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
-    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
-    style.Colors[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
-    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
-    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    style.Colors[ImGuiCol_FrameBg] = COL_BACKGROUND;
+    style.Colors[ImGuiCol_FrameBgHovered] = COL_ACCENT;
+    style.Colors[ImGuiCol_FrameBgActive] = COL_ACCENT_DARKER;
+    style.Colors[ImGuiCol_TitleBg] = COL_ACCENT_DARKER;
+    style.Colors[ImGuiCol_TitleBgCollapsed] = COL_ACCENT;
+    style.Colors[ImGuiCol_TitleBgActive] = COL_ACCENT_EVEN_DARKER;
+    style.Colors[ImGuiCol_MenuBarBg] = COL_ACCENT_EVEN_DARKER;
+    style.Colors[ImGuiCol_ScrollbarBg] = COL_BACKGROUND;
+    style.Colors[ImGuiCol_ScrollbarGrab] = COL_ACCENT;
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] = COL_ACCENT_EVEN_DARKER;
+    style.Colors[ImGuiCol_ScrollbarGrabActive] = COL_ACCENT_DARKER;
+    style.Colors[ImGuiCol_CheckMark] = COL_ACCENT_EVEN_DARKER;
+    style.Colors[ImGuiCol_SliderGrab] = COL_ACCENT_EVEN_DARKER;
+    style.Colors[ImGuiCol_SliderGrabActive] = COL_ACCENT_DARKER;
+    //style.Colors[ImGuiCol_Button] = ImVec4(0.26f, 0.59f, 0.98f, 0.40f);
+    style.Colors[ImGuiCol_Button] = COL_ACCENT;
+    style.Colors[ImGuiCol_ButtonHovered] = COL_ACCENT_EVEN_DARKER;
+    style.Colors[ImGuiCol_ButtonActive] = COL_ACCENT_DARKER;
+    style.Colors[ImGuiCol_Header] = COL_ACCENT;
+    style.Colors[ImGuiCol_HeaderHovered] = COL_ACCENT_EVEN_DARKER;
+    style.Colors[ImGuiCol_HeaderActive] = COL_ACCENT_DARKER;
     style.Colors[ImGuiCol_ResizeGrip] = ImVec4(1.00f, 1.00f, 1.00f, 0.50f);
     style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
     style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
