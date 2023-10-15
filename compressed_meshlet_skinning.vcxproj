@@ -34,6 +34,7 @@
     <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp" />
     <ClCompile Include="source\SharedData.cpp" />
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp" />
+    <ClCompile Include="source\vertexcompressor\DynamicMeshletVertexCodec.cpp" />
     <ClCompile Include="source\vertexcompressor\MeshletRiggedCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\NoCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\PermutationCodec.cpp" />
@@ -63,6 +64,7 @@
     <ClInclude Include="source\thirdparty\blend_attribute_codec.h" />
     <ClInclude Include="source\thirdparty\permutation_coding.h" />
     <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h" />
+    <ClInclude Include="source\vertexcompressor\DynamicMeshletVertexCodec.h" />
     <ClInclude Include="source\vertexcompressor\MeshletRiggedCompression.h" />
     <ClInclude Include="source\vertexcompressor\NoCompression.h" />
     <ClInclude Include="source\vertexcompressor\PermutationCodec.h" />

@@ -17,6 +17,7 @@
 #include "vertexcompressor/NoCompression.h"
 #include "vertexcompressor/BoneLUTCompression.h"
 #include "vertexcompressor/MeshletRiggedCompression.h"
+#include "vertexcompressor/DynamicMeshletVertexCodec.h"
 
 #include <functional>
 
@@ -393,17 +394,18 @@ void MeshletsApp::initGUI()
 					}
 
 					// ================ ERROR DIALOG ======================
-					if (mOpenErrorPopup) {
-						ImGui::OpenPopup("Compilation Error");
-						mOpenErrorPopup = false;
+					static std::string lastErrorMessage;
+					if (!mShowErrorMessage.empty()) {
+						lastErrorMessage = std::move(mShowErrorMessage);
+						ImGui::OpenPopup("Application Error");
 					}
 					ImGui::SetNextWindowPos({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f }, ImGuiCond_Always, { 0.5f, 0.5f });
 					ImGui::SetNextWindowSize({ 600, -1 }, ImGuiCond_Always);
 					ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8, 0.4, 0.4, 1.0));
 					ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.8, 0.4, 0.4, 0.8));
-					if (ImGui::BeginPopupModal("Compilation Error", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
+					if (ImGui::BeginPopupModal("Application Error", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings))
 					{
-						ImGui::TextWrapped(mLastErrorMessage.c_str());
+						ImGui::TextWrapped(lastErrorMessage.c_str());
 						ImGui::NewLine();
 						ImGui::SameLine(ImGui::GetWindowWidth() - 80);
 						if (ImGui::Button("Got it.")) ImGui::CloseCurrentPopup();
@@ -520,6 +522,7 @@ void MeshletsApp::initialize()
 	mVertexCompressors.push_back(std::make_unique<NoCompression>(this));
 	mVertexCompressors.push_back(std::make_unique<BoneLUTCompression>(this));
 	mVertexCompressors.push_back(std::make_unique<MeshletRiggedCompression>(this));
+	mVertexCompressors.push_back(std::make_unique<DynamicMeshletVertexCodec>(this));
 	if (mAnimations.size() > 0) mCurrentlyPlayingAnimationId = 0;
 }
 
@@ -683,8 +686,7 @@ void MeshletsApp::compileAndLoadNextPipeline()
 		withoutError = true;
 	}
 	catch (const std::exception& e) {
-		mLastErrorMessage = e.what();
-		mOpenErrorPopup = true;
+		mShowErrorMessage = e.what();
 	}
 	if (withoutError) {
 		freeCommandBufferAndExecute({

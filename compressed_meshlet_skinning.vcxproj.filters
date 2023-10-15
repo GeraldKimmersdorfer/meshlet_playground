@@ -162,6 +162,9 @@
     <ClCompile Include="source\helpers\lut_helper.cpp">
       <Filter>source\helpers</Filter>
     </ClCompile>
+    <ClCompile Include="source\vertexcompressor\DynamicMeshletVertexCodec.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
@@ -243,6 +246,9 @@
       <Filter>source\helpers</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="source\vertexcompressor\DynamicMeshletVertexCodec.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\icon_small.png">

@@ -12,6 +12,10 @@ layout(set = 3, binding = 0, scalar) buffer VertexBuffer { vertex_data_meshlet_c
 layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[]; };
 #extension GL_EXT_control_flow_attributes : enable
 #include "blend_attribute_compression.glsl"
+
+#elif MCC_VERTEX_COMPRESSION == _DMLT
+// NOT IMPLEMENTED
+
 #endif
 
 #if MCC_VERTEX_COMPRESSION == _NOCOMP
@@ -89,6 +93,9 @@ vertex_data getVertexData(uint vid) {
     //ret.mBoneWeights.w = 1.0 - ( ret.mBoneWeights.x + ret.mBoneWeights.y + ret.mBoneWeights.z );
     return ret;
 }
+
+#elif MCC_VERTEX_COMPRESSION == _DMLT
+// NOT IMPLEMENTED
 
 #endif
 

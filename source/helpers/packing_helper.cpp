@@ -52,8 +52,17 @@ void unpackMeshIdxVcTc(uint32_t src, uint32_t& meshIndex, uint8_t& vertexCount, 
 }
 
 uint32_t packNormal(glm::vec3 normal) {
+	auto compressed = compressNormal(normal);
+	return (static_cast<uint32_t>(compressed.x) << 16u) | (static_cast<uint32_t>(compressed.y) << 0u);
+}
+
+glm::u16vec2 compressNormal(glm::vec3 normal)
+{
 	auto octahedron = octahedronEncode(normal);
-	return (static_cast<uint32_t>(octahedron.x * 0xFFFF) << 16u) | (static_cast<uint32_t>(octahedron.y * 0xFFFF) << 0u);
+	return glm::u16vec2{
+		static_cast<uint16_t>(octahedron.x * 0xFFFF),
+		static_cast<uint16_t>(octahedron.y * 0xFFFF)
+	};
 }
 
 glm::vec3 unpackNormal(uint32_t normal) {
@@ -66,7 +75,15 @@ glm::vec3 unpackNormal(uint32_t normal) {
 
 uint32_t packTextureCoords(glm::vec2 texCoord)
 {
-	texCoord = glm::clamp(texCoord, glm::vec2(0.0), glm::vec2(1.0));
-	assert(texCoord.x >= 0.0 && texCoord.x <= 1.0 && texCoord.y >= 0.0 && texCoord.y <= 1.0);
-	return (static_cast<uint32_t>(texCoord.x * 0xFFFF) << 16u) | (static_cast<uint32_t>(texCoord.y * 0xFFFF) << 0u);
+	auto compressed = compressTextureCoords(texCoord);
+	return (static_cast<uint32_t>(compressed.x) << 16u) | (static_cast<uint32_t>(compressed.y) << 0u);
+}
+
+glm::u16vec2 compressTextureCoords(glm::vec2 texCoords)
+{
+	assert(texCoords.x >= 0.0 && texCoords.x <= 1.0 && texCoords.y >= 0.0 && texCoords.y <= 1.0);
+	return glm::u16vec2(
+		static_cast<uint16_t>(texCoords.x * 0xFFFF),
+		static_cast<uint16_t>(texCoords.y * 0xFFFF)
+	);
 }

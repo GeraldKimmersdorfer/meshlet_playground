@@ -45,7 +45,7 @@ layout(set = 4, binding = 0, scalar) buffer MeshletsBuffer { meshlet_native mesh
 layout(set = 4, binding = 0, scalar) buffer MeshletsBuffer { meshlet_redirected meshlets[]; };
 layout(std430, set = 4, binding = 2) buffer PackedIndexBuffer { uint mPackedIndices[]; };
 #endif
-
+ 
 #if MCC_MESHLET_EXTENSION == _EXT && MCC_MESHLET_TYPE == _REDIR
 layout(std430, set = 4, binding = 2) buffer PackedIndexBuffer_u8 { uint8_t mPackedIndices_u8[]; };
 #endif
