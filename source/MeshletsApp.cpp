@@ -255,6 +255,10 @@ void MeshletsApp::initGUI()
 
 					ImGui::Separator();
 
+					if (ImGui::SliderInt("Instance Count", (int*)(void*)&mConfig.mInstanceCount, 1, MAX_INSTANCE_COUNT)) config_has_changed = true;
+
+					if (ImGui::SliderFloat3("Instance Offset", &mConfig.mInstancingOffset.x, -100.0f, 100.0f)) config_has_changed = true;
+
 					if (ImGui::BeginCombo("Animation", mCurrentlyPlayingAnimationId >= 0 ? mAnimations[mCurrentlyPlayingAnimationId].mName.c_str() : "None")) {
 						if (ImGui::Selectable("None", mCurrentlyPlayingAnimationId < 0)) mCurrentlyPlayingAnimationId = -1;
 						for (int n = 0; n < mAnimations.size(); n++) {

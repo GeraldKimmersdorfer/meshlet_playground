@@ -68,8 +68,9 @@ struct camera_data
 struct config_data {
 	bool mOverlayMeshlets;
 	uint mMeshletsCount;
-	uint p1;
-	uint p2;
+	uint mInstanceCount;
+	uint padding;
+	vec4 mInstanceOffset;
 };
 
 struct MaterialGpuData

@@ -51,13 +51,6 @@ void unpackMeshIdxVcTc(uint32_t src, uint32_t& meshIndex, uint8_t& vertexCount, 
 	triangleCount = (src >> 0u) & 0x7F;
 }
 
-void quantizePosition(glm::vec3 normalizedPosition, uint16_t* quantizedPositions)
-{
-	quantizedPositions[0] = normalizedPosition.x * 0xFFFF;
-	quantizedPositions[1] = normalizedPosition.y * 0xFFFF;
-	quantizedPositions[2] = normalizedPosition.z * 0xFFFF;
-}
-
 uint32_t packNormal(glm::vec3 normal) {
 	auto octahedron = octahedronEncode(normal);
 	return (static_cast<uint32_t>(octahedron.x * 0xFFFF) << 16u) | (static_cast<uint32_t>(octahedron.y * 0xFFFF) << 0u);

@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#define MAX_INSTANCE_COUNT 500
+
 static constexpr size_t sNumVertices = 64;
 static constexpr size_t sNumIndices = 378;
 static constexpr size_t sNumPackedIndices = 95; //avk::div_ceil(sNumIndices, 4);
@@ -59,7 +61,9 @@ struct vertex_data_meshlet_coding {
 struct config_data {
 	uint32_t mOverlayMeshlets = true;
 	uint32_t mMeshletsCount = 0;
-	glm::uvec2 padding;
+	uint32_t mInstanceCount = 2;
+	uint32_t padding;
+	glm::vec4 mInstancingOffset = { 0.0f , 0.0f, 1.0f , 0.0f };
 };
 
 // NOTE: We end up with massive amounts

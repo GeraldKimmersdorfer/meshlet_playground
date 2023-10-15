@@ -6,8 +6,6 @@
 uint32_t packMeshIdxVcTc(uint32_t meshIndex, uint8_t vertexCount, uint8_t triangleCount);
 void unpackMeshIdxVcTc(uint32_t src, uint32_t& meshIndex, uint8_t& vertexCount, uint8_t& triangleCount);
 
-void quantizePosition(glm::vec3 normalizedPosition, uint16_t* quantizedPositions);
-
 // Encodes normals with octahedron mapping and returns the uvec2 as
 // quantisized 16 bit packed in one 32 bit uint
 uint32_t packNormal(glm::vec3 normal);
