@@ -438,7 +438,10 @@ void MeshletsApp::initReusableObjects()
 		avk::fragment_shader(ShaderMetaCompiler::precompile("background/solid_color.frag", {})),
 		avk::cfg::front_face::define_front_faces_to_be_clockwise(),
 		avk::cfg::viewport_depth_scissors_config::from_framebuffer(avk::context().main_window()->backbuffer_reference_at_index(0)),
-		avk::context().main_window()->renderpass()
+		avk::context().create_renderpass({
+			avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
+			avk::attachment::declare(avk::format_from_window_depth_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
+		}, avk::context().main_window()->renderpass_reference().subpass_dependencies())
 	);
 
 	// ===== CPU UPDATER ==== 

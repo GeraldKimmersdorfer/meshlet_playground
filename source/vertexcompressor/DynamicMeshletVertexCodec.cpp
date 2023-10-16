@@ -27,13 +27,12 @@ void DynamicMeshletVertexCodec::doCompress(avk::queue* queue)
 		newVert.mBoneIndexLuid = vertexLUIndexTable[vid];
 		newVert.mBoneWeightsAndPermutation = PermutationCodec::encode(vert.mBoneWeights, vertexLUPermutation[vid]);	// TODO: permutation is only 5 bit. Increase resolution of permutation coding
 	}
-
+	auto meshletBuilder = mShared->getCurrentMeshletBuilder();
+	const auto& meshlets = meshletBuilder->getMeshletsNative();
 #if _DEBUG
 	// NEXT CHECK: Lets check wether vertices are accessed in different meshlets! With our encoding scheme that can't be the case
 	// because the vertex data will only contain the offset to the median value of the meshlet. If thats the case, we'll have
 	// to copy the vertex for both meshlets. But first lets see if thats actually necessary.
-	auto meshletBuilder = mShared->getCurrentMeshletBuilder();
-	const auto& meshlets = meshletBuilder->getMeshletsNative();
 	std::map<uint32_t, uint32_t> mVertexReferences;	// containes for each vertex by how many different meshlets its referenced
 	for (uint32_t mltid = 0; mltid < meshlets.size(); mltid++) {
 		auto& meshlet = meshlets[mltid];
@@ -156,6 +155,8 @@ void DynamicMeshletVertexCodec::doCompress(avk::queue* queue)
 		glm::u16vec4 sumBitCount(bitCounts.mPosition.x + bitCounts.mPosition.y + bitCounts.mPosition.z + bitCounts.mNormal.x + bitCounts.mNormal.y + bitCounts.mTexCoord.x + bitCounts.mTexCoord.y + bitCounts.mBoneIndexLuid + bitCounts.mBoneWeightsAndPermutation);
 		sumBitCount = glm::ceil(glm::vec4(sumBitCount) / glm::vec4(1.0f, 8.0f, 16.0f, 32.0f)) * glm::vec4(1.0f, 8.0f, 16.0f, 32.0f);
 		glm::u16vec4 bitSaved = glm::u16vec4(uncompressedBitCount) - sumBitCount;
+
+		/*
 		std::cout << "==== MAX DIFFERENCES FOR MESHLET " << std::to_string(mltid) << " ====" << std::endl;
 		std::cout << "Position:                  " << glm::to_string(maxDifferences.mPosition) << " " << glm::to_string(bitCounts.mPosition) << std::endl;
 		std::cout << "Normal:                    " << glm::to_string(maxDifferences.mNormal) << " " << glm::to_string(bitCounts.mNormal) << std::endl;
@@ -165,7 +166,7 @@ void DynamicMeshletVertexCodec::doCompress(avk::queue* queue)
 		std::cout << "------------------------------------------------------" << std::endl;
 		std::cout << "BitCounts:(u1,u8,u16,u32)  " << glm::to_string(sumBitCount) << std::endl;
 		std::cout << "BitSaved: (u1,u8,u16,u32)  " << glm::to_string(bitSaved) << std::endl;
-		std::cout << "======================================================" << std::endl;
+		std::cout << "======================================================" << std::endl;*/
 
 		bitSavedTotal += glm::u16vec4(vertexCount) * bitSaved;
 		totalVertexCount += vertexCount;
