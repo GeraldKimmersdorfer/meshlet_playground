@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
 #include "../shared_structs.h"
 
 void test();
@@ -9,72 +10,66 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 	std::vector<glm::u16vec4>& lut, std::vector<uint16_t>* vertexLUIndexTable = nullptr, std::vector<uint8_t>* vertexLUPermutation = nullptr);
 
 template <class T>
-void swap_ip(T& vec, int i1, int i2) {
-	auto tmp = vec[i1];
-	vec[i1] = vec[i2];
-	vec[i2] = tmp;
-}
-
-template <class T>
 static inline T applyPermutation(const T& src, uint8_t permutationKey) {
-	T o = src;
+	assert(permutationKey >= 0 && permutationKey <= 23);
 	switch (permutationKey) {
-	case 0: break;
-	case 1: swap_ip(o, 2, 3); break;
-	case 2: swap_ip(o, 1, 2); break;
-	case 3: swap_ip(o, 1, 2); swap_ip(o, 2, 3); break;
-	case 4: swap_ip(o, 1, 3); break;
-	case 5: swap_ip(o, 1, 3); swap_ip(o, 2, 3); break;
-	case 6: swap_ip(o, 0, 1); break;
-	case 7: swap_ip(o, 0, 1); swap_ip(o, 2, 3); break;
-	case 8: swap_ip(o, 0, 1); swap_ip(o, 1, 2); break;
-	case 9: swap_ip(o, 0, 1); swap_ip(o, 1, 2); swap_ip(o, 2, 3); break;
-	case 10: swap_ip(o, 0, 1); swap_ip(o, 1, 3); break;
-	case 11: swap_ip(o, 0, 1); swap_ip(o, 1, 3); swap_ip(o, 2, 3); break;
-	case 12: swap_ip(o, 0, 2); break;
-	case 13: swap_ip(o, 0, 2); swap_ip(o, 2, 3); break;
-	case 14: swap_ip(o, 0, 1); swap_ip(o, 0, 2); break;
-	case 15: swap_ip(o, 0, 1); swap_ip(o, 0, 2); swap_ip(o, 2, 3); break;
-	case 16: swap_ip(o, 0, 2); swap_ip(o, 1, 3); break;
-	case 17: swap_ip(o, 0, 3); swap_ip(o, 0, 1); swap_ip(o, 0, 2); break;
-	case 18: swap_ip(o, 0, 3); break;
-	case 19: swap_ip(o, 2, 3); swap_ip(o, 0, 2); break;
-	case 20: swap_ip(o, 0, 3); swap_ip(o, 1, 2); break;
-	case 21: swap_ip(o, 0, 1); swap_ip(o, 0, 3); swap_ip(o, 1, 2); break;
-	case 22: swap_ip(o, 0, 1); swap_ip(o, 0, 3); break;
-	case 23: swap_ip(o, 0, 1); swap_ip(o, 0, 3); swap_ip(o, 2, 3); break;
+	case 0: return T(src[0], src[1], src[2], src[3]);
+	case 1: return T(src[0], src[1], src[3], src[2]);
+	case 2: return T(src[0], src[2], src[1], src[3]);
+	case 3: return T(src[0], src[2], src[3], src[1]);
+	case 4: return T(src[0], src[3], src[2], src[1]);
+	case 5: return T(src[0], src[3], src[1], src[2]);
+	case 6: return T(src[1], src[0], src[2], src[3]);
+	case 7: return T(src[1], src[0], src[3], src[2]);
+	case 8: return T(src[1], src[2], src[0], src[3]);
+	case 9: return T(src[1], src[2], src[3], src[0]);
+	case 10: return T(src[1], src[3], src[2], src[0]);
+	case 11: return T(src[1], src[3], src[0], src[2]);
+	case 12: return T(src[2], src[1], src[0], src[3]);
+	case 13: return T(src[2], src[1], src[3], src[0]);
+	case 14: return T(src[2], src[0], src[1], src[3]);
+	case 15: return T(src[2], src[0], src[3], src[1]);
+	case 16: return T(src[2], src[3], src[0], src[1]);
+	case 17: return T(src[2], src[3], src[1], src[0]);
+	case 18: return T(src[3], src[1], src[2], src[0]);
+	case 19: return T(src[3], src[1], src[0], src[2]);
+	case 20: return T(src[3], src[2], src[1], src[0]);
+	case 21: return T(src[3], src[2], src[0], src[1]);
+	case 22: return T(src[3], src[0], src[2], src[1]);
+	case 23: return T(src[3], src[0], src[1], src[2]);
 	}
-	return o;
+	std::cerr << "Permutation Key has to be inside bounds [0,23]" << std::endl;
+	return T(src);
 }
 
 template <class T>
 static inline T applyPermutationInverse(const T& src, uint8_t permutationKey) {
-	T o = src;
 	switch (permutationKey) {
-	case 0: break;
-	case 1: swap_ip(o, 2, 3); break;
-	case 2: swap_ip(o, 1, 2); break;
-	case 3: swap_ip(o, 1, 3); swap_ip(o, 2, 3); break;
-	case 4: swap_ip(o, 1, 3); break;
-	case 5: swap_ip(o, 1, 2); swap_ip(o, 2, 3); break;
-	case 6: swap_ip(o, 0, 1); break;
-	case 7: swap_ip(o, 0, 1); swap_ip(o, 2, 3); break;
-	case 8: swap_ip(o, 0, 1); swap_ip(o, 0, 2); break;
-	case 9: swap_ip(o, 0, 1); swap_ip(o, 0, 3); swap_ip(o, 2, 3); break;
-	case 10: swap_ip(o, 0, 1); swap_ip(o, 0, 3); break;
-	case 11: swap_ip(o, 0, 1); swap_ip(o, 0, 2); swap_ip(o, 2, 3); break;
-	case 12: swap_ip(o, 0, 2); break;
-	case 13: swap_ip(o, 2, 3); swap_ip(o, 0, 2); break;
-	case 14: swap_ip(o, 0, 1); swap_ip(o, 1, 2); break;
-	case 15: swap_ip(o, 0, 1); swap_ip(o, 1, 3); swap_ip(o, 2, 3); break;
-	case 16: swap_ip(o, 0, 2); swap_ip(o, 1, 3); break;
-	case 17: swap_ip(o, 0, 1); swap_ip(o, 0, 3); swap_ip(o, 1, 2); break;
-	case 18: swap_ip(o, 0, 3); break;
-	case 19: swap_ip(o, 0, 2); swap_ip(o, 2, 3); break;
-	case 20: swap_ip(o, 0, 3); swap_ip(o, 1, 2); break;
-	case 21: swap_ip(o, 0, 3); swap_ip(o, 0, 1); swap_ip(o, 0, 2); break;
-	case 22: swap_ip(o, 0, 1); swap_ip(o, 1, 3); break;
-	case 23: swap_ip(o, 0, 1); swap_ip(o, 1, 2); swap_ip(o, 2, 3); break;
+	case 0: return T(src[0], src[1], src[2], src[3]);
+	case 1: return T(src[0], src[1], src[3], src[2]);
+	case 2: return T(src[0], src[2], src[1], src[3]);
+	case 3: return T(src[0], src[3], src[1], src[2]);
+	case 4: return T(src[0], src[3], src[2], src[1]);
+	case 5: return T(src[0], src[2], src[3], src[1]);
+	case 6: return T(src[1], src[0], src[2], src[3]);
+	case 7: return T(src[1], src[0], src[3], src[2]);
+	case 8: return T(src[2], src[0], src[1], src[3]);
+	case 9: return T(src[3], src[0], src[1], src[2]);
+	case 10: return T(src[3], src[0], src[2], src[1]);
+	case 11: return T(src[2], src[0], src[3], src[1]);
+	case 12: return T(src[2], src[1], src[0], src[3]);
+	case 13: return T(src[3], src[1], src[0], src[2]);
+	case 14: return T(src[1], src[2], src[0], src[3]);
+	case 15: return T(src[1], src[3], src[0], src[2]);
+	case 16: return T(src[2], src[3], src[0], src[1]);
+	case 17: return T(src[3], src[2], src[0], src[1]);
+	case 18: return T(src[3], src[1], src[2], src[0]);
+	case 19: return T(src[2], src[1], src[3], src[0]);
+	case 20: return T(src[3], src[2], src[1], src[0]);
+	case 21: return T(src[2], src[3], src[1], src[0]);
+	case 22: return T(src[1], src[3], src[2], src[0]);
+	case 23: return T(src[1], src[2], src[3], src[0]);
 	}
-	return o;
+	std::cerr << "Permutation Key has to be inside bounds [0,23]" << std::endl;
+	return T(src);
 }

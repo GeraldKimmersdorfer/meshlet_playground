@@ -56,33 +56,6 @@ const std::map<uint32_t, uint8_t> permutationKeyLookup = {
  { 50331906u, 23 }  // 3, 0, 1, 2
 };
 
-const std::map<uint8_t, uint8_t> inverseKeyLookup = {
-	{0, 0},
-	{1, 1},
-	{2, 2},
-	{3, 5},
-	{4, 4},
-	{5, 3},
-	{6, 6},
-	{7, 7},
-	{8, 14},
-	{9, 23},
-	{10, 22},
-	{11, 15},
-	{12, 12},
-	{13, 19},
-	{14, 8},
-	{15, 11},
-	{16, 16},
-	{17, 21},
-	{18, 18},
-	{19, 13},
-	{20, 20},
-	{21, 17},
-	{22, 10},
-	{23, 9}
-};
-
 uint8_t getPermutationKey(uint32_t* arr) {
 	uint32_t hash = (arr[0] << 24) | (arr[1] << 16) | (arr[2] << 8) | (arr[3]);
 	auto it = permutationKeyLookup.find(hash);
@@ -223,6 +196,11 @@ static inline void removeFromUintVector(std::vector<uint16_t>& v, uint16_t val) 
 
 void test()
 {
+	auto src = glm::uvec4(0, 1, 2, 3);
+	for (int i = 0; i < 24; i++) {
+		auto p = applyPermutationInverse(src, i);
+		std::cout << "case " << i << ": return T(src[" << p[0] << "], src[" << p[1] << "], src[" << p[2] << "], src[" << p[3] << "]);" << std::endl;
+	}
 	getInverseKeys();
 }
 
@@ -459,7 +437,7 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 				auto finalPermut = combinePermutations(sortPermut, basePermut);
 				(*vertexLUPermutation)[vid] = finalPermut;
 
-				/*//DEBUG CHECK:
+				//DEBUG CHECK:
 				auto original = adoptedBoneIndexVectors[vid];
 				auto fromlut = reducedIndicesWithID[luid].first;
 				auto fromlutAfterPermu = applyPermutation(fromlut, finalPermut);
@@ -478,11 +456,10 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 
 					std::cout << "After Base Permu:       " << glm::to_string(fromLutAfterBasePermu) << std::endl;
 					std::cout << "After Sort Permu:       " << glm::to_string(fromLutAfterSortPermu) << std::endl;
-				} */
+				}
 			}
 		}
 		else {
-			
 			// In this case merging is either not activated or nothing was to merge. LUID is already applied. We just have to get Permutation
 			for (size_t vid = 0; vid < vertex_count; vid++) {
 				auto luid = luids[vid];
@@ -492,7 +469,6 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 				(*vertexLUPermutation)[vid] = permutation;
 			}
 		}
-
 	}
 
 	// STEP 7: Write out vertexLUIndexTable. The content is inside reducedIndicesWithID

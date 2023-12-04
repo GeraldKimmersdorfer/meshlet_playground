@@ -14,6 +14,7 @@
 #include "meshletbuilder/MeshoptimizerBuilder.h"
 #include "meshletbuilder/AVKBuilder.h"
 #include "meshletbuilder/BoneLUTDependentBuilder.h"
+
 #include "vertexcompressor/NoCompression.h"
 #include "vertexcompressor/BoneLUTCompression.h"
 #include "vertexcompressor/MeshletRiggedCompression.h"
@@ -40,7 +41,8 @@ void openDialogOptionPane(const char* vFilter, IGFDUserDatas vUserDatas, bool* v
 }
 
 std::vector<std::string> AssetFolderNames = {
-	R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets)"
+	R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets)",
+	R"(C:\Users\gkimmersdorfer\OneDrive - TU Wien\Bachelor-Arbeit\Assets)"
 };
 // Returns the first Asset folder thats available
 std::string getBestAvailableAssetFolder() {
@@ -129,7 +131,8 @@ void MeshletsApp::load(const std::string& filename)
 	mBoneTransforms.resize(model->num_bone_matrices(meshIndicesInOrder)); //OMG... num_bone_matrices returns fake bones for meshes. I DONT WANT THAT!!!
 
 	// ToDo: Gather init pose
-
+	glm::vec3 aabbMinWS{ FLT_MAX, FLT_MAX, FLT_MAX };
+	glm::vec3 aabbMaxWS{ -FLT_MAX, -FLT_MAX, -FLT_MAX };
 	for (size_t mpos = 0; mpos < meshIndicesInOrder.size(); mpos++) {
 		auto meshIndex = meshIndicesInOrder[mpos];
 		std::string meshname = model->name_of_mesh(mpos);
@@ -142,8 +145,6 @@ void MeshletsApp::load(const std::string& filename)
 			.mMaterialIndex = 0,
 			.mAnimated = static_cast<int32_t>(amesh->HasBones()),
 			});
-
-
 
 		// Find and assign the correct material in the allMatConfigs vector
 		for (auto pair : distinctMaterials) {
@@ -176,10 +177,15 @@ void MeshletsApp::load(const std::string& filename)
 				.mBoneIndices = meshBoneIndices[i],
 				.mBoneWeights = meshBoneWeights[i]
 				});
+			glm::vec3 vertexPosWS{ mesh.mTransformationMatrix * glm::vec4(meshPositions[i], 1.0f) };
+			aabbMinWS = glm::min(aabbMinWS, vertexPosWS);
+			aabbMaxWS = glm::max(aabbMaxWS, vertexPosWS);
 		}
 
 		mIndices.insert(mIndices.end(), meshIndices.begin(), meshIndices.end());
 	}
+	glm::vec3 aabbWSExtend = aabbMaxWS - aabbMinWS;
+	mConfig.mInstancingOffset = glm::vec4(0.0F, 0.0F, -aabbWSExtend.z, 0.0F);
 
 
 	// ======== START UPLOADING TO GPU =============
