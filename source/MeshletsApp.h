@@ -93,11 +93,6 @@ private: // v== Member variables ==v
 
 	uint32_t mTaskInvocationsExt;
 
-	avk::query_pool mTimestampPool;
-	uint64_t mLastTimestamp = 0;
-	uint64_t mLastDrawMeshTasksDuration = 0;
-	uint64_t mLastFrameDuration = 0;
-
 	std::unique_ptr<TimerManager> mTimer;
 
 	avk::graphics_pipeline mBackgroundPipeline;

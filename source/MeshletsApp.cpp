@@ -256,14 +256,7 @@ void MeshletsApp::initGUI()
 	auto imguiManager = avk::current_composition()->element_by_type<avk::imgui_manager>();
 	if (nullptr != imguiManager) {
 		imguiManager->add_callback([
-			this, imguiManager,
-				timestampPeriod = std::invoke([]() {
-				// get timestamp period from physical device, could be different for other GPUs
-				auto props = avk::context().physical_device().getProperties();
-			return static_cast<double>(props.limits.timestampPeriod);
-					}),
-				lastFrameDurationMs = 0.0,
-						lastDrawMeshTasksDurationMs = 0.0
+			this, imguiManager
 		]() mutable {
 				bool config_has_changed = false;
 					ImGuiIO& io = ImGui::GetIO();
@@ -389,23 +382,16 @@ void MeshletsApp::initGUI()
 						if (mVSyncEnabled) avk::context().main_window()->set_presentaton_mode(avk::presentation_mode::fifo);
 						else avk::context().main_window()->set_presentaton_mode(avk::presentation_mode::mailbox);
 					}
-					ImGui::Separator();
-
-					ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), "Timestamp Period: %.3f ns", timestampPeriod);
-					lastFrameDurationMs = glm::mix(lastFrameDurationMs, mLastFrameDuration * 1e-6 * timestampPeriod, 0.05);
-					lastDrawMeshTasksDurationMs = glm::mix(lastDrawMeshTasksDurationMs, mLastDrawMeshTasksDuration * 1e-6 * timestampPeriod, 0.05);
-					ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "Frame time (timer queries): %.3lf ms", lastFrameDurationMs);
-					ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "drawMeshTasks took        : %.3lf ms", lastDrawMeshTasksDurationMs);
 
 					if (ImGui::CollapsingHeader("Timing", ImGuiTreeNodeFlags_DefaultOpen)) {
 						auto timers = mTimer->get_timers();
 						if (timers.size() > 0) {
-							std::string currGroup = "JUST NO GROUP NAME";
+							std::string currGroup = "";
 							for (const auto& tmr : timers) {
 								auto thisGroup = tmr->get_group();
 								if (thisGroup != currGroup) {
 									currGroup = thisGroup;
-									ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), thisGroup.c_str(), timestampPeriod);
+									ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), thisGroup.c_str());
 								}
 								ImGui::Text("%s: %.3f (%.3f)", tmr->get_name().c_str(), tmr->get_last_value(), tmr->get_averaged_value());
 							}
@@ -504,11 +490,6 @@ void MeshletsApp::initReusableObjects()
 		LOG_INFO(std::format("This device supports the following subgroup operations: {}", vk::to_string(mPropsSubgroup.supportedOperations)));
 		LOG_INFO(std::format("This device supports subgroup operations in the following stages: {}", vk::to_string(mPropsSubgroup.supportedStages)));
 		mTaskInvocationsExt = mPropsMeshShader.maxPreferredTaskWorkGroupInvocations;
-
-		// ===== GPU QUERY POOLS ====
-		mTimestampPool = avk::context().create_query_pool_for_timestamp_queries(
-			static_cast<uint32_t>(avk::context().main_window()->number_of_frames_in_flight()) * 2
-		);
 
 		// ===== TIMING =====
 		mTimer = std::make_unique<TimerManager>();
@@ -637,21 +618,10 @@ void MeshletsApp::render()
 	auto cmdBfr = commandPool->alloc_command_buffer(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
 	uint32_t inFlightIndexU32 = static_cast<uint32_t>(inFlightIndex);
-	const auto firstQueryIndex = inFlightIndexU32 * 2;
-	if (mainWnd->current_frame() > mainWnd->number_of_frames_in_flight()) // otherwise we will wait forever
-	{
-		auto timers = mTimestampPool->get_results<uint64_t, 2>(
-			firstQueryIndex, 2, vk::QueryResultFlagBits::e64 // | vk::QueryResultFlagBits::eWait // => ensure that the results are available (shouldnt be necessary)
-			);
-		mLastDrawMeshTasksDuration = timers[1] - timers[0];
-		mLastFrameDuration = timers[1] - mLastTimestamp;
-		mLastTimestamp = timers[1];
-	}
+
 	auto gpu_frame_timer = std::static_pointer_cast<GpuTimer>(mTimer->get("gpu_frame"));
 
 	auto submissionData = context().record({
-			mTimestampPool->reset(firstQueryIndex, 2),     // reset the two values relevant for the current frame in flight
-			mTimestampPool->write_timestamp(firstQueryIndex + 0, stage::all_commands), // measure before drawMeshTasks*
 
 			gpu_frame_timer->startAction(inFlightIndexU32),
 
@@ -676,8 +646,6 @@ void MeshletsApp::render()
 			}),
 
 			gpu_frame_timer->stopAction(inFlightIndexU32),
-
-			mTimestampPool->write_timestamp(firstQueryIndex + 1, stage::mesh_shader),
 
 		}).into_command_buffer(cmdBfr).then_submit_to(*mQueue);
 
