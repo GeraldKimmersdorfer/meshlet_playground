@@ -81,6 +81,19 @@ uint getItemFromPackedIndexArray(uint u8index, uint meshletIndex) {
 }
 #endif
 
+// NOTE: This function is by far more performant than the ones in glsl_helper
+void boneTransform(in vec4 boneWeights, in uvec4 boneIndices, inout vec4 posMshSp, inout vec3 nrmMshSp) {
+	mat4 skinMatrix = mat4(0.0);
+	for (uint i = 0; i < 4; i++) {
+		if (boneWeights[i] > BONE_WEIGHT_EPSILON) {
+			skinMatrix += boneWeights[i] * bones[boneIndices[i]].transform;
+		} // else break (if boneWeights are sorted)
+	}
+	posMshSp = skinMatrix * posMshSp;
+	nrmMshSp = normalize(mat3(skinMatrix) * nrmMshSp);
+}
+
+
 void main() 
 {
 	uint meshletIndex = meshletIndices[gl_WorkGroupID.x];
@@ -122,18 +135,7 @@ void main()
 		vec3 nrmMshSp = vertex.mNormal;
 
 		if (isAnimated) {
-			vec4 boneWeights = vertex.mBoneWeights;
-			uvec4 boneIndices = vertex.mBoneIndices;
-			posMshSp = bone_transform(
-				bones[boneIndices[0]].transform, bones[boneIndices[1]].transform,
-				bones[boneIndices[2]].transform, bones[boneIndices[3]].transform,
-				boneWeights, posMshSp
-			);
-			nrmMshSp = bone_transform(
-				bones[boneIndices[0]].transform, bones[boneIndices[1]].transform,
-				bones[boneIndices[2]].transform, bones[boneIndices[3]].transform,
-				boneWeights, nrmMshSp
-			);
+			boneTransform(vertex.mBoneWeights, vertex.mBoneIndices, posMshSp, nrmMshSp);
 		}
 
 		// Standard transformation:
