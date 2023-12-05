@@ -41,6 +41,9 @@
     <Filter Include="assets\shaders\background">
       <UniqueIdentifier>{4b7f8ad6-087b-424e-8a9c-bd626b95d287}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\statistics">
+      <UniqueIdentifier>{820b7721-a989-4150-9522-22ec315d8e3a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\tools\glslangValidator.exe">

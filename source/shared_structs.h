@@ -3,10 +3,13 @@
 #include <glm/glm.hpp>
 
 #define MAX_INSTANCE_COUNT 500
+#define BONE_WEIGHT_EPSILON 0.0000001
 
 static constexpr size_t sNumVertices = 64;
 static constexpr size_t sNumIndices = 378;
 static constexpr size_t sNumPackedIndices = 95; //avk::div_ceil(sNumIndices, 4);
+
+
 
 struct mesh_data {
 	glm::mat4 mTransformationMatrix;
@@ -33,6 +36,8 @@ struct vertex_data_bone_lookup {
 	glm::vec4 mTxYNormal;
 	glm::vec3 mBoneWeights;
 	uint32_t mBoneIndicesLUID;
+	glm::vec4 mBoneWeightsGT;
+	glm::uvec4 mBoneIndicesGT;
 };
 
 struct vertex_data_permutation_coding {

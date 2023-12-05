@@ -2,6 +2,8 @@
 #define S_NUM_INDICES 378
 #define S_NUM_PACKED_INDICES 95 // avk::div_ceil(sNumIndices, 4)
 
+#define BONE_WEIGHT_EPSILON 0.0000001
+
 struct meshlet_native {
 	uint mMeshIdxVcTc;	// see packMeshIdxVcTc
 	uint mVertices[S_NUM_VERTICES];
@@ -46,6 +48,8 @@ struct vertex_data_bone_lookup {
 	vec4 mTxYNormal;
 	vec3 mBoneWeights;
 	uint mBoneIndicesLUID;
+	vec4 mBoneWeightsGT;
+	uvec4 mBoneIndicesGT;
 };
 
 struct vertex_data_meshlet_coding {

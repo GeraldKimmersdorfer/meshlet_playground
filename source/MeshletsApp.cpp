@@ -177,6 +177,17 @@ void MeshletsApp::load(const std::string& filename)
 				.mBoneIndices = meshBoneIndices[i],
 				.mBoneWeights = meshBoneWeights[i]
 				});
+
+			// "NORMALIZE" bone weights, meaning there are a lot of bone weights that don't add up to one.
+			// I don't know where that is coming from, but i intend to fix this in the following lines of code
+			// which stretches the weights that are > BONE_WEIGHT_EPSILON in regards of their weight.
+			float weightSum = 0.0f;
+			for (int bi = 0; bi < 4; bi++) {
+				if (vd.mBoneWeights[bi] < BONE_WEIGHT_EPSILON) vd.mBoneWeights[bi] = 0.0f;
+				else weightSum += vd.mBoneWeights[bi];
+			}
+			vd.mBoneWeights /= weightSum;
+
 			glm::vec3 vertexPosWS{ mesh.mTransformationMatrix * glm::vec4(meshPositions[i], 1.0f) };
 			aabbMinWS = glm::min(aabbMinWS, vertexPosWS);
 			aabbMaxWS = glm::max(aabbMaxWS, vertexPosWS);
@@ -184,9 +195,11 @@ void MeshletsApp::load(const std::string& filename)
 
 		mIndices.insert(mIndices.end(), meshIndices.begin(), meshIndices.end());
 	}
+
+	// NOTE: The AABB computation will definitely not work for most models, as the rigging often adds scaling
+	// To be exact it has to be computed for each animation individually. But this is out of scope here!
 	glm::vec3 aabbWSExtend = aabbMaxWS - aabbMinWS;
 	mConfig.mInstancingOffset = glm::vec4(0.0F, 0.0F, -aabbWSExtend.z, 0.0F);
-
 
 	// ======== START UPLOADING TO GPU =============
 	mVertexBuffer = avk::context().create_buffer(avk::memory_usage::device,

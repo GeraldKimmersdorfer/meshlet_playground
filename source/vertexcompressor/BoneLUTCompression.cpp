@@ -2,7 +2,6 @@
 #include "../helpers/lut_helper.h"
 #include <imgui.h>
 
-
 void BoneLUTCompression::doCompress(avk::queue* queue)
 {
 	std::vector<uint16_t> vertexLUIndexTable; std::vector<uint8_t> vertexLUPermutation;
@@ -13,11 +12,13 @@ void BoneLUTCompression::doCompress(avk::queue* queue)
 		auto& vert = mShared->mVertexData[vid];
 		glm::vec4 boneWeights = vert.mBoneWeights;
 		if (mWithShuffle) boneWeights = applyPermutation(boneWeights, vertexLUPermutation[vid]);
-		mVertexData.push_back(vertex_data_bone_lookup{
+		auto newVertexData = mVertexData.emplace_back(vertex_data_bone_lookup{
 			.mPositionTxX = vert.mPositionTxX,
 			.mTxYNormal = vert.mTxYNormal,
 			.mBoneWeights = glm::vec3(boneWeights),
-			.mBoneIndicesLUID = static_cast<uint32_t>(vertexLUIndexTable[vid])
+			.mBoneIndicesLUID = static_cast<uint32_t>(vertexLUIndexTable[vid]),
+			.mBoneWeightsGT = vert.mBoneWeights,
+			.mBoneIndicesGT = vert.mBoneIndices
 			});
 	}
 	mVertexBuffer = avk::context().create_buffer(avk::memory_usage::device,

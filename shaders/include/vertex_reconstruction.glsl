@@ -38,6 +38,8 @@ vertex_data getVertexData(uint vid) {
     ret.mBoneIndices = uvec4(bone_indices_lut[vertices[vid].mBoneIndicesLUID]);
     ret.mBoneWeights = vec4(vertices[vid].mBoneWeights, 1.0);
     ret.mBoneWeights.w = 1.0 - ( ret.mBoneWeights.x + ret.mBoneWeights.y + ret.mBoneWeights.z );
+    //ret.mBoneWeights = vertices[vid].mBoneWeightsGT;
+    //ret.mBoneIndices = vertices[vid].mBoneIndicesGT;
     return ret;
 }
 
