@@ -13,6 +13,8 @@
 #include "vertexcompressor/VertexCompressionInterface.h"
 #include "meshletbuilder/MeshletbuilderInterface.h"
 
+#include "statistics/TimerManager.h"
+
 #define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
 //#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Mixamo-Group-No-Materials.fbx)"
 //#define STARTUP_FILE R"(assets/weight_meshlet_creation_test.fbx)"
@@ -96,8 +98,7 @@ private: // v== Member variables ==v
 	uint64_t mLastDrawMeshTasksDuration = 0;
 	uint64_t mLastFrameDuration = 0;
 
-	avk::query_pool mPipelineStatsPool;
-	std::array<uint64_t, 3> mPipelineStats;
+	std::unique_ptr<TimerManager> mTimer;
 
 	avk::graphics_pipeline mBackgroundPipeline;
 

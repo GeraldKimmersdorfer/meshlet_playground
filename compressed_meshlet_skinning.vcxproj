@@ -33,6 +33,10 @@
     <ClCompile Include="source\shadercompiler\ShaderFile.cpp" />
     <ClCompile Include="source\shadercompiler\ShaderMetaCompiler.cpp" />
     <ClCompile Include="source\SharedData.cpp" />
+    <ClCompile Include="source\statistics\CPUTimer.cpp" />
+    <ClCompile Include="source\statistics\GPUTimer.cpp" />
+    <ClCompile Include="source\statistics\TimerInterface.cpp" />
+    <ClCompile Include="source\statistics\TimerManager.cpp" />
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\DynamicMeshletVertexCodec.cpp" />
     <ClCompile Include="source\vertexcompressor\MeshletRiggedCompression.cpp" />
@@ -61,6 +65,10 @@
     <ClInclude Include="source\shadercompiler\ShaderMetaConstant.h" />
     <ClInclude Include="source\SharedData.h" />
     <ClInclude Include="source\shared_structs.h" />
+    <ClInclude Include="source\statistics\CPUTimer.h" />
+    <ClInclude Include="source\statistics\GPUTimer.h" />
+    <ClInclude Include="source\statistics\TimerInterface.h" />
+    <ClInclude Include="source\statistics\TimerManager.h" />
     <ClInclude Include="source\thirdparty\blend_attribute_codec.h" />
     <ClInclude Include="source\thirdparty\permutation_coding.h" />
     <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h" />

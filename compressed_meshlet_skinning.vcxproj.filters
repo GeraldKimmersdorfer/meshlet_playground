@@ -168,6 +168,18 @@
     <ClCompile Include="source\vertexcompressor\DynamicMeshletVertexCodec.cpp">
       <Filter>source\vertexcompressor</Filter>
     </ClCompile>
+    <ClCompile Include="source\statistics\CPUTimer.cpp">
+      <Filter>source\statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\statistics\TimerInterface.cpp">
+      <Filter>source\statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\statistics\TimerManager.cpp">
+      <Filter>source\statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\statistics\GPUTimer.cpp">
+      <Filter>source\statistics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
@@ -251,6 +263,18 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="source\vertexcompressor\DynamicMeshletVertexCodec.h">
       <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\CPUTimer.h">
+      <Filter>source\statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\TimerInterface.h">
+      <Filter>source\statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\TimerManager.h">
+      <Filter>source\statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\GPUTimer.h">
+      <Filter>source\statistics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

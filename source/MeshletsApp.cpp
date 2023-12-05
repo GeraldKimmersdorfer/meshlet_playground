@@ -26,6 +26,10 @@
 #include "shadercompiler/ShaderMetaCompiler.h"
 #include "helpers/hud_helpers.h"
 
+#include "statistics/TimerManager.h"
+#include "statistics/CPUTimer.h"
+#include "statistics/GPUTimer.h"
+
 std::vector<glm::mat4> globalTransformPresets = {
 	glm::mat4(1.0),				// none
 	 glm::rotate(glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f)) * glm::scale(glm::vec3(0.01f))	// lucy
@@ -392,9 +396,24 @@ void MeshletsApp::initGUI()
 					lastDrawMeshTasksDurationMs = glm::mix(lastDrawMeshTasksDurationMs, mLastDrawMeshTasksDuration * 1e-6 * timestampPeriod, 0.05);
 					ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "Frame time (timer queries): %.3lf ms", lastFrameDurationMs);
 					ImGui::TextColored(ImVec4(.8f, .1f, .6f, 1.f), "drawMeshTasks took        : %.3lf ms", lastDrawMeshTasksDurationMs);
-					ImGui::Text("mPipelineStats[0]         : %llu", mPipelineStats[0]);
-					ImGui::Text("mPipelineStats[1]         : %llu", mPipelineStats[1]);
-					ImGui::Text("mPipelineStats[2]         : %llu", mPipelineStats[2]);
+
+					if (ImGui::CollapsingHeader("Timing", ImGuiTreeNodeFlags_DefaultOpen)) {
+						auto timers = mTimer->get_timers();
+						if (timers.size() > 0) {
+							std::string currGroup = "JUST NO GROUP NAME";
+							for (const auto& tmr : timers) {
+								auto thisGroup = tmr->get_group();
+								if (thisGroup != currGroup) {
+									currGroup = thisGroup;
+									ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), thisGroup.c_str(), timestampPeriod);
+								}
+								ImGui::Text("%s: %.3f (%.3f)", tmr->get_name().c_str(), tmr->get_last_value(), tmr->get_averaged_value());
+							}
+						}
+					}
+
+
+
 					ImGui::End();
 
 					// ================ FILE OPEN DIALOG ======================
@@ -460,7 +479,7 @@ void MeshletsApp::initReusableObjects()
 		avk::context().create_renderpass({
 			avk::attachment::declare(avk::format_from_window_color_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::color(0)     , avk::on_store::store),
 			avk::attachment::declare(avk::format_from_window_depth_buffer(avk::context().main_window()), avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
-		}, avk::context().main_window()->renderpass_reference().subpass_dependencies())
+			}, avk::context().main_window()->renderpass_reference().subpass_dependencies())
 	);
 
 	// ===== CPU UPDATER ==== 
@@ -490,10 +509,12 @@ void MeshletsApp::initReusableObjects()
 		mTimestampPool = avk::context().create_query_pool_for_timestamp_queries(
 			static_cast<uint32_t>(avk::context().main_window()->number_of_frames_in_flight()) * 2
 		);
-		mPipelineStatsPool = avk::context().create_query_pool_for_pipeline_statistics_queries(
-			vk::QueryPipelineStatisticFlagBits::eFragmentShaderInvocations | vk::QueryPipelineStatisticFlagBits::eMeshShaderInvocationsEXT | vk::QueryPipelineStatisticFlagBits::eTaskShaderInvocationsEXT,
-			avk::context().main_window()->number_of_frames_in_flight()
-		);
+
+		// ===== TIMING =====
+		mTimer = std::make_unique<TimerManager>();
+		mTimer->add_timer(std::make_shared<CpuTimer>("cpu_frame", "FRAME", 240, 1.0f / 60.0f));
+		mTimer->add_timer(std::make_shared<GpuTimer>("gpu_frame", "FRAME", 240, 1.0f / 60.0f));
+
 
 		// ===== GPU CAMERA BUFFER ====
 		const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();
@@ -577,6 +598,8 @@ void MeshletsApp::render()
 	//if (mPipelineID.first < 0) return;	// No pipeline selected
 	using namespace avk;
 
+	mTimer->start_timer("cpu_frame");
+
 	auto mainWnd = context().main_window();
 	auto inFlightIndex = mainWnd->current_in_flight_index();
 
@@ -590,13 +613,12 @@ void MeshletsApp::render()
 
 		animation.animate(clip, time, [this, &animation, targetMemory](mesh_bone_info aInfo, const glm::mat4& aInverseMeshRootMatrix, const glm::mat4& aTransformMatrix, const glm::mat4& aInverseBindPoseMatrix, const glm::mat4& aLocalTransformMatrix, size_t aAnimatedNodeIndex, size_t aBoneMeshTargetIndex, double aAnimationTimeInTicks) {
 			glm::mat4 result;
-		uint32_t index = aInfo.mGlobalBoneIndexOffset + aInfo.mMeshLocalBoneIndex;
-		glm::mat4 inverseMeshRootMatrix{ 1.0 };
-		if (mInverseMeshRootFix) inverseMeshRootMatrix = aInverseMeshRootMatrix;
-		result = inverseMeshRootMatrix * aTransformMatrix * aInverseBindPoseMatrix; // *mInverseLocalPointTransforms[aInfo.mMeshIndexInModel];
-		targetMemory[index] = result;
-			}
-		);
+			uint32_t index = aInfo.mGlobalBoneIndexOffset + aInfo.mMeshLocalBoneIndex;
+			glm::mat4 inverseMeshRootMatrix{ 1.0 };
+			if (mInverseMeshRootFix) inverseMeshRootMatrix = aInverseMeshRootMatrix;
+			result = inverseMeshRootMatrix * aTransformMatrix * aInverseBindPoseMatrix; // *mInverseLocalPointTransforms[aInfo.mMeshIndexInModel];
+			targetMemory[index] = result;
+			});
 	}
 
 	auto viewProjMat = mQuakeCam.is_enabled()
@@ -614,7 +636,8 @@ void MeshletsApp::render()
 	// Create a command buffer and render into the *current* swap chain image:
 	auto cmdBfr = commandPool->alloc_command_buffer(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
-	const auto firstQueryIndex = static_cast<uint32_t>(inFlightIndex) * 2;
+	uint32_t inFlightIndexU32 = static_cast<uint32_t>(inFlightIndex);
+	const auto firstQueryIndex = inFlightIndexU32 * 2;
 	if (mainWnd->current_frame() > mainWnd->number_of_frames_in_flight()) // otherwise we will wait forever
 	{
 		auto timers = mTimestampPool->get_results<uint64_t, 2>(
@@ -623,14 +646,14 @@ void MeshletsApp::render()
 		mLastDrawMeshTasksDuration = timers[1] - timers[0];
 		mLastFrameDuration = timers[1] - mLastTimestamp;
 		mLastTimestamp = timers[1];
-		mPipelineStats = mPipelineStatsPool->get_results<uint64_t, 3>(inFlightIndex, 1, vk::QueryResultFlagBits::e64);
 	}
+	auto gpu_frame_timer = std::static_pointer_cast<GpuTimer>(mTimer->get("gpu_frame"));
 
-	context().record({
-			mPipelineStatsPool->reset(inFlightIndex, 1),
-			mPipelineStatsPool->begin_query(inFlightIndex),
+	auto submissionData = context().record({
 			mTimestampPool->reset(firstQueryIndex, 2),     // reset the two values relevant for the current frame in flight
 			mTimestampPool->write_timestamp(firstQueryIndex + 0, stage::all_commands), // measure before drawMeshTasks*
+
+			gpu_frame_timer->startAction(inFlightIndexU32),
 
 			// Upload the updated bone matrices into the buffer for the current frame (considering that we have cConcurrentFrames-many concurrent frames):
 			mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
@@ -652,17 +675,19 @@ void MeshletsApp::render()
 				return mPipelines[mPipelineID.first]->render(inFlightIndex);
 			}),
 
+			gpu_frame_timer->stopAction(inFlightIndexU32),
+
 			mTimestampPool->write_timestamp(firstQueryIndex + 1, stage::mesh_shader),
-			mPipelineStatsPool->end_query(inFlightIndex)
-		})
-		.into_command_buffer(cmdBfr)
-	.then_submit_to(*mQueue)
-	// Do not start to render before the image has become available:
-	.waiting_for(imageAvailableSemaphore >> stage::color_attachment_output)
-	.submit();
 
-mainWnd->handle_lifetime(std::move(cmdBfr));
+		}).into_command_buffer(cmdBfr).then_submit_to(*mQueue);
 
+	mTimer->stop_timer("cpu_frame");
+
+		// Do not start to render before the image has become available:
+	submissionData.waiting_for(imageAvailableSemaphore >> stage::color_attachment_output)
+		.submit();
+
+	mainWnd->handle_lifetime(std::move(cmdBfr));
 }
 
 
