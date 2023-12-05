@@ -217,9 +217,9 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 	adoptedBoneIndexVectors.reserve(vertex_count);
 
 	for (auto& vert : vertexData) {
-		auto& tmp = adoptedBoneIndexVectors.emplace_back(vert.mBoneIndices);
+		auto& boneIndices = adoptedBoneIndexVectors.emplace_back(vert.mBoneIndices);
 		for (glm::length_t i = 0; i < 4; i++) {
-			if (vert.mBoneWeights[i] <= 0.000001f) tmp[i] = UINT16_MAX;
+			if (vert.mBoneWeights[i] <= BONE_WEIGHT_EPSILON) boneIndices[i] = UINT16_MAX;
 		}
 	}
 
@@ -296,7 +296,7 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 
 	// STEP 4: Merge Change Maps and apply to luids
 	luidChanges = mergeChangeMaps(luidChanges, mergeChangeMaps(luidChanges2, luidChanges3));
-	applyChangeMap(luids, luidChanges);	// Do we need that here? YES because of the basePermutations
+	applyChangeMap(luids, luidChanges);
 	luidChanges.clear();
 
 	// STEP 5: if withMerging is active lets try to combine the remaining entries such that we have as little "dont care" values as necessary
@@ -336,11 +336,6 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 							bestPartnerSharedIDsCount = sharedCount;
 							bestPartnerClosestAvgDistance = distance;
 						}
-					}
-
-					// TODO DEBUG:
-					if (bestPartner == 424 || itmToFillID == 424) {
-						std::cout << "asd";
 					}
 
 					// By now we definitely found a partner, so merge by putting item inside partner (as partner has more valid ids and is MAYBE more important)
@@ -436,42 +431,41 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 				bIndices = sortUvec4(bIndices, sortPermut);
 				auto finalPermut = combinePermutations(sortPermut, basePermut);
 				(*vertexLUPermutation)[vid] = finalPermut;
-
-				//DEBUG CHECK:
-				auto original = adoptedBoneIndexVectors[vid];
-				auto fromlut = reducedIndicesWithID[luid].first;
-				auto fromlutAfterPermu = applyPermutation(fromlut, finalPermut);
-				auto fromlutAfterInvPermu = applyPermutationInverse(fromlut, finalPermut);
-				auto fromLutAfterBasePermu = applyPermutation(fromlut, basePermut);
-				auto fromLutAfterSortPermu = applyPermutation(fromlut, sortPermut);
-
-				if (!cmpIndexVectorGoodEnough(original, fromlutAfterInvPermu)) {
-					std::cerr << "Fehler bei Vertex       " << vid << " with permut " << (int)basePermut << " | " << (int)sortPermut << " | " << (int)finalPermut << std::endl;
-					std::cout << "Original:               " << glm::to_string(vertexData[vid].mBoneIndices) << " with weights " << glm::to_string(vertexData[vid].mBoneWeights) << std::endl;
-					std::cout << "Adopted:                " << glm::to_string(original) << std::endl;
-					std::cout << "From LUT:               " << glm::to_string(fromlut) << std::endl;
-
-					std::cout << "After Final Permu:      " << glm::to_string(fromlutAfterPermu) << std::endl;
-					std::cout << "After Final Permu Inv.: " << glm::to_string(fromlutAfterInvPermu) << std::endl;
-
-					std::cout << "After Base Permu:       " << glm::to_string(fromLutAfterBasePermu) << std::endl;
-					std::cout << "After Sort Permu:       " << glm::to_string(fromLutAfterSortPermu) << std::endl;
-				}
 			}
 		}
 		else {
 			// In this case merging is either not activated or nothing was to merge. LUID is already applied. We just have to get Permutation
 			for (size_t vid = 0; vid < vertex_count; vid++) {
-				auto luid = luids[vid];
-				auto bIndices = adoptedBoneIndexVectors[luid];
-				uint8_t permutation;
-				bIndices = sortUvec4(bIndices, permutation);
-				(*vertexLUPermutation)[vid] = permutation;
+				auto bIndices = adoptedBoneIndexVectors[vid];
+				uint8_t sortPermut;
+				bIndices = sortUvec4(bIndices, sortPermut);
+				(*vertexLUPermutation)[vid] = sortPermut;
 			}
 		}
 	}
+	
+	//DEBUG CHECK:
+	/*
+	for (size_t vid = 0; vid < vertex_count; vid++) {
+		auto original = adoptedBoneIndexVectors[vid];
+		auto luid = luids[vid];
+		auto fromlut = reducedIndicesWithID[luid].first;
+		uint8_t permut = (vertexLUPermutation && vertexLUPermutation->size() == vertex_count) ? (*vertexLUPermutation)[vid] : 0;
+		auto fromlutAfterPermu = applyPermutation(fromlut, permut);
+		auto fromlutAfterInvPermu = applyPermutationInverse(fromlut, permut);
 
-	// STEP 7: Write out vertexLUIndexTable. The content is inside reducedIndicesWithID
+		if (!cmpIndexVectorGoodEnough(original, fromlutAfterInvPermu)) {
+			std::cerr << "Fehler bei Vertex       " << vid << " with permut " << (int)permut << std::endl;
+			std::cout << "Original:               " << glm::to_string(vertexData[vid].mBoneIndices) << " with weights " << glm::to_string(vertexData[vid].mBoneWeights) << std::endl;
+			std::cout << "Adopted:                " << glm::to_string(original) << std::endl;
+			std::cout << "From LUT:               " << glm::to_string(fromlut) << std::endl;
+
+			std::cout << "After Final Permu:      " << glm::to_string(fromlutAfterPermu) << std::endl;
+			std::cout << "After Final Permu Inv.: " << glm::to_string(fromlutAfterInvPermu) << std::endl;
+		}
+	}*/
+
+	// STEP 7: Write out vertexLUIndexTable.
 	(*vertexLUIndexTable) = std::move(luids);
 
 	// STEP 8: Write out LUT
