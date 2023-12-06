@@ -97,6 +97,9 @@
     <None Include="shaders\include\bit_coding.glsl">
       <Filter>assets\shaders\include</Filter>
     </None>
+    <None Include="shaders\include\permutation.glsl">
+      <Filter>assets\shaders\include</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">

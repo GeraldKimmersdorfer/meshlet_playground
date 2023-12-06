@@ -93,6 +93,7 @@
     <None Include="shaders\include\blend_attribute_compression.glsl" />
     <None Include="shaders\include\glsl_helpers.glsl" />
     <None Include="shaders\include\mcc.glsl" />
+    <None Include="shaders\include\permutation.glsl" />
     <None Include="shaders\include\shared_structs.glsl" />
     <None Include="shaders\include\vertex_reconstruction.glsl" />
     <None Include="shaders\meshlet.mesh" />
