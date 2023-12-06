@@ -40,8 +40,9 @@ struct vertex_data_bone_lookup {
 	glm::uvec4 mBoneIndicesGT;
 };
 
+// 20 byte
 struct vertex_data_permutation_coding {
-	uint64_t mPosition;
+	glm::u32vec2 mPosition;	// each component 21 bit
 	uint32_t mNormal;
 	uint32_t mTexCoords;
 	uint32_t mBoneData;
@@ -57,10 +58,13 @@ struct vertex_data_meshlet_coding {
 
 /*
 struct vertex_data_meshlet_coding {
-	uint32_t mPositionXY;
+	uint64_t mPosition;	// each component 21 bit
 	uint32_t mNormal;
-	uint32_t mTexCoords;
-	uint32_t mWeightsPositionZ;
+	uint32_t mTexCoord;
+	// WEIGHTS = 25 bit, actually available for the weights (more than in permut coding paper)
+	// MBILUID = 2 bit, id of the (up to 4) luids inside the meshlet_data (Meshlet Bone Index Lookup ID)
+	// PERMUTATION = 5 bit, 0-23, defines how the bone indices need to be shuffled
+	uint32_t mWeightsImbiluidPermutation;
 };*/
 
 struct config_data {

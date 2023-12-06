@@ -20,7 +20,7 @@ layout(set = 0, binding = 1) uniform CameraBuffer { camera_data camera; };
 layout(set = 2, binding = 0) buffer BoneTransformBuffer { bone_data bones[]; };
 layout(set = 4, binding = 1) buffer MeshBuffer { mesh_data meshes[]; };
 #if MCC_VERTEX_GATHER_TYPE == _PULL
-layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data vertices[]; };
+layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data_no_compression vertices[]; };
 #endif
 
 layout (location = 0) out PerVertexData
@@ -32,10 +32,22 @@ layout (location = 0) out PerVertexData
 	vec3 color;
 } v_out;
 
+// NOTE: This function is by far more performant than the ones in glsl_helper
+void boneTransform(in vec4 boneWeights, in uvec4 boneIndices, inout vec4 posMshSp, inout vec3 nrmMshSp) {
+	mat4 skinMatrix = mat4(0.0);
+	for (uint i = 0; i < 4; i++) {
+		if (boneWeights[i] > BONE_WEIGHT_EPSILON) {
+			skinMatrix += boneWeights[i] * bones[boneIndices[i]].transform;
+		} // else break (if boneWeights are sorted)
+	}
+	posMshSp = skinMatrix * posMshSp;
+	nrmMshSp = normalize(mat3(skinMatrix) * nrmMshSp);
+}
+
 void main() {
 	mesh_data mesh = meshes[gl_InstanceIndex];
 #if MCC_VERTEX_GATHER_TYPE == _PULL
-	vertex_data vertex = vertices[gl_VertexIndex];
+	vertex_data_no_compression vertex = vertices[gl_VertexIndex];
 #endif
 
 	mat4 transformationMatrix = mesh.mTransformationMatrix;
@@ -60,16 +72,7 @@ void main() {
 		vec4 boneWeights = inBoneWeights;
 		uvec4 boneIndices = inBoneIndices;
 #endif
-		posMshSp = bone_transform(
-			bones[boneIndices[0]].transform, bones[boneIndices[1]].transform,
-			bones[boneIndices[2]].transform, bones[boneIndices[3]].transform,
-			boneWeights, posMshSp
-		);
-		nrmMshSp = bone_transform(
-			bones[boneIndices[0]].transform, bones[boneIndices[1]].transform,
-			bones[boneIndices[2]].transform, bones[boneIndices[3]].transform,
-			boneWeights, nrmMshSp
-		);
+		boneTransform(boneWeights, boneIndices, posMshSp, nrmMshSp);
 	}
 
 	vec4 posWS = transformationMatrix * posMshSp;

@@ -10,3 +10,4 @@
 #define _NOCOMP 0
 #define _LUT 1
 #define _MLTR 2
+#define _PC 3

@@ -87,3 +87,23 @@ glm::u16vec2 compressTextureCoords(glm::vec2 texCoords)
 		static_cast<uint16_t>(texCoords.y * 0xFFFF)
 	);
 }
+
+glm::uvec2 encodeVec3ToUVec2(const glm::vec3& value)
+{
+	unsigned int x = static_cast<unsigned int>(value.x * float((1u << 21u) - 1u));
+	unsigned int y = static_cast<unsigned int>(value.y * float((1u << 21u) - 1u));
+	unsigned int z = static_cast<unsigned int>(value.z * float((1u << 21u) - 1u));
+
+	return glm::uvec2((x << 11u) | (y >> 10u), (y << 22u) | z);
+}
+
+glm::vec3 decodeUVec2ToVec3(const glm::uvec2& value)
+{
+	unsigned int x = (value.x >> 11u) & ((1u << 21u) - 1u);
+	unsigned int y = ((value.x << 10u) | (value.y >> 22u)) & ((1u << 21u) - 1u);
+	unsigned int z = value.y & ((1u << 21u) - 1u);
+
+	return glm::vec3(float(x) / float((1u << 21u) - 1u),
+		float(y) / float((1u << 21u) - 1u),
+		float(z) / float((1u << 21u) - 1u));
+}

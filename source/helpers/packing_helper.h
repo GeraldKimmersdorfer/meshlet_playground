@@ -19,3 +19,7 @@ glm::vec3 unpackNormal(uint32_t normal);
 uint32_t packTextureCoords(glm::vec2 texCoord);
 
 glm::u16vec2 compressTextureCoords(glm::vec2 texCoords);
+
+glm::uvec2 encodeVec3ToUVec2(const glm::vec3& value);
+
+glm::vec3 decodeUVec2ToVec3(const glm::uvec2& value);

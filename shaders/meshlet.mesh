@@ -99,7 +99,8 @@ void main()
 	uint meshletIndex = meshletIndices[gl_WorkGroupID.x];
 	uint invocationId = gl_LocalInvocationID.x;
 	uint instanceID = pushConstants.instanceID;
-	vec4 instanceOffset = instanceID * config.mInstanceOffset;
+	vec2 offsetXZ = spiral(instanceID) * config.mInstanceOffset.xz;
+	vec4 instanceOffset = vec4(offsetXZ.x, 0.0, offsetXZ.y, 0.0);
 
 	// Get all the meshlet data:
 	uint meshIndex 			  = (meshlets[meshletIndex].mMeshIdxVcTc & 0xFFFFC000) >> 18u;
@@ -113,10 +114,8 @@ void main()
 	uint indexDataOffset	  = meshlets[meshletIndex].mDataOffset;
 #endif
 
-
 	//if (gl_LocalInvocationID.x == 0 && gl_WorkGroupID.x == 0)
 	//	debugPrintfEXT("mli %u | mi %u | tc %u | vc %u | midxvctc %u \n", meshletIndex, meshIndex, triangleCount, vertexCount, meshlets[meshletIndex].mMeshIdxVcTc);
-
 	
 	// Step by NUM_MESH_SHADER_INVOCATIONS as we have that many threads but potentially more vertices to calculate:
 	for (uint i = invocationId; i < vertexCount; i += NUM_MESH_SHADER_INVOCATIONS)
@@ -129,7 +128,7 @@ void main()
 #endif
 		
 		vertex_data vertex = getVertexData(vi);
-		vec3 posLocal = vertex.mPosition * vec3(meshes[meshIndex].mPositionNormalizationInvScale) + vec3(meshes[meshIndex].mPositionNormalizationInvTranslation);
+		vec3 posLocal = vertex.mPosition * vec3(meshes[meshIndex].mPositionNormalizationInvScale) + vec3(meshes[meshIndex].mPositionNormalizationInvTranslation); // ToDo: change to fma
 
 		vec4 posMshSp = vec4(posLocal, 1.0);
 		vec3 nrmMshSp = vertex.mNormal;

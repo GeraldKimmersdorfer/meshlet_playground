@@ -94,6 +94,9 @@
     <None Include="shaders\background\screen_pass.vert">
       <Filter>assets\shaders\background</Filter>
     </None>
+    <None Include="shaders\include\bit_coding.glsl">
+      <Filter>assets\shaders\include</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp">
@@ -179,6 +182,9 @@
     </ClCompile>
     <ClCompile Include="source\statistics\GPUTimer.cpp">
       <Filter>source\statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\PermutationCodingCompression.cpp">
+      <Filter>source\vertexcompressor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -275,6 +281,9 @@
     </ClInclude>
     <ClInclude Include="source\statistics\GPUTimer.h">
       <Filter>source\statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\PermutationCodingCompression.h">
+      <Filter>source\vertexcompressor</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

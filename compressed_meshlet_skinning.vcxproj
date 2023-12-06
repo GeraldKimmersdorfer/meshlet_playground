@@ -42,6 +42,7 @@
     <ClCompile Include="source\vertexcompressor\MeshletRiggedCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\NoCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\PermutationCodec.cpp" />
+    <ClCompile Include="source\vertexcompressor\PermutationCodingCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\VertexCompressionInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -76,6 +77,7 @@
     <ClInclude Include="source\vertexcompressor\MeshletRiggedCompression.h" />
     <ClInclude Include="source\vertexcompressor\NoCompression.h" />
     <ClInclude Include="source\vertexcompressor\PermutationCodec.h" />
+    <ClInclude Include="source\vertexcompressor\PermutationCodingCompression.h" />
     <ClInclude Include="source\vertexcompressor\VertexCompressionInterface.h" />
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +88,7 @@
     <None Include="shaders\background\screen_pass.vert" />
     <None Include="shaders\background\solid_color.frag" />
     <None Include="shaders\diffuse_shading_fixed_lightsource.frag" />
+    <None Include="shaders\include\bit_coding.glsl" />
     <None Include="shaders\include\blend_attribute_codec.glsl" />
     <None Include="shaders\include\blend_attribute_compression.glsl" />
     <None Include="shaders\include\glsl_helpers.glsl" />

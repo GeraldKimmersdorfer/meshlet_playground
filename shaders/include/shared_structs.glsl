@@ -60,6 +60,13 @@ struct vertex_data_meshlet_coding {
 	uvec4 mBoneIndicesLUID;
 };
 
+struct vertex_data_permutation_coding {
+	uvec2 mPosition;	// each component 21 bit
+	uint mNormal;
+	uint mTexCoords;
+	uint mBoneData;
+};
+
 struct bone_data {
 	mat4 transform;
 };

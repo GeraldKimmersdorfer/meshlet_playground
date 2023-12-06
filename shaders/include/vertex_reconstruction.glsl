@@ -1,24 +1,12 @@
 
 #define ENTRY_COUNT 3
 
+/* =======================================================================================
+/*  NO COMPRESSION (NOCOMP)
+/* ======================================================================================= */
 #if MCC_VERTEX_COMPRESSION == _NOCOMP
+
 layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data_no_compression vertices[]; };
-#elif MCC_VERTEX_COMPRESSION == _LUT
-#extension EXT_shader_explicit_arithmetic_types : enable
-layout(set = 3, binding = 0, scalar) buffer VertexBuffer { vertex_data_bone_lookup vertices[]; };
-layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[]; };
-#elif MCC_VERTEX_COMPRESSION == _MLTR
-layout(set = 3, binding = 0, scalar) buffer VertexBuffer { vertex_data_meshlet_coding vertices[]; };
-layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[]; };
-#extension GL_EXT_control_flow_attributes : enable
-#include "blend_attribute_compression.glsl"
-
-#elif MCC_VERTEX_COMPRESSION == _DMLT
-// NOT IMPLEMENTED
-
-#endif
-
-#if MCC_VERTEX_COMPRESSION == _NOCOMP
 vertex_data getVertexData(uint vid) {
     vertex_data ret;
     ret.mPosition = vertices[vid].mPositionTxX.xyz;
@@ -29,7 +17,15 @@ vertex_data getVertexData(uint vid) {
     return ret;
 }
 
+/* =======================================================================================
+/*  LOOKUP TABLE COMPRESSION (LUT)
+/* ======================================================================================= */
 #elif MCC_VERTEX_COMPRESSION == _LUT
+
+#extension EXT_shader_explicit_arithmetic_types : enable
+layout(set = 3, binding = 0, scalar) buffer VertexBuffer { vertex_data_bone_lookup vertices[]; };
+layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[]; };
+
 vertex_data getVertexData(uint vid) {
     vertex_data ret;
     ret.mPosition = vertices[vid].mPositionTxX.xyz;
@@ -43,18 +39,16 @@ vertex_data getVertexData(uint vid) {
     return ret;
 }
 
+/* =======================================================================================
+/*  MESHLET RIGGED COMPRESSION (MLTR)
+/* ======================================================================================= */
 #elif MCC_VERTEX_COMPRESSION == _MLTR
-// https://twitter.com/Stubbesaurus/status/937994790553227264
-// https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
-vec3 octahedronDecode( vec2 f )
-{
-    f = f * 2.0 - 1.0;
-    vec3 n = vec3(f.x, f.y, 1.0 - abs( f.x ) - abs( f.y ));
-    float t = clamp(-n.z, 0.0, 1.0);
-    n.x += n.x >= 0.0 ? -t : t;
-    n.y += n.y >= 0.0 ? -t : t;
-    return normalize( n );
-}
+
+layout(set = 3, binding = 0, scalar) buffer VertexBuffer { vertex_data_meshlet_coding vertices[]; };
+layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[]; };
+#extension GL_EXT_control_flow_attributes : enable
+#include "blend_attribute_compression.glsl"
+#include "bit_coding.glsl"
 
 vertex_data getVertexData(uint vid) {
     vertex_data ret;
@@ -64,6 +58,10 @@ vertex_data getVertexData(uint vid) {
         bitfieldExtract(vertices[vid].mPosition.y, 16, 16)
     );
     ret.mPosition = disPosition * (1.0 / 0xFFFF);
+
+    vec3 testPosition = decode_position_2x32(encode_position_2x32(ret.mPosition));
+    ret.mPosition = testPosition;
+
     ret.mNormal = octahedronDecode(vec2(
         bitfieldExtract(vertices[vid].mPosition.z, 16, 16) / 65535.0,
         bitfieldExtract(vertices[vid].mPosition.z, 0, 16) / 65535.0
@@ -85,10 +83,7 @@ vertex_data getVertexData(uint vid) {
     float out_weights[ENTRY_COUNT + 1];
     uint tuple_index = decompress_blend_attributes(out_weights, valid, code, codec);
 
-    ret.mBoneWeights.w = out_weights[0];
-    ret.mBoneWeights.z = out_weights[1];
-    ret.mBoneWeights.y = out_weights[2];
-    ret.mBoneWeights.x = out_weights[3]; 
+    ret.mBoneWeights = vec4(out_weights[3], out_weights[2], out_weights[1], out_weights[0]);
     ret.mBoneIndices = uvec4(bone_indices_lut[tuple_index]);
     //ret.mBoneIndices = bone_indices_lut[vertices[vid].mBoneIndicesLUID.x];
     //ret.mBoneWeights = vertices[vid].mBoneWeights;
@@ -96,8 +91,53 @@ vertex_data getVertexData(uint vid) {
     return ret;
 }
 
+/* =======================================================================================
+/*  DYNAMIC MESHLET VERTEX CODING (DMLT)
+/* ======================================================================================= */
 #elif MCC_VERTEX_COMPRESSION == _DMLT
 // NOT IMPLEMENTED
 
+/* =======================================================================================
+/*  PERMUTATION CODING CODEC (PC)
+/* ======================================================================================= */
+#elif MCC_VERTEX_COMPRESSION == _PC
+
+layout(set = 3, binding = 0, scalar) buffer VertexBuffer { vertex_data_permutation_coding vertices[]; };
+layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[]; };
+#extension GL_EXT_control_flow_attributes : enable
+#include "blend_attribute_compression.glsl"
+#include "bit_coding.glsl"
+
+vertex_data getVertexData(uint vid) {
+    vertex_data ret;
+    ret.mPosition = decode_position_2x32(vertices[vid].mPosition);
+    ret.mNormal = octahedronDecode(vec2(
+        bitfieldExtract(vertices[vid].mNormal, 16, 16) / 65534.0,
+        bitfieldExtract(vertices[vid].mNormal, 0, 16) / 65534.0
+    ));
+
+    ret.mTexCoord = vec2(
+        bitfieldExtract(vertices[vid].mTexCoords, 16, 16) / 65534.0,
+        bitfieldExtract(vertices[vid].mTexCoords, 0, 16) / 65534.0
+    );
+
+    uvec2 code = uvec2(vertices[vid].mBoneData, 0);
+    bool valid; // not really necessary...
+    blend_attribute_codec_t codec;
+    codec.weight_value_count = 18;
+    codec.extra_value_counts[0] = 1;
+    codec.extra_value_counts[1] = 1;
+    codec.extra_value_counts[2] = 2;
+    codec.payload_value_count_over_factorial = 0; // irrelevant (only for valid check)
+    float out_weights[ENTRY_COUNT + 1];
+    uint tuple_index = decompress_blend_attributes(out_weights, valid, code, codec);
+
+    ret.mBoneWeights = vec4(out_weights[3], out_weights[2], out_weights[1], out_weights[0]);
+    ret.mBoneIndices = uvec4(bone_indices_lut[tuple_index]);
+    return ret;
+}
+
+
+/* ====================================EOF================================================ */
 #endif
 

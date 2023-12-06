@@ -19,6 +19,7 @@
 #include "vertexcompressor/BoneLUTCompression.h"
 #include "vertexcompressor/MeshletRiggedCompression.h"
 #include "vertexcompressor/DynamicMeshletVertexCodec.h"
+#include "vertexcompressor/PermutationCodingCompression.h"
 
 #include <functional>
 
@@ -545,6 +546,7 @@ void MeshletsApp::initialize()
 
 	mVertexCompressors.push_back(std::make_unique<NoCompression>(this));
 	mVertexCompressors.push_back(std::make_unique<BoneLUTCompression>(this));
+	mVertexCompressors.push_back(std::make_unique<PermutationCodingCompression>(this));
 	mVertexCompressors.push_back(std::make_unique<MeshletRiggedCompression>(this));
 	mVertexCompressors.push_back(std::make_unique<DynamicMeshletVertexCodec>(this));
 	if (mAnimations.size() > 0) mCurrentlyPlayingAnimationId = 0;
