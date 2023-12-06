@@ -40,12 +40,12 @@ struct vertex_data_bone_lookup {
 	glm::uvec4 mBoneIndicesGT;
 };
 
-// 20 byte
 struct vertex_data_permutation_coding {
 	glm::u32vec2 mPosition;	// each component 21 bit
 	uint32_t mNormal;
 	uint32_t mTexCoords;
 	uint32_t mBoneData;
+	uint32_t padding;	// even in scalar layouts we need 64 bit padding (8 byte)
 };
 
 struct vertex_data_meshlet_coding {

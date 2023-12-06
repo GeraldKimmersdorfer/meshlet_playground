@@ -65,6 +65,7 @@ struct vertex_data_permutation_coding {
 	uint mNormal;
 	uint mTexCoords;
 	uint mBoneData;
+	uint padding;
 };
 
 struct bone_data {

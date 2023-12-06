@@ -48,6 +48,7 @@ int main() // <== Starting point ==
 			// Gotta enable the mesh shader extension, ...
 			avk::required_device_extensions(VK_EXT_MESH_SHADER_EXTENSION_NAME),
 			avk::required_device_extensions(VK_EXT_MULTI_DRAW_EXTENSION_NAME),
+			avk::required_device_extensions(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME),
 			avk::optional_device_extensions(VK_NV_MESH_SHADER_EXTENSION_NAME),
 			// ... and enable the mesh shader features that we need:
 			[](vk::PhysicalDeviceMeshShaderFeaturesEXT& meshShaderFeatures) {
@@ -62,6 +63,9 @@ int main() // <== Starting point ==
 			[](vk::PhysicalDeviceVulkan12Features& features) {
 				features.setUniformAndStorageBuffer8BitAccess(VK_TRUE);
 				features.setStorageBuffer8BitAccess(VK_TRUE);
+			},
+			[](vk::PhysicalDeviceVulkan11Features& features) {
+				features.setStorageBuffer16BitAccess(VK_TRUE);
 			},
 			// Pass windows:
 			mainWnd,

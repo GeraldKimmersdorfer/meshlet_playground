@@ -4,6 +4,8 @@
 #include "../shadercompiler/ShaderMetaCompiler.h"
 #include "../avk_extensions.hpp"
 
+#include "../vertexcompressor/VertexCompressionInterface.h"
+
 avk::command::action_type_command draw_indexed_indirect_nobind(const avk::buffer_t& aParametersBuffer, const avk::buffer_t& aIndexBuffer, uint32_t aNumberOfDraws, vk::DeviceSize aParametersOffset, uint32_t aParametersStride)
 {
 	using namespace avk::command;
@@ -90,16 +92,17 @@ void VertexIndirectPipeline::doInitialize(avk::queue* queue)
 			avk::vertex_shader(mPathVertexShader),
 			avk::fragment_shader(mPathFragmentShader)
 		);
-		mAdditionalStaticDescriptorBindings.push_back(std::move(avk::descriptor_binding(3, 0, mShared->mVertexBuffer)));
+
+		auto vCompressor = mShared->getCurrentVertexCompressor();
+		vCompressor->compress(queue);
+		auto vertexBindings = vCompressor->getBindings();
+		mAdditionalStaticDescriptorBindings.insert(mAdditionalStaticDescriptorBindings.end(), vertexBindings.begin(), vertexBindings.end());
+
 	}
 	mShared->attachSharedPipelineConfiguration(&pipelineConfig, &mAdditionalStaticDescriptorBindings);
 
-	//auto vCompressor = mShared->getCurrentVertexCompressor();
-	//vCompressor->compress(queue);
-	//auto vertexBindings = vCompressor->getBindings();
-	//mAdditionalStaticDescriptorBindings.insert(mAdditionalStaticDescriptorBindings.end(), vertexBindings.begin(), vertexBindings.end());
-	// Add static descriptor bindings to pipeline definition
 
+	// Add static descriptor bindings to pipeline definition
 	for (auto& db : mAdditionalStaticDescriptorBindings) {
 		pipelineConfig.mResourceBindings.push_back(std::move(db));
 	}
@@ -141,7 +144,8 @@ void VertexIndirectPipeline::hud_setup(bool& config_has_changes)
 void VertexIndirectPipeline::compile()
 {
 	mPathVertexShader = ShaderMetaCompiler::precompile("vertex.vert", {
-		{"VERTEX_GATHER_TYPE", MCC_to_string(mVertexGatherType.second)}
+		{"VERTEX_GATHER_TYPE", MCC_to_string(mVertexGatherType.second)},
+		{"VERTEX_COMPRESSION", mShared->getCurrentVertexCompressor()->getMccId()}
 	});
 	mPathFragmentShader = ShaderMetaCompiler::precompile("diffuse_shading_fixed_lightsource.frag", {});
 	mShadersRecompiled = true;
@@ -149,6 +153,8 @@ void VertexIndirectPipeline::compile()
 
 void VertexIndirectPipeline::doDestroy()
 {
-	mAdditionalStaticDescriptorBindings.clear();
+	mShared->getCurrentVertexCompressor()->destroy();
+	mPipeline = avk::graphics_pipeline();
 	mIndirectDrawCommandBuffer = avk::buffer();
+	mAdditionalStaticDescriptorBindings.clear();
 }
