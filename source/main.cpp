@@ -4,10 +4,10 @@
 #include <sequential_invoker.hpp>
 
 #include "MeshletsApp.h"
-#include "helpers/packing_helper.h"
+#include "helpers/packing.h"
 #include <glm/gtx/string_cast.hpp>
 
-#include "helpers/lut_helper.h"
+#include "helpers/lut.h"
 
 int main() // <== Starting point ==
 {

@@ -150,26 +150,11 @@
     <ClCompile Include="source\SharedData.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="source\helpers\hud_helpers.cpp">
-      <Filter>source\helpers</Filter>
-    </ClCompile>
-    <ClCompile Include="source\helpers\packing_helper.cpp">
-      <Filter>source\helpers</Filter>
-    </ClCompile>
     <ClCompile Include="source\vertexcompressor\MeshletRiggedCompression.cpp">
-      <Filter>source\vertexcompressor</Filter>
-    </ClCompile>
-    <ClCompile Include="source\vertexcompressor\PermutationCodec.cpp">
       <Filter>source\vertexcompressor</Filter>
     </ClCompile>
     <ClCompile Include="source\meshletbuilder\BoneLUTDependentBuilder.cpp">
       <Filter>source\meshletbuilder</Filter>
-    </ClCompile>
-    <ClCompile Include="source\helpers\csv_helpers.cpp">
-      <Filter>source\helpers</Filter>
-    </ClCompile>
-    <ClCompile Include="source\helpers\lut_helper.cpp">
-      <Filter>source\helpers</Filter>
     </ClCompile>
     <ClCompile Include="source\vertexcompressor\DynamicMeshletVertexCodec.cpp">
       <Filter>source\vertexcompressor</Filter>
@@ -188,6 +173,21 @@
     </ClCompile>
     <ClCompile Include="source\vertexcompressor\PermutationCodingCompression.cpp">
       <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\csv.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\hud.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\lut.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\packing.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\permcodec.cpp">
+      <Filter>source\helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -248,26 +248,11 @@
     <ClInclude Include="source\thirdparty\permutation_coding.h">
       <Filter>thirdparty</Filter>
     </ClInclude>
-    <ClInclude Include="source\helpers\hud_helpers.h">
-      <Filter>source\helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="source\helpers\packing_helper.h">
-      <Filter>source\helpers</Filter>
-    </ClInclude>
     <ClInclude Include="source\vertexcompressor\MeshletRiggedCompression.h">
-      <Filter>source\vertexcompressor</Filter>
-    </ClInclude>
-    <ClInclude Include="source\vertexcompressor\PermutationCodec.h">
       <Filter>source\vertexcompressor</Filter>
     </ClInclude>
     <ClInclude Include="source\meshletbuilder\BoneLUTDependentBuilder.h">
       <Filter>source\meshletbuilder</Filter>
-    </ClInclude>
-    <ClInclude Include="source\helpers\csv_helpers.h">
-      <Filter>source\helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="source\helpers\lut_helper.h">
-      <Filter>source\helpers</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
     <ClInclude Include="source\vertexcompressor\DynamicMeshletVertexCodec.h">
@@ -287,6 +272,21 @@
     </ClInclude>
     <ClInclude Include="source\vertexcompressor\PermutationCodingCompression.h">
       <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\csv.h">
+      <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\hud.h">
+      <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\lut.h">
+      <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\packing.h">
+      <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\permcodec.h">
+      <Filter>source\helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,5 +1,5 @@
 #include "BoneLUTCompression.h"
-#include "../helpers/lut_helper.h"
+#include "../helpers/lut.h"
 #include <imgui.h>
 
 void BoneLUTCompression::doCompress(avk::queue* queue)

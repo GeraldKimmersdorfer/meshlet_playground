@@ -1,8 +1,8 @@
 #include "MeshletRiggedCompression.h"
-#include "../helpers/lut_helper.h"
+#include "../helpers/lut.h"
 #include <imgui.h>
-#include "../helpers/packing_helper.h"
-#include "PermutationCodec.h"
+#include "../helpers/packing.h"
+#include "../helpers/permcodec.h"
 
 void MeshletRiggedCompression::doCompress(avk::queue* queue)
 {

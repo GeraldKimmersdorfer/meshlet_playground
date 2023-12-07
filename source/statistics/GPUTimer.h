@@ -13,6 +13,7 @@ class GpuTimer : public TimerInterface {
 
 public:
 	GpuTimer(const std::string& name, const std::string& group, int queue_size, float average_weight);
+	~GpuTimer();
 
 	avk::command::action_type_command startAction(uint32_t inFlightIndex);
 

@@ -1,4 +1,4 @@
-#include "packing_helper.h"
+#include "packing.h"
 
 glm::vec2 OctWrap(glm::vec2 v)
 {

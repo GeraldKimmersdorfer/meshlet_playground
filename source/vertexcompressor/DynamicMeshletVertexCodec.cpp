@@ -1,8 +1,8 @@
 #include "DynamicMeshletVertexCodec.h"
-#include "../helpers/lut_helper.h"
+#include "../helpers/lut.h"
 #include <imgui.h>
-#include "../helpers/packing_helper.h"
-#include "PermutationCodec.h"
+#include "../helpers/packing.h"
+#include "../helpers/permcodec.h"
 #include "../meshletbuilder/MeshletbuilderInterface.h"
 #include <glm/gtx/string_cast.hpp>
 

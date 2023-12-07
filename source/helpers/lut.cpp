@@ -1,4 +1,4 @@
-#include "lut_helper.h"
+#include "lut.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
@@ -9,7 +9,7 @@
 #include <set>
 #include <iostream>
 
-#include "../helpers/csv_helpers.h"
+#include "../helpers/csv.h"
 
 // Define a custom hash function for glm::uvec4
 struct UVec4Hash {

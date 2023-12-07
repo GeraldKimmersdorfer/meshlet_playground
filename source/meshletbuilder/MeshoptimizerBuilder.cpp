@@ -2,7 +2,7 @@
 #include "MeshoptimizerBuilder.h"
 #include <span>
 #include "../../meshoptimizer/src/meshoptimizer.h"
-#include "../helpers/packing_helper.h"
+#include "../helpers/packing.h"
 
 #include "../SharedData.h"
 

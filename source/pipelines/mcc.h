@@ -26,5 +26,6 @@ std::string MCC_to_string(T value) {
 		case _PULL: return "_PULL";
 		}
 	}
+	assert(true);	// Please define all MCCs here
 	return "Undefined";
 }

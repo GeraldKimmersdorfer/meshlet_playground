@@ -1,4 +1,4 @@
-#include "PermutationCodec.h"
+#include "permcodec.h"
 #include <glm/gtc/random.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>

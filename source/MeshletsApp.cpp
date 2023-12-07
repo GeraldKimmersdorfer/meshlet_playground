@@ -25,7 +25,7 @@
 
 #include <glm/gtx/string_cast.hpp>
 #include "shadercompiler/ShaderMetaCompiler.h"
-#include "helpers/hud_helpers.h"
+#include "helpers/hud.h"
 
 #include "statistics/TimerManager.h"
 #include "statistics/CPUTimer.h"

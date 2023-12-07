@@ -17,10 +17,11 @@
   <ItemGroup>
     <ClCompile Include="ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="source\avk_extensions.cpp" />
-    <ClCompile Include="source\helpers\csv_helpers.cpp" />
-    <ClCompile Include="source\helpers\hud_helpers.cpp" />
-    <ClCompile Include="source\helpers\lut_helper.cpp" />
-    <ClCompile Include="source\helpers\packing_helper.cpp" />
+    <ClCompile Include="source\helpers\csv.cpp" />
+    <ClCompile Include="source\helpers\hud.cpp" />
+    <ClCompile Include="source\helpers\lut.cpp" />
+    <ClCompile Include="source\helpers\packing.cpp" />
+    <ClCompile Include="source\helpers\permcodec.cpp" />
     <ClCompile Include="source\meshletbuilder\AVKBuilder.cpp" />
     <ClCompile Include="source\meshletbuilder\BoneLUTDependentBuilder.cpp" />
     <ClCompile Include="source\meshletbuilder\MeshletbuilderInterface.cpp" />
@@ -41,17 +42,17 @@
     <ClCompile Include="source\vertexcompressor\DynamicMeshletVertexCodec.cpp" />
     <ClCompile Include="source\vertexcompressor\MeshletRiggedCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\NoCompression.cpp" />
-    <ClCompile Include="source\vertexcompressor\PermutationCodec.cpp" />
     <ClCompile Include="source\vertexcompressor\PermutationCodingCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\VertexCompressionInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="source\avk_extensions.hpp" />
-    <ClInclude Include="source\helpers\csv_helpers.h" />
-    <ClInclude Include="source\helpers\hud_helpers.h" />
-    <ClInclude Include="source\helpers\lut_helper.h" />
-    <ClInclude Include="source\helpers\packing_helper.h" />
+    <ClInclude Include="source\helpers\csv.h" />
+    <ClInclude Include="source\helpers\hud.h" />
+    <ClInclude Include="source\helpers\lut.h" />
+    <ClInclude Include="source\helpers\packing.h" />
+    <ClInclude Include="source\helpers\permcodec.h" />
     <ClInclude Include="source\meshletbuilder\AVKBuilder.h" />
     <ClInclude Include="source\meshletbuilder\BoneLUTDependentBuilder.h" />
     <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h" />
@@ -76,7 +77,6 @@
     <ClInclude Include="source\vertexcompressor\DynamicMeshletVertexCodec.h" />
     <ClInclude Include="source\vertexcompressor\MeshletRiggedCompression.h" />
     <ClInclude Include="source\vertexcompressor\NoCompression.h" />
-    <ClInclude Include="source\vertexcompressor\PermutationCodec.h" />
     <ClInclude Include="source\vertexcompressor\PermutationCodingCompression.h" />
     <ClInclude Include="source\vertexcompressor\VertexCompressionInterface.h" />
   </ItemGroup>

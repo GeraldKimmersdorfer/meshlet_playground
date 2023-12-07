@@ -21,6 +21,14 @@ GpuTimer::GpuTimer(const std::string& name, const std::string& group, int queue_
 	gputimer_timestamp_period = static_cast<double>(props.limits.timestampPeriod);
 }
 
+GpuTimer::~GpuTimer()
+{
+	gputimer_counter--;
+	if (gputimer_counter == 0) {
+		gputimer_querypool = avk::query_pool(); // Free ressource
+	}
+}
+
 avk::command::action_type_command GpuTimer::startAction(uint32_t inFlightIndex)
 {
 	// First fetch the old results:
