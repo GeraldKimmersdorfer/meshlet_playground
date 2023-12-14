@@ -491,8 +491,8 @@ void MeshletsApp::initReusableObjects()
 		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("lut_count"));
 		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("vb_size"));
 		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("mb_size"));
-		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("cpu_frame", "ms", 120));
-		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("gpu_frame", "ms", 120));
+		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("cpu_frame", "ms", 240));
+		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("gpu_frame", "ms", 240));
 		mAvkFrameTimer = std::make_unique<AvkTimer>(std::move(mPropertyManager->get("gpu_frame")));
 		mCpuFrameTimer = std::make_unique<CpuTimer>(std::move(mPropertyManager->get("cpu_frame")));
 		
