@@ -1,21 +1,17 @@
 #include "CpuTimer.h"
 
+CpuTimer::CpuTimer(std::shared_ptr<PropertyInterface> property)
+	:TimerInterface(std::move(property))
+{}
 
-CpuTimer::CpuTimer(const std::string& name, const std::string& group, int queue_size, const float average_weight)
-	:TimerInterface(name, group, queue_size, average_weight)
+void CpuTimer::start()
 {
-}
-
-void CpuTimer::_start() {
 	m_ticks[0] = std::chrono::high_resolution_clock::now();
 }
 
-void CpuTimer::_stop() {
+void CpuTimer::stop()
+{
 	m_ticks[1] = std::chrono::high_resolution_clock::now();
-	fetch_result(); // CPU timers do not need to wait for fetching!
-}
-
-float CpuTimer::_fetch_result() {
 	std::chrono::duration<double> diff = m_ticks[1] - m_ticks[0];
-	return ((float)(diff.count() * 1000.0));
+	m_prop->setFloat(diff.count() * 1000.0);
 }

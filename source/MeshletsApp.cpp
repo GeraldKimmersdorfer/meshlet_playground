@@ -27,10 +27,6 @@
 #include "shadercompiler/ShaderMetaCompiler.h"
 #include "helpers/hud.h"
 
-#include "statistics/TimerManager.h"
-#include "statistics/CPUTimer.h"
-#include "statistics/GPUTimer.h"
-
 #include "statistics/NumberProperty.h"
 #include "statistics/AverageNumberProperty.h"
 
@@ -387,24 +383,6 @@ void MeshletsApp::initGUI()
 						else avk::context().main_window()->set_presentaton_mode(avk::presentation_mode::mailbox);
 					}
 
-					if (ImGui::CollapsingHeader("Timing", ImGuiTreeNodeFlags_DefaultOpen)) {
-						auto timers = mTimer->get_timers();
-						if (timers.size() > 0) {
-							std::string currGroup = "";
-							for (const auto& tmr : timers) {
-								auto thisGroup = tmr->get_group();
-								if (thisGroup != currGroup) {
-									currGroup = thisGroup;
-									ImGui::TextColored(ImVec4(.5f, .3f, .4f, 1.f), thisGroup.c_str());
-								}
-								ImGui::Text("%s: %.3f (%.3f)", tmr->get_name().c_str(), tmr->get_last_value(), tmr->get_averaged_value());
-							}
-						}
-						else {
-							ImGui::TextColored(ImVec4(1.0f, .0f, .0f, 1.f), "No timer defined");
-						}
-					}
-
 					if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen)) {
 						auto props = mPropertyManager->getAll();
 						if (props.size() > 0) {
@@ -416,8 +394,6 @@ void MeshletsApp::initGUI()
 							ImGui::TextColored(ImVec4(1.0f, .0f, .0f, 1.f), "No property defined");
 						}
 					}
-
-
 
 					ImGui::End();
 
@@ -510,16 +486,16 @@ void MeshletsApp::initReusableObjects()
 		LOG_INFO(std::format("This device supports subgroup operations in the following stages: {}", vk::to_string(mPropsSubgroup.supportedStages)));
 		mTaskInvocationsExt = mPropsMeshShader.maxPreferredTaskWorkGroupInvocations;
 
-		// ===== TIMING =====
-		mTimer->add_timer(std::make_shared<CpuTimer>("cpu_frame", "FRAME", 240, 1.0f / 60.0f));
-		mTimer->add_timer(std::make_shared<GpuTimer>("gpu_frame", "FRAME", 240, 1.0f / 60.0f));
-
-		// ===== PROPERTIES =====
+		// ===== PROPERTIES AND TIMING =====
 		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("lut_size"));
 		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("lut_count"));
 		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("vb_size"));
 		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("mb_size"));
-
+		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("cpu_frame", "ms", 120));
+		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("gpu_frame", "ms", 120));
+		mAvkFrameTimer = std::make_unique<AvkTimer>(std::move(mPropertyManager->get("gpu_frame")));
+		mCpuFrameTimer = std::make_unique<CpuTimer>(std::move(mPropertyManager->get("cpu_frame")));
+		
 		// ===== GPU CAMERA BUFFER ====
 		const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();
 		for (int i = 0; i < concurrentFrames; ++i) {
@@ -603,7 +579,7 @@ void MeshletsApp::render()
 	//if (mPipelineID.first < 0) return;	// No pipeline selected
 	using namespace avk;
 
-	mTimer->start_timer("cpu_frame");
+	mCpuFrameTimer->start();
 
 	auto mainWnd = context().main_window();
 	auto inFlightIndex = mainWnd->current_in_flight_index();
@@ -643,11 +619,9 @@ void MeshletsApp::render()
 
 	uint32_t inFlightIndexU32 = static_cast<uint32_t>(inFlightIndex);
 
-	auto gpu_frame_timer = std::static_pointer_cast<GpuTimer>(mTimer->get("gpu_frame"));
-
 	auto submissionData = context().record({
 
-			gpu_frame_timer->startAction(inFlightIndexU32),
+			mAvkFrameTimer->start(inFlightIndexU32),
 
 			// Upload the updated bone matrices into the buffer for the current frame (considering that we have cConcurrentFrames-many concurrent frames):
 			mViewProjBuffers[inFlightIndex]->fill(glm::value_ptr(viewProjMat), 0),
@@ -669,11 +643,11 @@ void MeshletsApp::render()
 				return mPipelines[mPipelineID.first]->render(inFlightIndex);
 			}),
 
-			gpu_frame_timer->stopAction(inFlightIndexU32),
+			mAvkFrameTimer->stop(inFlightIndexU32),
 
 		}).into_command_buffer(cmdBfr).then_submit_to(*mQueue);
 
-	mTimer->stop_timer("cpu_frame");
+	mCpuFrameTimer->stop();
 
 		// Do not start to render before the image has become available:
 	submissionData.waiting_for(imageAvailableSemaphore >> stage::color_attachment_output)

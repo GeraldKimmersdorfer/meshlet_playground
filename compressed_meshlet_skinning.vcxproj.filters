@@ -168,10 +168,7 @@
     <ClCompile Include="source\statistics\TimerInterface.cpp">
       <Filter>source\statistics</Filter>
     </ClCompile>
-    <ClCompile Include="source\statistics\TimerManager.cpp">
-      <Filter>source\statistics</Filter>
-    </ClCompile>
-    <ClCompile Include="source\statistics\GPUTimer.cpp">
+    <ClCompile Include="source\statistics\AvkTimer.cpp">
       <Filter>source\statistics</Filter>
     </ClCompile>
     <ClCompile Include="source\vertexcompressor\PermutationCodingCompression.cpp">
@@ -276,10 +273,7 @@
     <ClInclude Include="source\statistics\TimerInterface.h">
       <Filter>source\statistics</Filter>
     </ClInclude>
-    <ClInclude Include="source\statistics\TimerManager.h">
-      <Filter>source\statistics</Filter>
-    </ClInclude>
-    <ClInclude Include="source\statistics\GPUTimer.h">
+    <ClInclude Include="source\statistics\AvkTimer.h">
       <Filter>source\statistics</Filter>
     </ClInclude>
     <ClInclude Include="source\vertexcompressor\PermutationCodingCompression.h">

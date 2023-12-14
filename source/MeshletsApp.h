@@ -13,8 +13,10 @@
 #include "vertexcompressor/VertexCompressionInterface.h"
 #include "meshletbuilder/MeshletbuilderInterface.h"
 
-#include "statistics/TimerManager.h"
 #include "statistics/PropertyManager.h"
+
+#include "statistics/CPUTimer.h"
+#include "statistics/AvkTimer.h"
 
 #define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
 //#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Mixamo-Group-No-Materials.fbx)"
@@ -92,9 +94,12 @@ private: // v== Member variables ==v
 	avk::orbit_camera mOrbitCam;
 	avk::quake_camera mQuakeCam;
 
-	uint32_t mTaskInvocationsExt = 0;
+	std::unique_ptr<AvkTimer> mAvkFrameTimer;
+	std::unique_ptr<CpuTimer> mCpuFrameTimer;
 
-	std::unique_ptr<TimerManager> mTimer = std::make_unique<TimerManager>();
+
+
+	uint32_t mTaskInvocationsExt = 0;
 
 	avk::graphics_pipeline mBackgroundPipeline;
 
