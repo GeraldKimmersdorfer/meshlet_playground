@@ -36,6 +36,8 @@
     <ClCompile Include="source\SharedData.cpp" />
     <ClCompile Include="source\statistics\CPUTimer.cpp" />
     <ClCompile Include="source\statistics\GPUTimer.cpp" />
+    <ClCompile Include="source\statistics\Property.cpp" />
+    <ClCompile Include="source\statistics\PropertyManager.cpp" />
     <ClCompile Include="source\statistics\TimerInterface.cpp" />
     <ClCompile Include="source\statistics\TimerManager.cpp" />
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp" />
@@ -69,6 +71,8 @@
     <ClInclude Include="source\shared_structs.h" />
     <ClInclude Include="source\statistics\CPUTimer.h" />
     <ClInclude Include="source\statistics\GPUTimer.h" />
+    <ClInclude Include="source\statistics\Property.h" />
+    <ClInclude Include="source\statistics\PropertyManager.h" />
     <ClInclude Include="source\statistics\TimerInterface.h" />
     <ClInclude Include="source\statistics\TimerManager.h" />
     <ClInclude Include="source\thirdparty\blend_attribute_codec.h" />

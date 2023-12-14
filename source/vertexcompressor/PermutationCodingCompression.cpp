@@ -41,6 +41,11 @@ void PermutationCodingCompression::doCompress(avk::queue* queue)
 
 	mAdditionalStaticDescriptorBindings.push_back(avk::descriptor_binding(3, 0, mVertexBuffer));
 	mAdditionalStaticDescriptorBindings.push_back(avk::descriptor_binding(3, 1, mBoneLUTBuffer));
+
+	// report to props:
+	mShared->mPropertyLutSize->setValue(mBoneLUTData.size() * sizeof(glm::u16vec4));
+	mShared->mPropertyLutCount->setValue(mBoneLUTData.size());
+	mShared->mPropertyVbSize->setValue(sizeof(vertex_data_permutation_coding) * mVertexData.size());
 }
 
 void PermutationCodingCompression::doDestroy()

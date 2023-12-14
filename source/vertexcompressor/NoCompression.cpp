@@ -9,6 +9,11 @@ void NoCompression::doCompress(avk::queue* queue)
 	);
 	avk::context().record_and_submit_with_fence({ mVertexBuffer->fill(mShared->mVertexData.data(), 0) }, *queue)->wait_until_signalled();
 	mAdditionalStaticDescriptorBindings.push_back(avk::descriptor_binding(3, 0, mShared->mVertexBuffer));
+
+	// report to props:
+	mShared->mPropertyLutSize->setValue(0);
+	mShared->mPropertyLutCount->setValue(0);
+	mShared->mPropertyVbSize->setValue(sizeof(vertex_data) * mShared->mVertexData.size());
 }
 
 void NoCompression::doDestroy()

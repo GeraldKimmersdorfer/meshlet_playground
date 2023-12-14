@@ -189,6 +189,12 @@
     <ClCompile Include="source\helpers\permcodec.cpp">
       <Filter>source\helpers</Filter>
     </ClCompile>
+    <ClCompile Include="source\statistics\PropertyManager.cpp">
+      <Filter>source\statistics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\statistics\Property.cpp">
+      <Filter>source\statistics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MeshletsApp.h">
@@ -287,6 +293,12 @@
     </ClInclude>
     <ClInclude Include="source\helpers\permcodec.h">
       <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\PropertyManager.h">
+      <Filter>source\statistics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\Property.h">
+      <Filter>source\statistics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

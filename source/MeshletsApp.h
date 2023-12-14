@@ -14,6 +14,7 @@
 #include "meshletbuilder/MeshletbuilderInterface.h"
 
 #include "statistics/TimerManager.h"
+#include "statistics/PropertyManager.h"
 
 #define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
 //#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Mixamo-Group-No-Materials.fbx)"
@@ -91,9 +92,10 @@ private: // v== Member variables ==v
 	avk::orbit_camera mOrbitCam;
 	avk::quake_camera mQuakeCam;
 
-	uint32_t mTaskInvocationsExt;
+	uint32_t mTaskInvocationsExt = 0;
 
 	std::unique_ptr<TimerManager> mTimer;
+	std::unique_ptr<PropertyManager> mPropertyManager;
 
 	avk::graphics_pipeline mBackgroundPipeline;
 
