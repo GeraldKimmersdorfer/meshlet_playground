@@ -14,7 +14,7 @@
 #include <meshlet_helpers.hpp>
 #include "shared_structs.h"
 
-#include "statistics/Property.h"
+#include "statistics/PropertyManager.h"
 
 class MeshletbuilderInterface;
 class VertexCompressionInterface;
@@ -59,10 +59,7 @@ public:
 	avk::updater* mSharedUpdater; // Not necessary anymore
 	avk::descriptor_cache mDescriptorCache;
 
-	std::shared_ptr<NumberProperty<uint32_t>> mPropertyLutSize;	// size of bone index lookuptable in bytes
-	std::shared_ptr<NumberProperty<uint32_t>> mPropertyLutCount;	// count of entries in bone index lookuptable
-	std::shared_ptr<NumberProperty<uint32_t>> mPropertyVbSize;	// size of vertexbuffer in bytes
-	std::shared_ptr<NumberProperty<uint32_t>> mPropertyMbSize;	// size of Meshletbuffer in bytes
+	std::shared_ptr<PropertyManager> mPropertyManager = std::make_shared<PropertyManager>();
 
 	virtual void uploadConfig() = 0;
 

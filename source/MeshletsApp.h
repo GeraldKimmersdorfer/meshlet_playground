@@ -94,8 +94,7 @@ private: // v== Member variables ==v
 
 	uint32_t mTaskInvocationsExt = 0;
 
-	std::unique_ptr<TimerManager> mTimer;
-	std::unique_ptr<PropertyManager> mPropertyManager;
+	std::unique_ptr<TimerManager> mTimer = std::make_unique<TimerManager>();
 
 	avk::graphics_pipeline mBackgroundPipeline;
 

@@ -31,6 +31,9 @@
 #include "statistics/CPUTimer.h"
 #include "statistics/GPUTimer.h"
 
+#include "statistics/NumberProperty.h"
+#include "statistics/AverageNumberProperty.h"
+
 std::vector<glm::mat4> globalTransformPresets = {
 	glm::mat4(1.0),				// none
 	 glm::rotate(glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f)) * glm::scale(glm::vec3(0.01f))	// lucy
@@ -406,7 +409,7 @@ void MeshletsApp::initGUI()
 						auto props = mPropertyManager->getAll();
 						if (props.size() > 0) {
 							for (auto prop : props) {
-								ImGui::Text("%s: %s", prop->getName().c_str(), prop->getValueAsString().c_str());
+								ImGui::Text("%s: %s", prop->getName().c_str(), prop->getFormatedString().c_str());
 							}
 						}
 						else {
@@ -508,21 +511,14 @@ void MeshletsApp::initReusableObjects()
 		mTaskInvocationsExt = mPropsMeshShader.maxPreferredTaskWorkGroupInvocations;
 
 		// ===== TIMING =====
-		mTimer = std::make_unique<TimerManager>();
 		mTimer->add_timer(std::make_shared<CpuTimer>("cpu_frame", "FRAME", 240, 1.0f / 60.0f));
 		mTimer->add_timer(std::make_shared<GpuTimer>("gpu_frame", "FRAME", 240, 1.0f / 60.0f));
 
 		// ===== PROPERTIES =====
-		mPropertyManager = std::make_unique<PropertyManager>();
-		mPropertyLutSize = std::make_shared<NumberProperty<uint32_t>>("lut_size", 0);
-		mPropertyLutCount = std::make_shared<NumberProperty<uint32_t>>("lut_count", 0);
-		mPropertyVbSize = std::make_shared<NumberProperty<uint32_t>>("vb_size", 0);
-		mPropertyMbSize = std::make_shared<NumberProperty<uint32_t>>("mb_size", 0);
-		mPropertyManager->add_property(mPropertyLutSize);
-		mPropertyManager->add_property(mPropertyLutCount);
-		mPropertyManager->add_property(mPropertyVbSize);
-		mPropertyManager->add_property(mPropertyMbSize);
-
+		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("lut_size"));
+		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("lut_count"));
+		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("vb_size"));
+		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("mb_size"));
 
 		// ===== GPU CAMERA BUFFER ====
 		const auto concurrentFrames = avk::context().main_window()->number_of_frames_in_flight();

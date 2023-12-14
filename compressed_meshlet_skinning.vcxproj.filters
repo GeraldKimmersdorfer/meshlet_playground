@@ -44,6 +44,9 @@
     <Filter Include="source\statistics">
       <UniqueIdentifier>{820b7721-a989-4150-9522-22ec315d8e3a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\statistics\properties">
+      <UniqueIdentifier>{570a829f-acd4-4805-bb2f-91e05b1a3d32}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\tools\glslangValidator.exe">
@@ -189,11 +192,14 @@
     <ClCompile Include="source\helpers\permcodec.cpp">
       <Filter>source\helpers</Filter>
     </ClCompile>
-    <ClCompile Include="source\statistics\PropertyManager.cpp">
-      <Filter>source\statistics</Filter>
+    <ClCompile Include="source\statistics\NumberProperty.cpp">
+      <Filter>source\statistics\properties</Filter>
     </ClCompile>
-    <ClCompile Include="source\statistics\Property.cpp">
-      <Filter>source\statistics</Filter>
+    <ClCompile Include="source\statistics\PropertyManager.cpp">
+      <Filter>source\statistics\properties</Filter>
+    </ClCompile>
+    <ClCompile Include="source\statistics\AverageNumberProperty.cpp">
+      <Filter>source\statistics\properties</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -294,11 +300,17 @@
     <ClInclude Include="source\helpers\permcodec.h">
       <Filter>source\helpers</Filter>
     </ClInclude>
-    <ClInclude Include="source\statistics\PropertyManager.h">
-      <Filter>source\statistics</Filter>
+    <ClInclude Include="source\statistics\NumberProperty.h">
+      <Filter>source\statistics\properties</Filter>
     </ClInclude>
-    <ClInclude Include="source\statistics\Property.h">
-      <Filter>source\statistics</Filter>
+    <ClInclude Include="source\statistics\PropertyManager.h">
+      <Filter>source\statistics\properties</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\PropertyInterface.h">
+      <Filter>source\statistics\properties</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\AverageNumberProperty.h">
+      <Filter>source\statistics\properties</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

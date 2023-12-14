@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 #include <map>
-#include "Property.h"
+#include "PropertyInterface.h"
 
 class PropertyManager
 {
