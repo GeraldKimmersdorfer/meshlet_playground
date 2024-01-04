@@ -107,3 +107,21 @@ glm::vec3 decodeUVec2ToVec3(const glm::uvec2& value)
 		float(y) / float((1u << 21u) - 1u),
 		float(z) / float((1u << 21u) - 1u));
 }
+
+uint16_t packMbiluidAndPermutation(uint32_t mbiluid, uint32_t permutation)
+{
+	// Ensure mbiluid is 2 bits long
+	assert(mbiluid <= 3);
+	// Ensure permutation is 5 bits long
+	assert(permutation <= 31);
+	return (mbiluid << 5) | permutation;
+}
+
+void unpackMbiluidAndPermutation(uint16_t packedValue, uint32_t& mbiluid, uint32_t& permutation)
+{
+	// Extract mbiluid (highest 2 bits of the 7-bit value)
+	mbiluid = (packedValue >> 5) & 0x03; // Mask with 0x03 to ensure only 2 bits are extracted
+
+	// Extract permutation (lowest 5 bits)
+	permutation = packedValue & 0x1F; // Mask with 0x1F to ensure only 5 bits are extracted
+}

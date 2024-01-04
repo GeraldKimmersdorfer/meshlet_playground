@@ -210,9 +210,13 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 
 	uint32_t vertex_count = static_cast<uint32_t>(vertexData.size());
 
+	// make sure that permutation vector is filled if provided
+	if (vertexLUPermutation) vertexLUPermutation->resize(vertex_count);
+
 	// STEP 0: Create vector with all reduced bone index vectors
 	std::vector<glm::u16vec4> adoptedBoneIndexVectors;	// for unused bones (weigth < epsilon) -> UINT16_MAX
 	std::vector<uint16_t> luids(vertex_count);	// lookup index per vertex
+
 
 	adoptedBoneIndexVectors.reserve(vertex_count);
 

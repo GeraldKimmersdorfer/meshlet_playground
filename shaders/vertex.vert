@@ -36,13 +36,17 @@ layout (location = 0) out PerVertexData
 	vec3 color;
 } v_out;
 
+layout(push_constant) uniform PushConstants {
+	copy_push_data copy;
+};
+
 // NOTE: This function is by far more performant than the ones in glsl_helper
 void boneTransform(in vec4 boneWeights, in uvec4 boneIndices, inout vec4 posMshSp, inout vec3 nrmMshSp) {
 	mat4 skinMatrix = mat4(0.0);
 	for (uint i = 0; i < 4; i++) {
 		if (boneWeights[i] > BONE_WEIGHT_EPSILON) {
 			skinMatrix += boneWeights[i] * bones[boneIndices[i]].transform;
-		} // else break (if boneWeights are sorted)
+		}  else break; // (if boneWeights are sorted)
 	}
 	posMshSp = skinMatrix * posMshSp;
 	nrmMshSp = normalize(mat3(skinMatrix) * nrmMshSp);
@@ -51,8 +55,7 @@ void boneTransform(in vec4 boneWeights, in uvec4 boneIndices, inout vec4 posMshS
 void main() {
 
 #if MCC_VERTEX_GATHER_TYPE == _PULL
-	vertex_data vertex = getVertexData(gl_VertexIndex);
-	//vertex_data_no_compression vertex = vertices[gl_VertexIndex];
+	vertex_data vertex = getVertexData(gl_VertexIndex, 0);
 #elif MCC_VERTEX_GATHER_TYPE == _PUSH
 	vertex_data vertex = vertex_data(inPosition, inNormal, inTexCoord, inBoneIndices, inBoneWeights);
 #endif
@@ -62,7 +65,7 @@ void main() {
 	bool isAnimated 		  = meshes[meshIndex].mAnimated;
 	uint materialIndex        = meshes[meshIndex].mMaterialIndex;
 
-	vec3 posLocal = vertex.mPosition * vec3(meshes[meshIndex].mPositionNormalizationInvScale) + vec3(meshes[meshIndex].mPositionNormalizationInvTranslation); // ToDo: change to fma
+	vec3 posLocal = fma(vertex.mPosition, vec3(meshes[meshIndex].mPositionNormalizationInvScale), vec3(meshes[meshIndex].mPositionNormalizationInvTranslation));
 
 	vec4 posMshSp = vec4(posLocal, 1.0);
 	vec3 nrmMshSp = vertex.mNormal;
@@ -72,7 +75,7 @@ void main() {
 	}
 
 	// Standard transformation:
-	vec4 posWS = transformationMatrix * posMshSp;
+	vec4 posWS = transformationMatrix * posMshSp + copy.mOffset;
 	vec4 posCS = camera.mViewProjMatrix * posWS;
 
 	gl_Position = posCS;

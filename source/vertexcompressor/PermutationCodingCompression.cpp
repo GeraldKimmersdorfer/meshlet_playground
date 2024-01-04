@@ -19,8 +19,8 @@ void PermutationCodingCompression::doCompress(avk::queue* queue)
 		auto& newVert = mVertexData.emplace_back(vertex_data_permutation_coding{});
 
 		newVert.mPosition = encodeVec3ToUVec2(glm::vec3(vert.mPositionTxX.x, vert.mPositionTxX.y, vert.mPositionTxX.z));
-		auto decoded = decodeUVec2ToVec3(newVert.mPosition);
-		/*if (!glm::all(glm::epsilonEqual(decoded, glm::vec3(vert.mPositionTxX.x, vert.mPositionTxX.y, vert.mPositionTxX.z), 0.0001f))) {
+		/*auto decoded = decodeUVec2ToVec3(newVert.mPosition);
+		if (!glm::all(glm::epsilonEqual(decoded, glm::vec3(vert.mPositionTxX.x, vert.mPositionTxX.y, vert.mPositionTxX.z), 0.0001f))) {
 			std::cout << "FEHLER";
 		}*/
 		
@@ -43,9 +43,10 @@ void PermutationCodingCompression::doCompress(avk::queue* queue)
 	mAdditionalStaticDescriptorBindings.push_back(avk::descriptor_binding(3, 1, mBoneLUTBuffer));
 
 	// report to props:
-	//mShared->mPropertyLutSize->setValue(mBoneLUTData.size() * sizeof(glm::u16vec4));
-	//mShared->mPropertyLutCount->setValue(mBoneLUTData.size());
-	//mShared->mPropertyVbSize->setValue(sizeof(vertex_data_permutation_coding) * mVertexData.size());
+	mShared->mPropertyManager->get("lut_size")->setUint(mBoneLUTData.size() * sizeof(glm::u16vec4));
+	mShared->mPropertyManager->get("lut_count")->setUint(mBoneLUTData.size());
+	mShared->mPropertyManager->get("vb_size")->setUint(sizeof(vertex_data_permutation_coding) * mVertexData.size());
+	mShared->mPropertyManager->get("amb_size")->setUint(0);
 }
 
 void PermutationCodingCompression::doDestroy()

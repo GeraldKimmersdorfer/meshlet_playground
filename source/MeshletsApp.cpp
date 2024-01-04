@@ -203,7 +203,7 @@ void MeshletsApp::load(const std::string& filename)
 	// NOTE: The AABB computation will definitely not work for most models, as the rigging often adds scaling
 	// To be exact it has to be computed for each animation individually. But this is out of scope here!
 	glm::vec3 aabbWSExtend = aabbMaxWS - aabbMinWS;
-	mConfig.mInstancingOffset = glm::vec4(0.0F, 0.0F, -aabbWSExtend.z, 0.0F);
+	mConfig.mCopyOffset = glm::vec4(aabbWSExtend.x, 0.0F, aabbWSExtend.z, 0.0F);
 
 	// ======== START UPLOADING TO GPU =============
 	mVertexBuffer = avk::context().create_buffer(avk::memory_usage::device,
@@ -272,9 +272,9 @@ void MeshletsApp::initGUI()
 
 					ImGui::Separator();
 
-					if (ImGui::SliderInt("Instance Count", (int*)(void*)&mConfig.mInstanceCount, 1, MAX_INSTANCE_COUNT)) config_has_changed = true;
+					if (ImGui::SliderInt("Copy Count", (int*)(void*)&mConfig.mCopyCount, 1, MAX_INSTANCE_COUNT)) config_has_changed = true;
 
-					if (ImGui::SliderFloat3("Instance Offset", &mConfig.mInstancingOffset.x, -100.0f, 100.0f)) config_has_changed = true;
+					if (ImGui::SliderFloat3("Copy Offset", &mConfig.mCopyOffset.x, -100.0f, 100.0f)) config_has_changed = true;
 
 					if (ImGui::BeginCombo("Animation", mCurrentlyPlayingAnimationId >= 0 ? mAnimations[mCurrentlyPlayingAnimationId].mName.c_str() : "None")) {
 						if (ImGui::Selectable("None", mCurrentlyPlayingAnimationId < 0)) mCurrentlyPlayingAnimationId = -1;
@@ -487,12 +487,13 @@ void MeshletsApp::initReusableObjects()
 		mTaskInvocationsExt = mPropsMeshShader.maxPreferredTaskWorkGroupInvocations;
 
 		// ===== PROPERTIES AND TIMING =====
-		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("lut_size"));
 		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("lut_count"));
-		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("vb_size"));
-		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("mb_size"));
-		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("cpu_frame", "ms", 240));
-		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("gpu_frame", "ms", 240));
+		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("lut_size", " byte"));
+		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("vb_size", " byte"));
+		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("mb_size", " byte"));
+		mPropertyManager->add_property(std::make_shared<NumberProperty<uint32_t>>("amb_size", " byte"));
+		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("cpu_frame", " ms", 240));
+		mPropertyManager->add_property(std::make_shared<AverageNumberProperty<float>>("gpu_frame", " ms", 240));
 		mAvkFrameTimer = std::make_unique<AvkTimer>(std::move(mPropertyManager->get("gpu_frame")));
 		mCpuFrameTimer = std::make_unique<CpuTimer>(std::move(mPropertyManager->get("cpu_frame")));
 		

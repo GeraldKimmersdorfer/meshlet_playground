@@ -69,6 +69,8 @@ public:
 	void attachSharedPipelineConfiguration(avk::graphics_pipeline_config* pipeConfig, std::vector<avk::binding_data>* staticDescriptors);
 	std::vector<avk::binding_data> getDynamicDescriptorBindings(int64_t inFlightIndex);
 
+	copy_push_data getCopyDataForId(uint32_t id);
+
 protected:
 	void hudSharedConfiguration(bool& config_has_changed);
 

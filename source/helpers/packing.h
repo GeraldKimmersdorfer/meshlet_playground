@@ -23,3 +23,7 @@ glm::u16vec2 compressTextureCoords(glm::vec2 texCoords);
 glm::uvec2 encodeVec3ToUVec2(const glm::vec3& value);
 
 glm::vec3 decodeUVec2ToVec3(const glm::uvec2& value);
+
+uint16_t packMbiluidAndPermutation(uint32_t mbiluid, uint32_t permutation);
+
+void unpackMbiluidAndPermutation(uint16_t packedValue, uint32_t& mbiluid, uint32_t& permutation);

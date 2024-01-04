@@ -46,7 +46,7 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 		avk::task_shader(mPathTaskShader, "main", true).set_specialization_constant(0, mTaskInvocations),
 		avk::mesh_shader(mPathMeshShader, "main", true).set_specialization_constant(0, mTaskInvocations).set_specialization_constant(1, mMeshInvocations),
 		avk::fragment_shader(mPathFragmentShader, "main", true),
-		avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(uint32_t) }
+		avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(copy_push_data) }
 	);
 
 	mAdditionalStaticDescriptorBindings.push_back(std::move(avk::descriptor_binding(4, 0, mMeshletsBuffer)));
@@ -84,17 +84,17 @@ avk::command::action_type_command MeshPipeline::render(int64_t inFlightIndex)
 					))),
 				command::custom_commands([this](avk::command_buffer_t& cb) {
 					if (mMeshletExtension.first == _NV) {
-						for (int i = 0; i < mShared->mConfig.mInstanceCount; i++) {
+						for (int i = 0; i < mShared->mConfig.mCopyCount; i++) {
 							cb.record({
-								avk::command::push_constants(mPipeline->layout(), i),
+								avk::command::push_constants(mPipeline->layout(), mShared->getCopyDataForId(i)),
 								avk::command::draw_mesh_tasks_nv(div_ceil(mShared->mConfig.mMeshletsCount, mTaskInvocations), 0)
 								});
 						}
 					}
 					else {
-						for (int i = 0; i < mShared->mConfig.mInstanceCount; i++) {
+						for (int i = 0; i < mShared->mConfig.mCopyCount; i++) {
 							cb.record({
-								avk::command::push_constants(mPipeline->layout(), i),
+								avk::command::push_constants(mPipeline->layout(), mShared->getCopyDataForId(i)),
 								avk::command::draw_mesh_tasks_ext(div_ceil(mShared->mConfig.mMeshletsCount, mTaskInvocations), 1, 1)
 								});
 						}

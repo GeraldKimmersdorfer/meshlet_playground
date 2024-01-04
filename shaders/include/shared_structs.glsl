@@ -48,17 +48,27 @@ struct vertex_data_bone_lookup {
 	vec4 mTxYNormal;
 	vec3 mBoneWeights;
 	uint mBoneIndicesLUID;
-	vec4 mBoneWeightsGT;
-	uvec4 mBoneIndicesGT;
 };
 
+struct vertex_data_meshlet_coding {
+	uvec2 mPosition;	// each component 21 bit
+	uint mNormal;
+	uint mTexCoords;
+	// WEIGHTS = 25 bit, actually available for the weights (more than in permut coding paper)
+	// MBILUID = 2 bit, id of the (up to 4) luids inside the meshlet_data (Meshlet Bone Index Lookup ID)
+	// PERMUTATION = 5 bit, 0-23, defines how the bone indices need to be shuffled
+	uint mWeightsImbiluidPermutation;
+	uint padding;	// even in scalar layouts we need 64 bit padding (8 byte)
+};
+
+/* DELETE
 struct vertex_data_meshlet_coding {
 	uvec4 mPosition;
 	vec4 mNormal;
 	vec4 mTexCoord;
 	vec4 mBoneWeights;
 	uvec4 mBoneIndicesLUID;
-};
+};*/
 
 struct vertex_data_permutation_coding {
 	uvec2 mPosition;	// each component 21 bit
@@ -77,12 +87,17 @@ struct camera_data
     mat4 mViewProjMatrix;
 };
 
+struct copy_push_data {
+	uvec4 mID;
+	vec4 mOffset;
+};
+
 struct config_data {
 	bool mOverlayMeshlets;
 	uint mMeshletsCount;
-	uint mInstanceCount;
+	uint mCopyCount;
 	uint padding;
-	vec4 mInstanceOffset;
+	vec4 mCopyOffset;
 };
 
 struct MaterialGpuData

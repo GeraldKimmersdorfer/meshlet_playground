@@ -7,7 +7,7 @@ class PermutationCodingCompression : public VertexCompressionInterface {
 public:
 
 	PermutationCodingCompression(SharedData* shared)
-		: VertexCompressionInterface(shared, "Permutation Coding (20 byte)", "_PC")
+		: VertexCompressionInterface(shared, "Permutation Coding (24 byte)", "_PC")
 	{}
 
 protected:

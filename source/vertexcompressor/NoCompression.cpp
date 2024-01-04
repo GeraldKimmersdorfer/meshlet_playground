@@ -11,9 +11,10 @@ void NoCompression::doCompress(avk::queue* queue)
 	mAdditionalStaticDescriptorBindings.push_back(avk::descriptor_binding(3, 0, mShared->mVertexBuffer));
 
 	// report to props:
-	//mShared->mPropertyLutSize->setValue(0);
-	//mShared->mPropertyLutCount->setValue(0);
-	//mShared->mPropertyVbSize->setValue(sizeof(vertex_data) * mShared->mVertexData.size());
+	mShared->mPropertyManager->get("lut_size")->setUint(0);
+	mShared->mPropertyManager->get("lut_count")->setUint(0);
+	mShared->mPropertyManager->get("vb_size")->setUint(sizeof(vertex_data) * mShared->mVertexData.size());
+	mShared->mPropertyManager->get("amb_size")->setUint(0);
 }
 
 void NoCompression::doDestroy()

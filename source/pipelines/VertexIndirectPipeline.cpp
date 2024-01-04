@@ -84,13 +84,16 @@ void VertexIndirectPipeline::doInitialize(avk::queue* queue)
 			avk::from_buffer_binding(0)->stream_per_vertex(offsetForTexcoord, vk::Format::eR32G32Sfloat, sizeof(vertex_data))->to_location(1),
 			avk::from_buffer_binding(0)->stream_per_vertex(offsetForNormal, vk::Format::eR32G32B32Sfloat, sizeof(vertex_data))->to_location(2),
 			avk::from_buffer_binding(0)->stream_per_vertex(offsetForBoneIndices, vk::Format::eR32G32B32A32Uint, sizeof(vertex_data))->to_location(3),
-			avk::from_buffer_binding(0)->stream_per_vertex(offsetForBoneWeight, vk::Format::eR32G32B32A32Sfloat, sizeof(vertex_data))->to_location(4)
+			avk::from_buffer_binding(0)->stream_per_vertex(offsetForBoneWeight, vk::Format::eR32G32B32A32Sfloat, sizeof(vertex_data))->to_location(4),
+			avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(copy_push_data) }
 		);
+
 	}
 	else if (mVertexGatherType.first == _PULL) {
 		pipelineConfig = avk::create_graphics_pipeline_config(
 			avk::vertex_shader(mPathVertexShader),
-			avk::fragment_shader(mPathFragmentShader)
+			avk::fragment_shader(mPathFragmentShader),
+			avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(copy_push_data) }
 		);
 
 		auto vCompressor = mShared->getCurrentVertexCompressor();
@@ -123,11 +126,24 @@ avk::command::action_type_command VertexIndirectPipeline::render(int64_t inFligh
 						mAdditionalStaticDescriptorBindings,
 						mShared->getDynamicDescriptorBindings(inFlightIndex)
 					))),
-				command::conditional(
-					[this]() { return mVertexGatherType.first == _PUSH; },
-					[this]() { return command::draw_indexed_indirect(mIndirectDrawCommandBuffer.as_reference(), mShared->mIndexBuffer.as_reference(), mShared->mMeshData.size(), mShared->mVertexBuffer.as_reference()); },
-					[this]() { return draw_indexed_indirect_nobind(mIndirectDrawCommandBuffer.as_reference(), mShared->mIndexBuffer.as_reference(), mShared->mMeshData.size(), 0, static_cast<uint32_t>(sizeof(VkDrawIndexedIndirectCommand))); }
-				)
+				command::custom_commands([this](avk::command_buffer_t& cb) {
+					if (mVertexGatherType.first == _PUSH) {
+						for (int i = 0; i < mShared->mConfig.mCopyCount; i++) {
+							cb.record({
+								avk::command::push_constants(mPipeline->layout(), mShared->getCopyDataForId(i)),
+								command::draw_indexed_indirect(mIndirectDrawCommandBuffer.as_reference(), mShared->mIndexBuffer.as_reference(), mShared->mMeshData.size(), mShared->mVertexBuffer.as_reference())
+								});
+						}
+					}
+					else {
+						for (int i = 0; i < mShared->mConfig.mCopyCount; i++) {
+							cb.record({
+								avk::command::push_constants(mPipeline->layout(), mShared->getCopyDataForId(i)),
+								draw_indexed_indirect_nobind(mIndirectDrawCommandBuffer.as_reference(), mShared->mIndexBuffer.as_reference(), mShared->mMeshData.size(), 0, static_cast<uint32_t>(sizeof(VkDrawIndexedIndirectCommand))),
+								});
+						}
+					}
+				}),
 		});
 }
 

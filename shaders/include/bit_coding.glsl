@@ -28,3 +28,14 @@ vec3 decode_position_2x32(uvec2 value) {
                 float(y) / float((1u << 21u) - 1u), 
                 float(z) / float((1u << 21u) - 1u));
 }
+
+// GLSL Function to pack mbiluid and permutation
+uint packMbiluidAndPermutation(uint mbiluid, uint permutation) {
+    return (mbiluid << 5) | permutation;
+}
+
+// GLSL Function to unpack into mbiluid and permutation
+void unpackMbiluidAndPermutation(uint packedValue, out uint mbiluid, out uint permutation) {
+    mbiluid = (packedValue >> 5) & 0x03;
+    permutation = packedValue & 0x1F;
+}

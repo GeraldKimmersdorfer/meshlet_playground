@@ -16,9 +16,7 @@ void BoneLUTCompression::doCompress(avk::queue* queue)
 			.mPositionTxX = vert.mPositionTxX,
 			.mTxYNormal = vert.mTxYNormal,
 			.mBoneWeights = glm::vec3(boneWeights),
-			.mBoneIndicesLUID = static_cast<uint32_t>(vertexLUIndexTable[vid]),
-			.mBoneWeightsGT = vert.mBoneWeights,
-			.mBoneIndicesGT = vert.mBoneIndices
+			.mBoneIndicesLUID = static_cast<uint32_t>(vertexLUIndexTable[vid])
 			});
 	}
 	mVertexBuffer = avk::context().create_buffer(avk::memory_usage::device,
@@ -37,9 +35,9 @@ void BoneLUTCompression::doCompress(avk::queue* queue)
 
 	// report to props:
 	mShared->mPropertyManager->get("lut_size")->setUint(mBoneLUTData.size() * sizeof(glm::u16vec4));
-	//mShared->mPropertyLutSize->setValue(mBoneLUTData.size() * sizeof(glm::u16vec4));
-	//mShared->mPropertyLutCount->setValue(mBoneLUTData.size());
-	//mShared->mPropertyVbSize->setValue(sizeof(vertex_data_bone_lookup) * mVertexData.size());
+	mShared->mPropertyManager->get("lut_count")->setUint(mBoneLUTData.size());
+	mShared->mPropertyManager->get("vb_size")->setUint(sizeof(vertex_data_bone_lookup) * mVertexData.size());
+	mShared->mPropertyManager->get("amb_size")->setUint(0);
 }
 
 void BoneLUTCompression::doDestroy()

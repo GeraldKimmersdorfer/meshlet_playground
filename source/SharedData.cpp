@@ -2,6 +2,24 @@
 
 #include <imgui.h>
 
+glm::ivec2 spiral(unsigned int n) {
+	if (n == 0) return glm::ivec2(0, 0);
+
+	int r = int(std::floor((std::sqrt(float(n)) - 1.0f) / 2.0f)) + 1;
+	int p = 8 * r * (r - 1) / 2;
+	int en = r * 2;
+	int a = int(n - unsigned int(p)) % (r * 8);
+
+	switch (a / (r * 2)) {
+	case 0: return glm::ivec2(a - r, -r);
+	case 1: return glm::ivec2(r, (a % en) - r);
+	case 2: return glm::ivec2(r - (a % en), r);
+	case 3: return glm::ivec2(-r, r - (a % en));
+	}
+
+	return glm::ivec2(0, 0);
+}
+
 void SharedData::attachSharedPipelineConfiguration(avk::graphics_pipeline_config* pipeConfig, std::vector<avk::binding_data>* staticDescriptors)
 {
 	pipeConfig->mFrontFaceWindingOrder = avk::cfg::front_face::define_front_faces_to_be_counter_clockwise();
@@ -37,6 +55,13 @@ std::vector<avk::binding_data> SharedData::getDynamicDescriptorBindings(int64_t 
 		std::move(avk::descriptor_binding(0, 1, mViewProjBuffers[inFlightIndex])),
 		std::move(avk::descriptor_binding(2, 0, mBoneTransformBuffers[inFlightIndex]))
 	};
+}
+
+copy_push_data SharedData::getCopyDataForId(uint32_t id)
+{
+	auto spiralXZ = spiral(id);
+	auto offsetXZ = glm::vec2(mConfig.mCopyOffset.x, mConfig.mCopyOffset.z) * (glm::vec2)spiralXZ;
+	return copy_push_data{ glm::uvec4(id, spiralXZ.x, spiralXZ.y, 0), glm::vec4(offsetXZ.x, 0.0, offsetXZ.y, 0.0) };
 }
 
 void SharedData::hudSharedConfiguration(bool& config_has_changed)

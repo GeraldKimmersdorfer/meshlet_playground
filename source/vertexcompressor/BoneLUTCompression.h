@@ -7,7 +7,7 @@ class BoneLUTCompression : public VertexCompressionInterface {
 public:
 
 	BoneLUTCompression(SharedData* shared)
-		: VertexCompressionInterface(shared, "Bone LUT (128bit)", "_LUT")
+		: VertexCompressionInterface(shared, "Bone LUT (48 byte)", "_LUT")
 	{}
 
 protected:

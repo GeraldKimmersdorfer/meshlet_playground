@@ -36,8 +36,6 @@ struct vertex_data_bone_lookup {
 	glm::vec4 mTxYNormal;
 	glm::vec3 mBoneWeights;
 	uint32_t mBoneIndicesLUID;
-	glm::vec4 mBoneWeightsGT;
-	glm::uvec4 mBoneIndicesGT;
 };
 
 struct vertex_data_permutation_coding {
@@ -48,31 +46,38 @@ struct vertex_data_permutation_coding {
 	uint32_t padding;	// even in scalar layouts we need 64 bit padding (8 byte)
 };
 
+/* DELETE
 struct vertex_data_meshlet_coding {
 	glm::uvec4 mPosition;
 	glm::vec4 mNormal;
 	glm::vec4 mTexCoord;
 	glm::vec4 mBoneWeights;
 	glm::uvec4 mBoneIndicesLUID;
-};
+};*/
 
-/*
+
 struct vertex_data_meshlet_coding {
-	uint64_t mPosition;	// each component 21 bit
+	glm::u32vec2 mPosition;	// each component 21 bit
 	uint32_t mNormal;
-	uint32_t mTexCoord;
+	uint32_t mTexCoords;
 	// WEIGHTS = 25 bit, actually available for the weights (more than in permut coding paper)
 	// MBILUID = 2 bit, id of the (up to 4) luids inside the meshlet_data (Meshlet Bone Index Lookup ID)
 	// PERMUTATION = 5 bit, 0-23, defines how the bone indices need to be shuffled
 	uint32_t mWeightsImbiluidPermutation;
-};*/
+	uint32_t padding;	// even in scalar layouts we need 64 bit padding (8 byte)
+};
+
+struct copy_push_data {
+	glm::uvec4 mID;		// id, spiralx, spiralz, 0
+	glm::vec4 mOffset;	// offset in world space, 0
+};
 
 struct config_data {
 	uint32_t mOverlayMeshlets = true;
 	uint32_t mMeshletsCount = 0;
-	uint32_t mInstanceCount = 2;
+	uint32_t mCopyCount = 2;
 	uint32_t padding;
-	glm::vec4 mInstancingOffset = { 0.0f , 0.0f, 1.0f , 0.0f };
+	glm::vec4 mCopyOffset = { 1.0f , 0.0f, 1.0f , 0.0f };
 };
 
 // NOTE: We end up with massive amounts

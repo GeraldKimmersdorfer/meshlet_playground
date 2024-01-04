@@ -23,9 +23,9 @@ ivec2 spiral(uint n) {
     return ivec2(0, 0);
 }
 
-// <0 ... pt lies on the negative halfspace
-//  0 ... pt lies on the plane
-// >0 ... pt lies on the positive halfspace
+// < 0 ... pt lies on the negative halfspace
+//   0 ... pt lies on the plane
+// > 0 ... pt lies on the positive halfspace
 float ClassifyPoint(Plane plane, vec3 pt)
 {
 	float d;
