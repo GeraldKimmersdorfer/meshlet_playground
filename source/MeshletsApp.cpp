@@ -101,6 +101,8 @@ void normalizePositions(std::vector<glm::vec3>& positions, glm::vec4& invTransla
 void MeshletsApp::load(const std::string& filename)
 {
 	reset();
+	// Load camera definitions
+	readCameraDefinitionsFromFile(mCameraDefinitions);
 
 	avk::model& model = mModel = std::move(avk::model_t::load_from_file(filename, aiProcess_Triangulate | aiProcess_FlipUVs));
 	std::vector<avk::material_config> allMatConfigs;
@@ -272,10 +274,6 @@ void MeshletsApp::initGUI()
 
 					ImGui::Separator();
 
-					if (ImGui::SliderInt("Copy Count", (int*)(void*)&mConfig.mCopyCount, 1, MAX_INSTANCE_COUNT)) config_has_changed = true;
-
-					if (ImGui::SliderFloat3("Copy Offset", &mConfig.mCopyOffset.x, -100.0f, 100.0f)) config_has_changed = true;
-
 					if (ImGui::BeginCombo("Animation", mCurrentlyPlayingAnimationId >= 0 ? mAnimations[mCurrentlyPlayingAnimationId].mName.c_str() : "None")) {
 						if (ImGui::Selectable("None", mCurrentlyPlayingAnimationId < 0)) mCurrentlyPlayingAnimationId = -1;
 						for (int n = 0; n < mAnimations.size(); n++) {
@@ -286,15 +284,64 @@ void MeshletsApp::initGUI()
 						ImGui::EndCombo();
 					}
 					if (mCurrentlyPlayingAnimationId >= 0) {
+						ImGui::SetNextItemWidth(200);
+						const float step = 0.05f; // Your desired step size
+						if (ImGui::SliderFloat("##AnimationProgress", &mCurrentAnimationProgress, 0.0f, 1.0f, "%.3f")) {
+							mCurrentAnimationProgress = roundf(mCurrentAnimationProgress / step) * step;
+							mCurrentAnimationProgressChanged = true;
+						}
+						//if (ImGui::SliderFloat("##AnimationProgress", &mCurrentAnimationProgress, 0.0f, 1.0f)) mCurrentAnimationProgressChanged = true;
+						ImGui::SameLine();
+						if (ImGui::Button(mCurrentAnimationPaused ? "Play" : "Pause")) mCurrentAnimationPaused = !mCurrentAnimationPaused;
 						ImGui::Checkbox("Inverse Mesh Root Fix", &mInverseMeshRootFix);
 					}
+					
 					ImGui::Separator();
+
 					bool quakeCamEnabled = mQuakeCam.is_enabled();
-					if (ImGui::Checkbox("Enable Quake Camera [F5]", &quakeCamEnabled)) {
-						if (quakeCamEnabled) { // => should be enabled
-							mQuakeCam.set_matrix(mOrbitCam.matrix()); mQuakeCam.enable(); mOrbitCam.disable();
+					if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
+						if (ImGui::Checkbox("Enable Quake Camera [F5]", &quakeCamEnabled)) {
+							if (quakeCamEnabled) { // => should be enabled
+								mQuakeCam.set_matrix(mOrbitCam.matrix()); mQuakeCam.enable(); mOrbitCam.disable();
+							}
+						}
+						static char mCameraName[30] = "New Camera";
+						ImGui::SetNextItemWidth(100);
+						ImGui::InputText("##cameraname", mCameraName, 30);
+						ImGui::SameLine();
+						if (ImGui::Button("Save Camera")) {
+							auto proj = mQuakeCam.projection_matrix();
+							auto view = mQuakeCam.matrix();
+							if (!quakeCamEnabled) {
+								proj = mOrbitCam.projection_matrix();
+								view = mOrbitCam.matrix();
+							}
+							mCameraDefinitions[mCameraName] = { mCameraName, view, proj };
+							saveCameraDefinitionsToFile(mCameraDefinitions);
+						}
+
+						static std::string currentCameraName = "Default";
+						if (ImGui::BeginCombo("Select Camera", currentCameraName.c_str())) {
+							for (const auto& cameraDef : mCameraDefinitions) {
+								bool isSelected = (currentCameraName == cameraDef.first);
+								if (ImGui::Selectable(cameraDef.first.c_str(), isSelected)) {
+									currentCameraName = cameraDef.first;
+									// Load camera view and projection matrices
+									if (quakeCamEnabled) {
+										mQuakeCam.set_matrix(cameraDef.second.mViewMatrix);
+										mQuakeCam.set_projection_matrix(cameraDef.second.mProjectionMatrix);
+									}
+									else {
+										mOrbitCam.set_matrix(cameraDef.second.mViewMatrix);
+										mOrbitCam.set_projection_matrix(cameraDef.second.mProjectionMatrix);
+									}
+								}
+								if (isSelected) ImGui::SetItemDefaultFocus();
+							}
+							ImGui::EndCombo();
 						}
 					}
+
 					if (avk::input().key_pressed(avk::key_code::f5)) {
 						if (quakeCamEnabled) {
 							mOrbitCam.set_matrix(mQuakeCam.matrix()); mOrbitCam.enable(); mQuakeCam.disable();
@@ -572,6 +619,27 @@ void MeshletsApp::update()
 	}
 	// The ImGui-Context had to be already created and theres no other callback, thats why its here
 	if (update_call_count++ == 0)  activateImGuiStyle(false, 0.9); //StyleColorsSpectrum();
+
+	if (mCurrentlyPlayingAnimationId >= 0 && (mCurrentAnimationPaused == false || mCurrentAnimationProgressChanged == true)) {
+		auto& aData = mAnimations[mCurrentlyPlayingAnimationId];
+		auto& animation = aData.mAnimation;
+		auto& clip = aData.mClip;
+		const auto dt = time().delta_time() / aData.mDurationSeconds;
+		mCurrentAnimationProgress += dt;
+		if (mCurrentAnimationProgress > 1.0) mCurrentAnimationProgress = 1.0 - mCurrentAnimationProgress;
+		auto time = aData.mDurationSeconds * mCurrentAnimationProgress;
+		mCurrentAnimationProgressChanged = false;
+		auto targetMemory = mBoneTransforms.data();
+
+		animation.animate(clip, time, [this, &animation, targetMemory](mesh_bone_info aInfo, const glm::mat4& aInverseMeshRootMatrix, const glm::mat4& aTransformMatrix, const glm::mat4& aInverseBindPoseMatrix, const glm::mat4& aLocalTransformMatrix, size_t aAnimatedNodeIndex, size_t aBoneMeshTargetIndex, double aAnimationTimeInTicks) {
+			glm::mat4 result;
+			uint32_t index = aInfo.mGlobalBoneIndexOffset + aInfo.mMeshLocalBoneIndex;
+			glm::mat4 inverseMeshRootMatrix{ 1.0 };
+			if (mInverseMeshRootFix) inverseMeshRootMatrix = aInverseMeshRootMatrix;
+			result = inverseMeshRootMatrix * aTransformMatrix * aInverseBindPoseMatrix; // *mInverseLocalPointTransforms[aInfo.mMeshIndexInModel];
+			targetMemory[index] = result;
+			});
+	}
 }
 
 void MeshletsApp::render()
@@ -585,23 +653,7 @@ void MeshletsApp::render()
 	auto mainWnd = context().main_window();
 	auto inFlightIndex = mainWnd->current_in_flight_index();
 
-	if (mCurrentlyPlayingAnimationId >= 0) {
-		auto& aData = mAnimations[mCurrentlyPlayingAnimationId];
-		auto& animation = aData.mAnimation;
-		auto& clip = aData.mClip;
-		const auto doubleTime = fmod(time().absolute_time_dp(), aData.mDurationSeconds * 2);
-		auto time = glm::lerp(0.0, aData.mDurationSeconds, (doubleTime > aData.mDurationSeconds ? doubleTime - aData.mDurationSeconds : doubleTime) / aData.mDurationSeconds);
-		auto targetMemory = mBoneTransforms.data();
 
-		animation.animate(clip, time, [this, &animation, targetMemory](mesh_bone_info aInfo, const glm::mat4& aInverseMeshRootMatrix, const glm::mat4& aTransformMatrix, const glm::mat4& aInverseBindPoseMatrix, const glm::mat4& aLocalTransformMatrix, size_t aAnimatedNodeIndex, size_t aBoneMeshTargetIndex, double aAnimationTimeInTicks) {
-			glm::mat4 result;
-			uint32_t index = aInfo.mGlobalBoneIndexOffset + aInfo.mMeshLocalBoneIndex;
-			glm::mat4 inverseMeshRootMatrix{ 1.0 };
-			if (mInverseMeshRootFix) inverseMeshRootMatrix = aInverseMeshRootMatrix;
-			result = inverseMeshRootMatrix * aTransformMatrix * aInverseBindPoseMatrix; // *mInverseLocalPointTransforms[aInfo.mMeshIndexInModel];
-			targetMemory[index] = result;
-			});
-	}
 
 	auto viewProjMat = mQuakeCam.is_enabled()
 		? mQuakeCam.projection_and_view_matrix()

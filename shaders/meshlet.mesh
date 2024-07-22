@@ -58,7 +58,8 @@ layout (location = 0) out PerVertexData
 	vec3 normalWS;
 	vec2 texCoord;
 	flat int materialIndex;
-	flat vec3 color;
+	vec3 color;
+	flat vec3 colorFlat;
 } v_out[];
 
 layout(push_constant) uniform PushConstants {
@@ -123,8 +124,8 @@ void main()
 #elif MCC_MESHLET_TYPE == _NATIVE
 		int vi = int(meshlets[meshletIndex].mVertices[i] + vertexOffset);
 #endif
-		
-		vertex_data vertex = getVertexData(vi, meshletIndex);
+		uint bluid = 0;
+		vertex_data vertex = getVertexData(vi, meshletIndex, bluid);
 		vec3 posLocal = fma(vertex.mPosition, vec3(meshes[meshIndex].mPositionNormalizationInvScale), vec3(meshes[meshIndex].mPositionNormalizationInvTranslation));
 
 		vec4 posMshSp = vec4(posLocal, 1.0);
@@ -143,12 +144,17 @@ void main()
 		v_out[i].normalWS = mat3(transformationMatrix) * nrmMshSp;
 		v_out[i].texCoord = vertex.mTexCoord;
 		v_out[i].materialIndex = int(materialIndex);
+		//v_out[i].colorFlat = color_from_id_hash(meshletIndex, config.hashColorTint.rgb);
 		
+		if (config.overlayIndex == 1) {
+			v_out[i].colorFlat = color_from_id_hash(meshletIndex, config.hashColorTint.rgb); 
+		} else if (config.overlayIndex == 3) {
+			v_out[i].colorFlat = color_from_id_hash(bluid, config.hashColorTint.rgb); 
+		}
+		v_out[i].color = v_out[i].colorFlat;
 #if MCC_MESHLET_EXTENSION == _EXT
-		v_out[i].color = color_from_id_hash(meshletIndex);
 		gl_MeshVerticesEXT[i].gl_Position = posCS;
 #elif MCC_MESHLET_EXTENSION == _NV
-		v_out[i].color = color_from_id_hash(meshletIndex, vec3(118, 185, 0) / 255.0);
 		gl_MeshVerticesNV[i].gl_Position = posCS;
 #endif
 

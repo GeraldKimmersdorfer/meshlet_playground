@@ -40,7 +40,7 @@ void BoneLUTDependentBuilder::doGenerate()
 		// let meshoptimizer build the meshlets for us
 		size_t meshlet_count = meshopt_buildMeshlets_feedback(meshlets.data(), meshlet_vertices.data(), meshlet_triangles.data(),
 			indices.data(), indices.size(), &vertices[0].mPositionTxX[0], vertices.size(), sizeof(vertex_data),
-			aMaxVertices, max_triangles, cone_weight, &vertexLUIndexTable32[0], 1);
+			aMaxVertices, max_triangles, cone_weight, &vertexLUIndexTable32[0], 4);
 
 		std::vector<meshlet_native> generatedMeshlets(meshlet_count);
 		for (int mltx = 0; mltx < meshlet_count; mltx++) {

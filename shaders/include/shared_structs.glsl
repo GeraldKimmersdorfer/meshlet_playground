@@ -93,11 +93,16 @@ struct copy_push_data {
 };
 
 struct config_data {
-	bool mOverlayMeshlets;
+	uint overlayIndex;
 	uint mMeshletsCount;
 	uint mCopyCount;
 	uint padding;
 	vec4 mCopyOffset;
+	float overlayStrength;
+	uint overlayPreShading;
+	float lightAmbientStrength;
+	float lightDiffuseStrength;
+	vec4 hashColorTint;
 };
 
 struct MaterialGpuData

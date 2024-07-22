@@ -26,6 +26,8 @@ class SharedData
 {
 public:
 
+	SharedData();
+
 	config_data mConfig;
 
 	avk::model mModel;
@@ -77,5 +79,7 @@ protected:
 private:
 	avk::cfg::culling_mode mCullingMode = avk::cfg::culling_mode::cull_back_faces;
 	avk::cfg::polygon_drawing_mode mDrawingMode = avk::cfg::polygon_drawing_mode::fill;
+
+	std::map<std::string, config_data> mConfigurations;
 
 };

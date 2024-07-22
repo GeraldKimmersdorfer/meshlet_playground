@@ -8,7 +8,7 @@
 
 layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data_no_compression vertices[]; };
 
-vertex_data getVertexData(uint vid, uint mid) {
+vertex_data getVertexData(uint vid, uint mid, out uint bluid) {
     vertex_data ret;
     ret.mPosition = vertices[vid].mPositionTxX.xyz;
     ret.mNormal = vertices[vid].mTxYNormal.yzw;
@@ -27,12 +27,13 @@ vertex_data getVertexData(uint vid, uint mid) {
 layout(set = 3, binding = 0, scalar) buffer VertexBuffer { vertex_data_bone_lookup vertices[]; };
 layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[]; };
 
-vertex_data getVertexData(uint vid, uint mid) {
+vertex_data getVertexData(uint vid, uint mid, out uint bluid) {
     vertex_data ret;
     ret.mPosition = vertices[vid].mPositionTxX.xyz;
     ret.mNormal = vertices[vid].mTxYNormal.yzw;
     ret.mTexCoord = vec2(vertices[vid].mPositionTxX.w, vertices[vid].mTxYNormal.x);
-    ret.mBoneIndices = uvec4(bone_indices_lut[vertices[vid].mBoneIndicesLUID]);
+    bluid = vertices[vid].mBoneIndicesLUID;
+    ret.mBoneIndices = uvec4(bone_indices_lut[bluid]);
     ret.mBoneWeights = vec4(vertices[vid].mBoneWeights, 1.0);
     ret.mBoneWeights.w = 1.0 - ( ret.mBoneWeights.x + ret.mBoneWeights.y + ret.mBoneWeights.z );
     //ret.mBoneWeights = vertices[vid].mBoneWeightsGT;
@@ -53,7 +54,7 @@ layout(set = 3, binding = 2) buffer VertexPerMeshletBuffer { uint16_t meshlet_mb
 #include "bit_coding.glsl"
 #include "permutation.glsl"
 
-vertex_data getVertexData(uint vid, uint mid) {
+vertex_data getVertexData(uint vid, uint mid, out uint bluid) {
     vertex_data ret;
     ret.mPosition = decode_position_2x32(vertices[vid].mPosition);
     ret.mNormal = octahedronDecode(vec2(
@@ -81,6 +82,7 @@ vertex_data getVertexData(uint vid, uint mid) {
     unpackMbiluidAndPermutation(tuple_index, mbiluid, permutation);
 
     uint luid = uint(meshlet_mbi_lut[mid * 4 + mbiluid]);
+    bluid = luid;
 
     ret.mBoneWeights = vec4(out_weights[3], out_weights[2], out_weights[1], out_weights[0]);
     ret.mBoneIndices = uvec4(bone_indices_lut[luid]);
@@ -105,7 +107,7 @@ layout(set = 3, binding = 1) buffer BoneIndicesLUT { u16vec4 bone_indices_lut[];
 #include "blend_attribute_compression.glsl"
 #include "bit_coding.glsl"
 
-vertex_data getVertexData(uint vid, uint mid) {
+vertex_data getVertexData(uint vid, uint mid, out uint bluid) {
     vertex_data ret;
     ret.mPosition = decode_position_2x32(vertices[vid].mPosition);
     ret.mNormal = octahedronDecode(vec2(
@@ -128,6 +130,7 @@ vertex_data getVertexData(uint vid, uint mid) {
     codec.payload_value_count_over_factorial = 0; // irrelevant (only for valid check)
     float out_weights[ENTRY_COUNT + 1];
     uint tuple_index = decompress_blend_attributes(out_weights, valid, code, codec);
+    bluid = tuple_index;
 
     ret.mBoneWeights = vec4(out_weights[3], out_weights[2], out_weights[1], out_weights[0]);
     ret.mBoneIndices = uvec4(bone_indices_lut[tuple_index]);

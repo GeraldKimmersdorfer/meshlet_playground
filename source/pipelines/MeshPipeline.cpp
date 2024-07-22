@@ -105,7 +105,6 @@ avk::command::action_type_command MeshPipeline::render(int64_t inFlightIndex)
 
 void MeshPipeline::hud_config(bool& config_has_changed)
 {
-	config_has_changed |= ImGui::Checkbox("Highlight meshlets", (bool*)(void*)&mShared->mConfig.mOverlayMeshlets);
 }
 
 void MeshPipeline::hud_setup(bool& config_has_changes)

@@ -18,6 +18,8 @@
 #include "statistics/CPUTimer.h"
 #include "statistics/AvkTimer.h"
 
+#include "helpers/camera_storage.h"
+
 #define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
 //#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Mixamo-Group-No-Materials.fbx)"
 //#define STARTUP_FILE R"(assets/weight_meshlet_creation_test.fbx)"
@@ -42,6 +44,7 @@ class MeshletsApp : public avk::invokee, public SharedData
 		avk::animation_clip_data mClip;
 		avk::animation mAnimation;
 	};
+
 
 public:
 
@@ -83,6 +86,9 @@ private: // v== Member variables ==v
 	bool mInverseMeshRootFix = true;
 
 	int mCurrentlyPlayingAnimationId = -1;	// negative if no animation currently
+	float mCurrentAnimationProgress = 0.0f;
+	bool mCurrentAnimationPaused = false;
+	bool mCurrentAnimationProgressChanged = false;
 
 	avk::queue* mQueue;
 	
@@ -93,6 +99,7 @@ private: // v== Member variables ==v
 
 	avk::orbit_camera mOrbitCam;
 	avk::quake_camera mQuakeCam;
+	std::map<std::string, CameraDefinition> mCameraDefinitions;
 
 	std::unique_ptr<AvkTimer> mAvkFrameTimer;
 	std::unique_ptr<CpuTimer> mCpuFrameTimer;

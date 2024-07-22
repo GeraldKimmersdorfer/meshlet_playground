@@ -1,4 +1,5 @@
 #include "SharedData.h"
+#include "helpers/config_storage.h"
 
 #include <imgui.h>
 
@@ -18,6 +19,11 @@ glm::ivec2 spiral(unsigned int n) {
 	}
 
 	return glm::ivec2(0, 0);
+}
+
+SharedData::SharedData()
+{
+	readConfigurationsFromFile(mConfigurations);
 }
 
 void SharedData::attachSharedPipelineConfiguration(avk::graphics_pipeline_config* pipeConfig, std::vector<avk::binding_data>* staticDescriptors)
@@ -66,6 +72,50 @@ copy_push_data SharedData::getCopyDataForId(uint32_t id)
 
 void SharedData::hudSharedConfiguration(bool& config_has_changed)
 {
+	if (ImGui::SliderInt("Copy Count", (int*)(void*)&mConfig.mCopyCount, 1, MAX_INSTANCE_COUNT)) config_has_changed = true;
+	//if (ImGui::SliderFloat3("Copy Offset", &mConfig.mCopyOffset.x, -100.0f, 100.0f)) config_has_changed = true;
+	if (ImGui::DragFloat3("Copy Offset2", &mConfig.mCopyOffset.x, 0.1f)) config_has_changed = true;
+
+	ImGui::Separator();
+
 	ImGui::Combo("Rasterizer Culling", (int*)(void*)&mCullingMode, "Disabled\0Cull Front Faces\0Cull Back Faces\0Cull Both\0");
 	ImGui::Combo("Polygon Draw Mode", (int*)(void*)&mDrawingMode, "Solid\0Wireframe\0Points\0");
+
+	ImGui::Separator();
+	if (ImGui::Combo("Overlay", (int*)&mConfig.overlayIndex, "Disabled\0Meshlets/Instance\0Black\0Bone LookupID\0")) config_has_changed = true;
+	if (mConfig.overlayIndex > 0) {
+		if (ImGui::SliderFloat("Overlay Strength", &mConfig.overlayStrength, 0.0f, 1.0f, "%.2f")) config_has_changed = true;
+		if (ImGui::Checkbox("Overlay Pre Shading", (bool*)(void*)&mConfig.overlayPreShading)) config_has_changed = true;
+		if (ImGui::ColorEdit3("Hash Color Tint", &mConfig.hashColorTint.x)) config_has_changed = true;
+	}
+	ImGui::Separator();
+
+	if (ImGui::SliderFloat2("Amb/Diff Intensity", (float*)(void*)&mConfig.lightAmbientStrength, 0.0, 4.0, "%.2f")) config_has_changed = true;
+
+	ImGui::Separator();
+
+	static char configName[30] = "New Config";
+	ImGui::SetNextItemWidth(100);
+	ImGui::InputText("##configName", configName, 30);
+	ImGui::SameLine();
+	if (ImGui::Button("Save Config")) {
+		mConfigurations[configName] = mConfig;
+		saveConfigurationsToFile(mConfigurations);
+	}
+
+	static std::string currentConfigName = "Custom";
+	if (ImGui::BeginCombo("Select Configuration", currentConfigName.c_str())) {
+		for (const auto& configDef : mConfigurations) {
+			bool isSelected = (currentConfigName == configDef.first);
+			if (ImGui::Selectable(configDef.first.c_str(), isSelected)) {
+				currentConfigName = configDef.first;
+				this->mConfig = configDef.second;
+				config_has_changed = true;
+			}
+			if (isSelected) ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+
+
 }

@@ -34,6 +34,7 @@ layout (location = 0) out PerVertexData
 	vec2 texCoord;
 	flat int materialIndex;
 	vec3 color;
+	flat vec3 colorFlat;
 } v_out;
 
 layout(push_constant) uniform PushConstants {
@@ -54,8 +55,9 @@ void boneTransform(in vec4 boneWeights, in uvec4 boneIndices, inout vec4 posMshS
 
 void main() {
 
+	uint bluid = 0;
 #if MCC_VERTEX_GATHER_TYPE == _PULL
-	vertex_data vertex = getVertexData(gl_VertexIndex, 0);
+	vertex_data vertex = getVertexData(gl_VertexIndex, 0, bluid);
 #elif MCC_VERTEX_GATHER_TYPE == _PUSH
 	vertex_data vertex = vertex_data(inPosition, inNormal, inTexCoord, inBoneIndices, inBoneWeights);
 #endif
@@ -84,6 +86,12 @@ void main() {
 	v_out.normalWS = mat3(transformationMatrix) * nrmMshSp;
 	v_out.texCoord = vertex.mTexCoord;
 	v_out.materialIndex = int(materialIndex);
-	v_out.color = color_from_id_hash(gl_InstanceIndex); 
+	if (config.overlayIndex == 1) {
+		v_out.color = color_from_id_hash(gl_VertexIndex, config.hashColorTint.rgb); 
+	} else if (config.overlayIndex == 3) {
+		v_out.color = color_from_id_hash(bluid, config.hashColorTint.rgb); 
+	}
+	v_out.colorFlat = v_out.color; 
+
 }
 

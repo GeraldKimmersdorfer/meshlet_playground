@@ -46,16 +46,6 @@ struct vertex_data_permutation_coding {
 	uint32_t padding;	// even in scalar layouts we need 64 bit padding (8 byte)
 };
 
-/* DELETE
-struct vertex_data_meshlet_coding {
-	glm::uvec4 mPosition;
-	glm::vec4 mNormal;
-	glm::vec4 mTexCoord;
-	glm::vec4 mBoneWeights;
-	glm::uvec4 mBoneIndicesLUID;
-};*/
-
-
 struct vertex_data_meshlet_coding {
 	glm::u32vec2 mPosition;	// each component 21 bit
 	uint32_t mNormal;
@@ -73,11 +63,16 @@ struct copy_push_data {
 };
 
 struct config_data {
-	uint32_t mOverlayMeshlets = true;
+	uint32_t overlayIndex = 0; // 0 = none, 1 = meshlets
 	uint32_t mMeshletsCount = 0;
-	uint32_t mCopyCount = 2;
+	uint32_t mCopyCount = 1;
 	uint32_t padding;
 	glm::vec4 mCopyOffset = { 1.0f , 0.0f, 1.0f , 0.0f };
+	float overlayStrength = 0.5;
+	uint32_t overlayPreShading = 1;
+	float lightAmbientStrength = 0.5;
+	float lightDiffuseStrength = 0.8;
+	glm::vec4 hashColorTint = { 1.0f, 1.0f, 1.0f, 1.0f };
 };
 
 // NOTE: We end up with massive amounts
