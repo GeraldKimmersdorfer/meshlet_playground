@@ -44,5 +44,4 @@ void MeshoptimizerBuilder::doGenerate()
 		allMeshlets.insert(allMeshlets.end(), generatedMeshlets.begin(), generatedMeshlets.end());
 	}
 	mMeshletsNative = std::move(allMeshlets);
-	generateRedirectedMeshletsFromNative();
 }

@@ -70,6 +70,11 @@ copy_push_data SharedData::getCopyDataForId(uint32_t id)
 	return copy_push_data{ glm::uvec4(id, spiralXZ.x, spiralXZ.y, 0), glm::vec4(offsetXZ.x, 0.0, offsetXZ.y, 0.0) };
 }
 
+void SharedData::addMeshletInfo(uint32_t meshletId, std::string msg)
+{
+	mMeshletInfoStorage[meshletId].push_back(msg);
+}
+
 void SharedData::hudSharedConfiguration(bool& config_has_changed)
 {
 	if (ImGui::SliderInt("Copy Count", (int*)(void*)&mConfig.mCopyCount, 1, MAX_INSTANCE_COUNT)) config_has_changed = true;
@@ -82,11 +87,46 @@ void SharedData::hudSharedConfiguration(bool& config_has_changed)
 	ImGui::Combo("Polygon Draw Mode", (int*)(void*)&mDrawingMode, "Solid\0Wireframe\0Points\0");
 
 	ImGui::Separator();
-	if (ImGui::Combo("Overlay", (int*)&mConfig.overlayIndex, "Disabled\0Meshlets/Instance\0Black\0Bone LookupID\0")) config_has_changed = true;
+	static std::map<uint32_t, std::string> overlays = {
+		{0, "Disabled"},
+		// Overlays for Fragment Stage:
+		{10, "Black"},
+
+		// Overlays for Vertex/Mesh Stage:
+		{100, "Vertex Index"},
+		{101, "Mesh Index"},
+		{102, "Meshlet Index"},
+		{103, "Tuple Index"},
+		{104, "Bone Weights XYZ"},
+		{105, "Bone Indices Permutation"},
+
+		{110, "Bone Attr. Resolution"},
+		{111, "Bone Attr. Offset LOG"},
+
+		{200, "Meshlet Highlight"}
+	};
+	if (ImGui::BeginCombo("Overlay", overlays[mConfig.overlayIndex].c_str())) {
+		for (const auto& overlay : overlays) {
+			const bool is_selected = (mConfig.overlayIndex == overlay.first);
+			if (ImGui::Selectable(overlay.second.c_str(), is_selected)) {
+				mConfig.overlayIndex = overlay.first;
+				config_has_changed = true;
+			}
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if (is_selected) {
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+	//if (ImGui::Combo("Overlay", (int*)&mConfig.overlayIndex, "Disabled\0Black\0Vertex Index\0Mesh Index\0Meshlet Index\0Tuple Index\0Bone Weights XYZ\0Meshlet Highlight\0")) config_has_changed = true;
 	if (mConfig.overlayIndex > 0) {
 		if (ImGui::SliderFloat("Overlay Strength", &mConfig.overlayStrength, 0.0f, 1.0f, "%.2f")) config_has_changed = true;
 		if (ImGui::Checkbox("Overlay Pre Shading", (bool*)(void*)&mConfig.overlayPreShading)) config_has_changed = true;
 		if (ImGui::ColorEdit3("Hash Color Tint", &mConfig.hashColorTint.x)) config_has_changed = true;
+		if (mConfig.overlayIndex == 200) {
+			if (ImGui::SliderInt("Meshlet Index", (int*)(void*)&mConfig.highlightedMeshletIndex, 0, mConfig.mMeshletsCount - 1)) config_has_changed = true;
+		}
 	}
 	ImGui::Separator();
 
@@ -116,6 +156,5 @@ void SharedData::hudSharedConfiguration(bool& config_has_changed)
 		}
 		ImGui::EndCombo();
 	}
-
 
 }

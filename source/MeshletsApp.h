@@ -17,6 +17,7 @@
 
 #include "statistics/CPUTimer.h"
 #include "statistics/AvkTimer.h"
+#include "statistics/AverageNumberProperty.h"
 
 #include "helpers/camera_storage.h"
 
@@ -76,6 +77,8 @@ private: // v== Member variables ==v
 
 	void compileAndLoadNextPipeline();
 
+	void evaluateModelProperties(const std::string& filename);
+
 	std::pair<int, int> mPipelineID = { -1, 0 };
 	std::vector<std::unique_ptr<PipelineInterface>> mPipelines;
 	std::pair<int, int> mMeshletBuilderID = { 0, 0 };
@@ -91,7 +94,7 @@ private: // v== Member variables ==v
 	bool mCurrentAnimationProgressChanged = false;
 
 	avk::queue* mQueue;
-	
+
 	std::vector<animation_data> mAnimations;
 
 	std::vector<glm::mat4> mInitialBoneTransforms;
@@ -102,7 +105,9 @@ private: // v== Member variables ==v
 	std::map<std::string, CameraDefinition> mCameraDefinitions;
 
 	std::unique_ptr<AvkTimer> mAvkFrameTimer;
+	std::shared_ptr<AverageNumberProperty<float>> mAvkFrameProperty;
 	std::unique_ptr<CpuTimer> mCpuFrameTimer;
+	std::shared_ptr<AverageNumberProperty<float>> mCpuFrameProperty;
 
 
 

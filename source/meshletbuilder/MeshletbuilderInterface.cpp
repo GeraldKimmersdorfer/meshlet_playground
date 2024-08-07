@@ -4,8 +4,11 @@
 
 void MeshletbuilderInterface::generate()
 {
+	LOG_S(INFO) << "Generating meshlets for " << mName;
 	if (mShared->mIndices.size() != mGeneratedOnIndexCount) {
 		doGenerate();
+		addVertexOffsetToMeshlets();
+		generateRedirectedMeshletsFromNative();
 		mGeneratedOnIndexCount = mShared->mIndices.size();
 	}
 }
@@ -16,6 +19,7 @@ void MeshletbuilderInterface::destroy()
 	mMeshletsRedirect.clear();
 	mRedirectPackedIndexData.clear();
 	mGeneratedOnIndexCount = 0;	// make sure it gets rebuild on next generate
+	LOG_S(INFO) << "Meshletbuilder " << mName << " destroyed";
 }
 
 const std::pair<std::vector<meshlet_redirect>, std::vector<uint32_t>> MeshletbuilderInterface::getMeshletsRedirect()
@@ -26,6 +30,19 @@ const std::pair<std::vector<meshlet_redirect>, std::vector<uint32_t>> Meshletbui
 const std::vector<meshlet_native>& MeshletbuilderInterface::getMeshletsNative()
 {
 	return mMeshletsNative;
+}
+
+void MeshletbuilderInterface::overwriteMeshlets(const std::vector<meshlet_native>& meshletsNative)
+{
+	mMeshletsNative = meshletsNative;
+	generateRedirectedMeshletsFromNative();
+}
+
+void MeshletbuilderInterface::reportBufferSizes()
+{
+	mShared->mPropertyManager->get("meshlets")->setUint(mMeshletsNative.size());
+	mShared->mPropertyManager->get("mb_size")->setUint(mMeshletsNative.size() * sizeof(meshlet_native));
+	mShared->mPropertyManager->get("mb_redirect_size")->setUint(mMeshletsRedirect.size() * sizeof(meshlet_redirect) + mRedirectPackedIndexData.size() * sizeof(uint32_t));
 }
 
 void MeshletbuilderInterface::generateRedirectedMeshletsFromNative()
@@ -47,4 +64,17 @@ void MeshletbuilderInterface::generateRedirectedMeshletsFromNative()
 	}
 	mRedirectPackedIndexData = std::move(newIndexData);
 	mMeshletsRedirect = std::move(newMeshletData);
+
+	reportBufferSizes();
+}
+
+void MeshletbuilderInterface::addVertexOffsetToMeshlets()
+{
+	for (auto& m : mMeshletsNative) {
+		uint32_t meshIndex; uint8_t vertexCount; uint8_t triangleCount;
+		unpackMeshIdxVcTc(m.mMeshIdxVcTc, meshIndex, vertexCount, triangleCount);
+		for (int i = 0; i < vertexCount; i++) {
+			m.mVertices[i] += mShared->mMeshData[meshIndex].mVertexOffset;
+		}
+	}
 }

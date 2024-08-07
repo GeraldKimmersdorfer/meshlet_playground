@@ -6,6 +6,19 @@
 #include "../helpers/lut.h"
 #include "../SharedData.h"
 
+struct vertexDataForMeshletBuilding {
+	glm::vec3 position;
+	glm::vec3 normal;
+	uint16_t tupleId;
+};	// mind padding and alignment!
+
+/*
+std::vector<meshlet_native> BoneLUTDependentBuilder::generateForMesh(std::vector<vertexDataForMeshletBuilding> vertices)
+{
+	return mMeshletsNative;
+}*/
+#define CHECK_VERTEX_REUSE 1
+
 void BoneLUTDependentBuilder::doGenerate()
 {
 	uint32_t aMaxVertices = sNumVertices;
@@ -18,10 +31,10 @@ void BoneLUTDependentBuilder::doGenerate()
 	auto vertexPriorityCalculation = [this](uint32_t vIDSource, uint32_t vIDNew) {
 		return 0.5;
 		};
-	
+
 	// Calculate LUT indices:
 	std::vector<glm::u16vec4> lut; std::vector<uint16_t> vertexLUIndexTable; std::vector<uint8_t> vertexLUPermutation;
-	createBoneIndexLUT(true, true, mShared->mVertexData, lut, &vertexLUIndexTable, &vertexLUPermutation);
+	createBoneIndexLUT(true, true, true, mShared->mVertexData, lut, &vertexLUIndexTable, &vertexLUPermutation);
 	std::vector<uint32_t> vertexLUIndexTable32;
 	vertexLUIndexTable32.reserve(vertexLUIndexTable.size());
 	for (const auto& value : vertexLUIndexTable) vertexLUIndexTable32.push_back(static_cast<uint32_t>(value));
@@ -30,6 +43,25 @@ void BoneLUTDependentBuilder::doGenerate()
 		auto& mesh = mShared->mMeshData[midx];
 		std::span<uint32_t> indices{ &(mShared->mIndices[mesh.mIndexOffset]), mesh.mIndexCount };
 		std::span<vertex_data> vertices{ &(mShared->mVertexData[mesh.mVertexOffset]), mesh.mVertexCount };
+
+#if CHECK_VERTEX_REUSE
+		// Check wether vertices are reused in indices
+		std::vector<uint32_t> vertexUsageCount(vertices.size(), 0);
+		for (auto idx : indices) {
+			vertexUsageCount[idx]++;
+		}
+		uint32_t vertices_reused = 0;
+		uint32_t vertices_max_reused = 0;
+		for (int i = 0; i < vertexUsageCount.size(); i++) {
+			if (vertexUsageCount[i] > 1) {
+				vertices_max_reused = std::max(vertices_max_reused, vertexUsageCount[i]);
+				vertices_reused++;
+				//std::cout << "Vertex " << i << " is used " << vertexUsageCount[i] << " times" << std::endl;
+			}
+		}
+		std::cout << "Vertices reused: " << vertices_reused << " with max=" << vertices_max_reused << std::endl;
+#endif
+
 
 		// get the maximum number of meshlets that could be generated
 		size_t max_meshlets = meshopt_buildMeshletsBound(indices.size(), aMaxVertices, max_triangles);
@@ -55,5 +87,5 @@ void BoneLUTDependentBuilder::doGenerate()
 		allMeshlets.insert(allMeshlets.end(), generatedMeshlets.begin(), generatedMeshlets.end());
 	}
 	mMeshletsNative = std::move(allMeshlets);
-	generateRedirectedMeshletsFromNative();
 }
+

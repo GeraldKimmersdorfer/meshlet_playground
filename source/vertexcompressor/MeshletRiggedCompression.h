@@ -11,7 +11,7 @@ class MeshletRiggedCompression : public VertexCompressionInterface {
 public:
 
 	MeshletRiggedCompression(SharedData* shared)
-		: VertexCompressionInterface(shared, "Meshlet Rigged (24 byte)", "_MLTR")
+		: VertexCompressionInterface(shared, "Meshlet Rigged", "_MLTR")
 	{}
 
 protected:
@@ -33,6 +33,7 @@ private:
 	avk::buffer mBoneLUTBuffer;
 	avk::buffer mAdditionalMeshletBuffer;
 
+	bool mWithReuse = true;
 	bool mWithShuffle = false;
 	bool mWithMerge = false;
 

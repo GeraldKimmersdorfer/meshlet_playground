@@ -55,9 +55,8 @@ void boneTransform(in vec4 boneWeights, in uvec4 boneIndices, inout vec4 posMshS
 
 void main() {
 
-	uint bluid = 0;
 #if MCC_VERTEX_GATHER_TYPE == _PULL
-	vertex_data vertex = getVertexData(gl_VertexIndex, 0, bluid);
+	vertex_data vertex = getVertexData(gl_VertexIndex, 0);
 #elif MCC_VERTEX_GATHER_TYPE == _PUSH
 	vertex_data vertex = vertex_data(inPosition, inNormal, inTexCoord, inBoneIndices, inBoneWeights);
 #endif
@@ -67,7 +66,9 @@ void main() {
 	bool isAnimated 		  = meshes[meshIndex].mAnimated;
 	uint materialIndex        = meshes[meshIndex].mMaterialIndex;
 
-	vec3 posLocal = fma(vertex.mPosition, vec3(meshes[meshIndex].mPositionNormalizationInvScale), vec3(meshes[meshIndex].mPositionNormalizationInvTranslation));
+	// Scale position and texcoord from [0,1] to the actual bounds
+	const vec3 posLocal = fma(vertex.mPosition, vec3(meshes[meshIndex].mPositionInvScale), vec3(meshes[meshIndex].mPositionInvTranslation));
+	const vec2 texCoord = fma(vertex.mTexCoord, meshes[meshIndex].mTexCoordsInvTranslationScale.zw, meshes[meshIndex].mTexCoordsInvTranslationScale.xy);
 
 	vec4 posMshSp = vec4(posLocal, 1.0);
 	vec3 nrmMshSp = vertex.mNormal;
@@ -84,14 +85,18 @@ void main() {
 
 	v_out.positionWS = posWS.xyz;
 	v_out.normalWS = mat3(transformationMatrix) * nrmMshSp;
-	v_out.texCoord = vertex.mTexCoord;
+	v_out.texCoord = texCoord;
 	v_out.materialIndex = int(materialIndex);
-	if (config.overlayIndex == 1) {
-		v_out.color = color_from_id_hash(gl_VertexIndex, config.hashColorTint.rgb); 
-	} else if (config.overlayIndex == 3) {
-		v_out.color = color_from_id_hash(bluid, config.hashColorTint.rgb); 
+
+	switch (config.overlayIndex) {
+		case 100: v_out.color = color_from_id_hash(gl_VertexIndex, config.hashColorTint.rgb); break;
+		case 101: v_out.color = color_from_id_hash(meshIndex, config.hashColorTint.rgb); break;
+		case 102: v_out.color = vec3(1.0, 0.0, 0.0); break; // for meshlet pipeline
+		case 103: v_out.color = color_from_id_hash(global_tuple_index, config.hashColorTint.rgb); break;
+		case 104: v_out.color = sortVec4HighLow(vertex.mBoneWeights).rgb * vec3(1.0, 2.0, 3.0); break;
+		case 105: v_out.color = vec3(1.0, 0.0, 0.0); break; // for meshlet pipeline
+		case 200: v_out.color = vec3(1.0, 0.0, 0.0); break; // for meshlet pipeline
 	}
 	v_out.colorFlat = v_out.color; 
-
 }
 

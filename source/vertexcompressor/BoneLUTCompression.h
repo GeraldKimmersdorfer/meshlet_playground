@@ -27,6 +27,7 @@ private:
 	avk::buffer mVertexBuffer;
 	avk::buffer mBoneLUTBuffer;
 
+	bool mWithReuse = true;
 	bool mWithShuffle = false;
 	bool mWithMerge = false;
 

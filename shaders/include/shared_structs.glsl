@@ -17,8 +17,9 @@ struct meshlet_redirected {
 
 struct mesh_data {
 	mat4 mTransformationMatrix;
-	vec4 mPositionNormalizationInvScale;
-	vec4 mPositionNormalizationInvTranslation;
+	vec4 mPositionInvScale;
+	vec4 mPositionInvTranslation;
+	vec4 mTexCoordsInvTranslationScale;
 	uint mVertexOffset;		// Offset to first item in Positions Texel-Buffer
 	uint mVertexCount;
 	uint mIndexOffset;		// Offset to first item in Indices Texel-Buffer
@@ -61,15 +62,6 @@ struct vertex_data_meshlet_coding {
 	uint padding;	// even in scalar layouts we need 64 bit padding (8 byte)
 };
 
-/* DELETE
-struct vertex_data_meshlet_coding {
-	uvec4 mPosition;
-	vec4 mNormal;
-	vec4 mTexCoord;
-	vec4 mBoneWeights;
-	uvec4 mBoneIndicesLUID;
-};*/
-
 struct vertex_data_permutation_coding {
 	uvec2 mPosition;	// each component 21 bit
 	uint mNormal;
@@ -87,6 +79,8 @@ struct camera_data
     mat4 mViewProjMatrix;
 };
 
+
+
 struct copy_push_data {
 	uvec4 mID;
 	vec4 mOffset;
@@ -103,6 +97,8 @@ struct config_data {
 	float lightAmbientStrength;
 	float lightDiffuseStrength;
 	vec4 hashColorTint;
+	uint highlightedMeshletIndex;
+	bool discardAllFragments;
 };
 
 struct MaterialGpuData

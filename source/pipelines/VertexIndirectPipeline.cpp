@@ -53,6 +53,7 @@ void VertexIndirectPipeline::doInitialize(avk::queue* queue)
 		mVertexGatherType.first = mVertexGatherType.second;
 		mShadersRecompiled = false;
 	}
+
 	auto gpuDrawCommands = std::vector<VkDrawIndexedIndirectCommand>(mShared->mMeshData.size());
 	for (int i = 0; i < gpuDrawCommands.size(); i++) {
 		gpuDrawCommands[i] = VkDrawIndexedIndirectCommand{
@@ -67,7 +68,7 @@ void VertexIndirectPipeline::doInitialize(avk::queue* queue)
 		avk::indirect_buffer_meta::create_from_data(gpuDrawCommands),
 		avk::storage_buffer_meta::create_from_data(gpuDrawCommands)
 	);
-	avk::context().record_and_submit_with_fence({ mIndirectDrawCommandBuffer->fill(gpuDrawCommands.data(), 0)}, *queue)->wait_until_signalled();
+	avk::context().record_and_submit_with_fence({ mIndirectDrawCommandBuffer->fill(gpuDrawCommands.data(), 0) }, *queue)->wait_until_signalled();
 
 	avk::graphics_pipeline_config pipelineConfig;
 
@@ -87,7 +88,6 @@ void VertexIndirectPipeline::doInitialize(avk::queue* queue)
 			avk::from_buffer_binding(0)->stream_per_vertex(offsetForBoneWeight, vk::Format::eR32G32B32A32Sfloat, sizeof(vertex_data))->to_location(4),
 			avk::push_constant_binding_data{ avk::shader_type::all, 0, sizeof(copy_push_data) }
 		);
-
 	}
 	else if (mVertexGatherType.first == _PULL) {
 		pipelineConfig = avk::create_graphics_pipeline_config(
@@ -110,6 +110,8 @@ void VertexIndirectPipeline::doInitialize(avk::queue* queue)
 		pipelineConfig.mResourceBindings.push_back(std::move(db));
 	}
 	mPipeline = avk::context().create_graphics_pipeline(std::move(pipelineConfig));
+
+	mShared->mPropertyManager->get("ib_size")->setUint(mShared->mIndices.size() * sizeof(unsigned int)); // No index buffer for meshlets
 
 }
 
@@ -161,7 +163,7 @@ void VertexIndirectPipeline::compile()
 	mPathVertexShader = ShaderMetaCompiler::precompile("vertex.vert", {
 		{"VERTEX_GATHER_TYPE", MCC_to_string(mVertexGatherType.second)},
 		{"VERTEX_COMPRESSION", mShared->getCurrentVertexCompressor()->getMccId()}
-	});
+		});
 	mPathFragmentShader = ShaderMetaCompiler::precompile("diffuse_shading_fixed_lightsource.frag", {});
 	mShadersRecompiled = true;
 }

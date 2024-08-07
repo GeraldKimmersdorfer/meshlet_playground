@@ -25,6 +25,8 @@ layout (location = 0) out vec4 fs_out;
 
 void main() 
 {
+	if (config.discardAllFragments)	discard; 
+
 	int matIndex = v_in.materialIndex;
 
 	int diffuseTexIndex = matSsbo.materials[matIndex].mDiffuseTexIndex;
@@ -32,9 +34,17 @@ void main()
 	if (colora.a < 0.2) discard;
 	vec3 color = colora.rgb;
 
-	vec3 overlayColor = v_in.colorFlat;
+	vec3 overlayColor = v_in.colorFlat; // per default flat shaded overlay
+	switch (config.overlayIndex) {
+		case 10: overlayColor = vec3(0.0, 0.0, 0.0); break;
+
+		case 104: case 111:	// all the ones with smooth shading
+			overlayColor = v_in.color; break;
+	}
 	if(config.overlayIndex > 0) {
 		if (config.overlayIndex == 2) overlayColor = vec3(0.0, 0.0, 0.0);
+		else if (config.overlayIndex == 5) overlayColor = v_in.color;
+		else if (config.overlayIndex == 6) overlayColor = v_in.color;
 		if (config.overlayPreShading == 1) {
 			color = mix(color, overlayColor, config.overlayStrength);
 		}

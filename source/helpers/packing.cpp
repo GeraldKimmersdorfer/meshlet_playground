@@ -1,5 +1,9 @@
 #include "packing.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 glm::vec2 OctWrap(glm::vec2 v)
 {
 	auto yx = glm::vec2(v.y, v.x);
@@ -37,11 +41,39 @@ glm::vec3 octahedronDecode(glm::vec2 f)
 	return glm::normalize(n);
 }
 
+glm::vec2 sphericalEncode(glm::vec3 normal)
+{
+	float theta = atan2(normal.y, normal.x);  // Azimuthal angle
+	float phi = acos(normal.z);  // Polar angle
+
+	// Normalize theta and phi to the range [0, 1]
+	float theta_normalized = (theta + M_PI) / (2 * M_PI);
+	float phi_normalized = phi / M_PI;
+
+	return glm::vec2(theta_normalized, phi_normalized);
+}
+
+glm::vec3 sphericalDecode(glm::vec2 encoded)
+{
+	// Convert the normalized theta and phi back to their original ranges
+	float theta = encoded.x * 2.0f * M_PI - M_PI;
+	float phi = encoded.y * M_PI;
+
+	// Convert spherical coordinates back to Cartesian coordinates
+	float x = sin(phi) * cos(theta);
+	float y = sin(phi) * sin(theta);
+	float z = cos(phi);
+
+	return glm::vec3(x, y, z);
+}
+
+
+
 uint32_t packMeshIdxVcTc(uint32_t meshIndex, uint8_t vertexCount, uint8_t triangleCount) {
-	 return
-		 ((static_cast<uint32_t>(meshIndex) & 0x3FFFF) << 18u) |
-		 ((static_cast<uint32_t>(vertexCount) & 0x7F) << 7u) |
-		 ((static_cast<uint32_t>(triangleCount) & 0x7F) << 0u);
+	return
+		((static_cast<uint32_t>(meshIndex) & 0x3FFFF) << 18u) |
+		((static_cast<uint32_t>(vertexCount) & 0x7F) << 7u) |
+		((static_cast<uint32_t>(triangleCount) & 0x7F) << 0u);
 }
 
 void unpackMeshIdxVcTc(uint32_t src, uint32_t& meshIndex, uint8_t& vertexCount, uint8_t& triangleCount)
@@ -67,8 +99,8 @@ glm::u16vec2 compressNormal(glm::vec3 normal)
 
 glm::vec3 unpackNormal(uint32_t normal) {
 	auto octahedron = glm::vec2(
-		(normal >> 16u) * (1.0F/0xFFFF),
-		(normal & 0xFFFF) * (1.0F/0xFFFF)
+		(normal >> 16u) * (1.0F / 0xFFFF),
+		(normal & 0xFFFF) * (1.0F / 0xFFFF)
 	);
 	return octahedronDecode(octahedron);
 }
@@ -85,6 +117,16 @@ glm::u16vec2 compressTextureCoords(glm::vec2 texCoords)
 	return glm::u16vec2(
 		static_cast<uint16_t>(texCoords.x * 0xFFFF),
 		static_cast<uint16_t>(texCoords.y * 0xFFFF)
+	);
+}
+
+glm::u16vec3 naiveWeightEncode(const glm::vec4& weights)
+{
+	assert(weights.x >= weights.y && weights.y >= weights.z && weights.z >= weights.w);
+	return glm::u16vec3(
+		static_cast<uint16_t>(weights.y * 2 * 0xFFFF),
+		static_cast<uint16_t>(weights.z * 3 * 0xFFFF),
+		static_cast<uint16_t>(weights.w * 4 * 0xFFFF)
 	);
 }
 

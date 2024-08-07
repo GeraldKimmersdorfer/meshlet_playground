@@ -6,10 +6,13 @@
 #include <queue>
 #include <type_traits>
 #include "PropertyInterface.h"
+#include "propertyFormatters.h"
 
 
-template <typename T, typename AvgType = T>
+template <typename T>
 class AverageNumberProperty :public PropertyInterface {
+
+	using FormatterFunc = std::function<std::string(const T&)>;
 
 	static_assert(
 		std::is_same<T, float>::value ||
@@ -18,41 +21,62 @@ class AverageNumberProperty :public PropertyInterface {
 		);
 
 public:
-	AverageNumberProperty(const std::string& name, const std::string& unit = "", const unsigned int max_queue_length = 60) 
-		:PropertyInterface(name, unit), m_max_queue_length(max_queue_length) 
-	{};
+	AverageNumberProperty(const std::string& name,
+		const unsigned int max_queue_length = 60,
+		FormatterFunc formatter = genericSiFormatter<T>)
+		: PropertyInterface(name), m_formatter(formatter)
+	{
+		m_elements.resize(max_queue_length, T());
+	}
+
 
 	void setValue(const T& newValue) {
 		std::lock_guard<std::mutex> lock(mtx_property); // Keeps the lock until the end of the block
-		m_property = newValue;
-		
-		m_total += m_property;
-		m_avgelements.push(m_property);
-		if (m_avgelements.size() > m_max_queue_length) {
-			m_total -= m_avgelements.front();
-			m_avgelements.pop();
-		}
-		m_avg = m_total / m_avgelements.size();
+
+		const auto& id = m_element_nextid;
+
+		// Remove the old value from the total and total square
+		m_total -= m_elements[id];
+		m_total_square -= m_elements[id] * m_elements[id];
+
+		// Add the new value to the total and total square
+		m_elements[id] = newValue;
+		m_total += newValue;
+		m_total_square += newValue * newValue;
+		m_current_valid_elements = std::min(m_current_valid_elements + 1, m_elements.size());
+
+		m_avg = m_total / m_current_valid_elements;
+
+		// Calculate the variance
+		T variance = (m_total_square / m_current_valid_elements) - (m_avg * m_avg);
+		m_sdev = std::sqrt(variance);
+
+		m_element_nextid = nextElementId();
+		m_lastvalue = newValue;
 	}
+
 
 	T getValue() {
 		std::lock_guard<std::mutex> lock(mtx_property); // Keeps the lock until the end of the block
-		return m_property;
+		return m_lastvalue;
 	}
 
-	AvgType getAverage() {
+	T getAverage() {
 		return m_avg;
 	}
 
-	std::string getValueAsString() {
-		return std::to_string(getValue());
-	}
-
-	std::string getFormatedString() {
+	std::string getValueAsFormattedString() override {
 		std::stringstream ss;
-		ss << std::to_string(getValue()) << m_unit << " (" << std::to_string(m_avg) << m_unit << ")";
+		ss << m_formatter(m_avg) << " +- " << m_formatter(m_sdev) << " [" << m_current_valid_elements << "]";
 		return ss.str();
 	}
+
+	std::string getValueAsString() override {
+		std::ostringstream ss;
+		ss << std::scientific << m_avg;
+		return ss.str();
+	}
+
 
 	void setFloat(float newValue) override {
 		setValue(newValue);
@@ -62,14 +86,42 @@ public:
 		setValue(newValue);
 	}
 
-private:
-	T m_property = T();
-	AvgType m_avg = AvgType();
+	void reset() {
+		std::lock_guard<std::mutex> lock(mtx_property); // Keeps the lock until the end of the block
+		m_total = T();
+		m_total_square = T();
+		m_current_valid_elements = 0;
+		m_lastvalue = T();
+		m_avg = T();
+		m_sdev = T();
+		m_element_nextid = 0;
+		auto old_size = m_elements.size();
+		m_elements.clear();
+		m_elements.resize(old_size, T());
+	}
 
-	std::queue<T> m_avgelements;
-	unsigned int m_max_queue_length;
-	AvgType m_total = AvgType();
-	
+private:
+	T m_lastvalue = T();
+	T m_avg = T();
+	T m_sdev = T();
+
+	std::vector<T> m_elements;
+	size_t m_element_nextid = 0;
+	size_t m_current_valid_elements = 0;
+
+	T m_total = T();
+	T m_total_square = T();
+
+	FormatterFunc m_formatter;
+
+	inline const size_t nextElementId() {
+		return (m_element_nextid + 1) % m_elements.size();
+	}
+
+	inline const size_t prevElementId() {
+		return (m_element_nextid + m_elements.size() - 1) % m_elements.size();
+	}
+
 	// Mutex for thread safety
 	std::mutex mtx_property;
 };

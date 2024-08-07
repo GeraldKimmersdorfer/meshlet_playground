@@ -13,8 +13,9 @@ static constexpr size_t sNumPackedIndices = 95; //avk::div_ceil(sNumIndices, 4);
 
 struct mesh_data {
 	glm::mat4 mTransformationMatrix;
-	glm::vec4 mPositionNormalizationInvScale;
-	glm::vec4 mPositionNormalizationInvTranslation;
+	glm::vec4 mPositionInvScale;
+	glm::vec4 mPositionInvTranslation;
+	glm::vec4 mTexCoordsInvTranslationScale;
 	uint32_t mVertexOffset;			// Offset to first item in general Vertex-Buffer
 	uint32_t mVertexCount;			// Amount of vertices in general Vertex-Buffer
 	uint32_t mIndexOffset;			// Offset to first item in general Indices-Buffer
@@ -73,6 +74,8 @@ struct config_data {
 	float lightAmbientStrength = 0.5;
 	float lightDiffuseStrength = 0.8;
 	glm::vec4 hashColorTint = { 1.0f, 1.0f, 1.0f, 1.0f };
+	uint32_t highlightedMeshletIndex = 0;
+	uint32_t discardAllFragments = false;
 };
 
 // NOTE: We end up with massive amounts

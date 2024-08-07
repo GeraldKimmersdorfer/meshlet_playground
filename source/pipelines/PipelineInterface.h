@@ -17,6 +17,7 @@ public:
 	/// Creates CPU/GPU Buffers, compresses vertex attributes,...
 	/// </summary>
 	void initialize(avk::queue* queue) {
+		LOG_S(INFO) << "Initializing pipeline " << mName;
 		doInitialize(queue);
 		initCount++;
 	}
@@ -32,6 +33,7 @@ public:
 	/// </summary>
 	void destroy() {
 		doDestroy();
+		LOG_S(INFO) << "Pipeline " << mName << " destroyed";
 	}
 
 	/// <summary>

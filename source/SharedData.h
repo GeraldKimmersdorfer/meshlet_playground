@@ -16,6 +16,8 @@
 
 #include "statistics/PropertyManager.h"
 
+#include "helpers/log.h"
+
 class MeshletbuilderInterface;
 class VertexCompressionInterface;
 
@@ -73,6 +75,8 @@ public:
 
 	copy_push_data getCopyDataForId(uint32_t id);
 
+	void addMeshletInfo(uint32_t meshletId, std::string msg);
+
 protected:
 	void hudSharedConfiguration(bool& config_has_changed);
 
@@ -81,5 +85,6 @@ private:
 	avk::cfg::polygon_drawing_mode mDrawingMode = avk::cfg::polygon_drawing_mode::fill;
 
 	std::map<std::string, config_data> mConfigurations;
+	std::map<uint32_t, std::vector<std::string>> mMeshletInfoStorage;
 
 };

@@ -40,8 +40,8 @@ avk::command::action_type_command AvkTimer::start(uint32_t inFlightIndex)
 	{
 		auto timers = gputimer_querypool->get_results<uint64_t, 2>(
 			firstPoolIndex, 2, vk::QueryResultFlagBits::e64 // | vk::QueryResultFlagBits::eWait // => ensure that the results are available (shouldnt be necessary)
-			);
-		m_prop->setFloat((double)(timers[1] - timers[0]) * 1e-6 * gputimer_timestamp_period);
+		);
+		m_prop->setFloat((double)(timers[1] - timers[0]) * 1e-9 * gputimer_timestamp_period);
 	}
 	// Now record to overwrite with new ones:
 	m_ready_to_fetch[inFlightIndex] = true;

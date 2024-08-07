@@ -20,9 +20,19 @@ uint32_t packTextureCoords(glm::vec2 texCoord);
 
 glm::u16vec2 compressTextureCoords(glm::vec2 texCoords);
 
+glm::u16vec3 naiveWeightEncode(const glm::vec4& weights);
+
 glm::uvec2 encodeVec3ToUVec2(const glm::vec3& value);
 
 glm::vec3 decodeUVec2ToVec3(const glm::uvec2& value);
+
+glm::vec2 sphericalEncode(glm::vec3 normal);
+
+glm::vec3 sphericalDecode(glm::vec2 encoded);
+
+glm::vec2 octahedronEncode(glm::vec3 normal);
+
+glm::vec3 octahedronDecode(glm::vec2 f);
 
 uint16_t packMbiluidAndPermutation(uint32_t mbiluid, uint32_t permutation);
 

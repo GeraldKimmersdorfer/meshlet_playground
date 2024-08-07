@@ -1,4 +1,26 @@
 
+float decode8(uint value) { return float(value) / 255.0; }
+vec2 decode8(uvec2 value) { return vec2(float(value.x) / 255.0, float(value.y) / 255.0); }
+vec3 decode8(uvec3 value) { return vec3(float(value.x) / 255.0, float(value.y) / 255.0, float(value.z) / 255.0); }
+vec4 decode8(uvec4 value) { return vec4(float(value.x) / 255.0, float(value.y) / 255.0, float(value.z) / 255.0, float(value.w) / 255.0); }
+
+float decode16(uint value) { return float(value) / 65535.0; }
+vec2 decode16(uvec2 value) { return vec2(float(value.x) / 65535.0, float(value.y) / 65535.0); }
+vec3 decode16(uvec3 value) { return vec3(float(value.x) / 65535.0, float(value.y) / 65535.0, float(value.z) / 65535.0); }
+vec4 decode16(uvec4 value) { return vec4(float(value.x) / 65535.0, float(value.y) / 65535.0, float(value.z) / 65535.0, float(value.w) / 65535.0); }
+
+float decode21(uint value) { return float(value) / 2097151.0; }
+vec2 decode21(uvec2 value) { return vec2(float(value.x) / 2097151.0, float(value.y) / 2097151.0); }
+vec3 decode21(uvec3 value) { return vec3(float(value.x) / 2097151.0, float(value.y) / 2097151.0, float(value.z) / 2097151.0); }
+vec4 decode21(uvec4 value) { return vec4(float(value.x) / 2097151.0, float(value.y) / 2097151.0, float(value.z) / 2097151.0, float(value.w) / 2097151.0); }
+
+uint concatenate2x8(uint low, uint high) { return (high << 8) | low; }
+uint concatenate3x8(uint low, uint mid, uint high) { return (high << 16) | (mid << 8) | low; }
+uint concatenate4x8(uint low, uint midLow, uint midHigh, uint high) { return (high << 24) | (midHigh << 16) | (midLow << 8) | low; }
+uint concatenate2x16(uint low, uint high) { return (high << 16) | low; }
+
+uint concatenate16a8(uint low, uint high) { return (high << 16) | low; }
+
 // https://twitter.com/Stubbesaurus/status/937994790553227264
 // https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
 vec3 octahedronDecode( vec2 f )
@@ -20,14 +42,13 @@ uvec2 encode_position_2x32(vec3 value) {
 }
 
 vec3 decode_position_2x32(uvec2 value) {
-    uint x = (value.x >> 11u) & ((1u << 21u) - 1u);
-    uint y = ((value.x << 10u) | (value.y >> 22u)) & ((1u << 21u) - 1u);
-    uint z = value.y & ((1u << 21u) - 1u);
-
-    return vec3(float(x) / float((1u << 21u) - 1u), 
-                float(y) / float((1u << 21u) - 1u), 
-                float(z) / float((1u << 21u) - 1u));
+    return decode21(uvec3(
+        (value.x >> 11u) & ((1u << 21u) - 1u),
+        ((value.x << 10u) | (value.y >> 22u)) & ((1u << 21u) - 1u),
+        value.y & ((1u << 21u) - 1u)
+    ));
 }
+
 
 // GLSL Function to pack mbiluid and permutation
 uint packMbiluidAndPermutation(uint mbiluid, uint permutation) {
@@ -39,3 +60,4 @@ void unpackMbiluidAndPermutation(uint packedValue, out uint mbiluid, out uint pe
     mbiluid = (packedValue >> 5) & 0x03;
     permutation = packedValue & 0x1F;
 }
+

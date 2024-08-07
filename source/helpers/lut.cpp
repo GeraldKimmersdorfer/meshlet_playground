@@ -204,7 +204,7 @@ void test()
 	getInverseKeys();
 }
 
-void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<vertex_data>& vertexData, std::vector<glm::u16vec4>& lut, std::vector<uint16_t>* vertexLUIndexTable, std::vector<uint8_t>* vertexLUPermutation)
+void createBoneIndexLUT(bool withReuse, bool withShuffling, bool withMerging, const std::vector<vertex_data>& vertexData, std::vector<glm::u16vec4>& lut, std::vector<uint16_t>* vertexLUIndexTable, std::vector<uint8_t>* vertexLUPermutation)
 {
 	assert(vertexLUIndexTable);	// Dont' allow no target for new VertexLUIndices
 
@@ -263,45 +263,52 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 		reducedIndices = std::move(sortedIndices);
 	}
 
-	// STEP 3: Order indices and delete ones that can be used by others (optimization also done in paper permutation coding. see there for more details)
+	LuidChangeMap luidChanges2;
+
 	std::vector<std::pair<glm::u16vec4, uint16_t>> reducedIndicesWithID;
 	reducedIndicesWithID.reserve(reducedIndices.size());
 	for (const auto& pair : reducedIndices) reducedIndicesWithID.push_back(pair);
-	std::sort(reducedIndicesWithID.begin(), reducedIndicesWithID.end(), cmpIndexVectorTupleForSort);
-	LuidChangeMap luidChanges2;
 
-	// NOTE: Now it can (and will) happen that a luid is pointing to a luid thats actually not in the list anymore, because
-	// it was deleted in a successing step. Therefore we have to go temporarly save all the luids for this block and if a new better option
-	// is found we have to change all of the luid transfers in the change map within the block. (sounds more complicated than it is)
-	// SECOND NOTE: We dont need currentBlockLUIds if we have a seperate loop inside the loop for the block. (would probably be better/faster)
-	std::vector<uint16_t> currentBlockLUIds;
-	// Now only keep the last of each set, as this one should be the one that encompasses all of them
-	for (uint16_t i = 0; i < reducedIndicesWithID.size() - 1; i++) {
-		// Check the one after me, if it can be used in my stead then delete me
-		if (cmpIndexVectorGoodEnough(reducedIndicesWithID[i].first, reducedIndicesWithID[i + 1].first)) {
-			auto newLuid = reducedIndicesWithID[i + 1].second;
-			for (const auto luid : currentBlockLUIds) luidChanges2[luid] = newLuid;
-			luidChanges2[reducedIndicesWithID[i].second] = newLuid;
-			currentBlockLUIds.push_back(reducedIndicesWithID[i].second);
-			reducedIndicesWithID.erase(reducedIndicesWithID.begin() + i);
-			i--;
+	// STEP 3: Order indices and delete ones that can be used by others (optimization also done in paper permutation coding. see there for more details)
+	if (withReuse) {
+		std::sort(reducedIndicesWithID.begin(), reducedIndicesWithID.end(), cmpIndexVectorTupleForSort);
+	
+		// NOTE: Now it can (and will) happen that a luid is pointing to a luid thats actually not in the list anymore, because
+		// it was deleted in a successing step. Therefore we have to go temporarly save all the luids for this block and if a new better option
+		// is found we have to change all of the luid transfers in the change map within the block. (sounds more complicated than it is)
+		// SECOND NOTE: We dont need currentBlockLUIds if we have a seperate loop inside the loop for the block. (would probably be better/faster)
+		std::vector<uint16_t> currentBlockLUIds;
+		// Now only keep the last of each set, as this one should be the one that encompasses all of them
+		for (uint16_t i = 0; i < reducedIndicesWithID.size() - 1; i++) {
+			// Check the one after me, if it can be used in my stead then delete me
+			if (cmpIndexVectorGoodEnough(reducedIndicesWithID[i].first, reducedIndicesWithID[i + 1].first)) {
+				auto newLuid = reducedIndicesWithID[i + 1].second;
+				for (const auto luid : currentBlockLUIds) luidChanges2[luid] = newLuid;
+				luidChanges2[reducedIndicesWithID[i].second] = newLuid;
+				currentBlockLUIds.push_back(reducedIndicesWithID[i].second);
+				reducedIndicesWithID.erase(reducedIndicesWithID.begin() + i);
+				i--;
+			}
+			else {
+				currentBlockLUIds.clear();
+			}
 		}
-		else {
-			currentBlockLUIds.clear();
+
+		// Reset indices: (such that the index and the index inside the pair is actually the same)
+		LuidChangeMap luidChanges3;
+		for (uint16_t newLuid = 0; newLuid < reducedIndicesWithID.size(); newLuid++) {
+			luidChanges3[reducedIndicesWithID[newLuid].second] = newLuid;
+			reducedIndicesWithID[newLuid].second = newLuid;
 		}
+
+		// STEP 4: Merge Change Maps and apply to luids
+		luidChanges = mergeChangeMaps(luidChanges, mergeChangeMaps(luidChanges2, luidChanges3));
+		applyChangeMap(luids, luidChanges);
+		luidChanges.clear();
 	}
 
-	// Reset indices: (such that the index and the index inside the pair is actually the same)
-	LuidChangeMap luidChanges3;
-	for (uint16_t newLuid = 0; newLuid < reducedIndicesWithID.size(); newLuid++) {
-		luidChanges3[reducedIndicesWithID[newLuid].second] = newLuid;
-		reducedIndicesWithID[newLuid].second = newLuid;
-	}
 
-	// STEP 4: Merge Change Maps and apply to luids
-	luidChanges = mergeChangeMaps(luidChanges, mergeChangeMaps(luidChanges2, luidChanges3));
-	applyChangeMap(luids, luidChanges);
-	luidChanges.clear();
+
 
 	// STEP 5: if withMerging is active lets try to combine the remaining entries such that we have as little "dont care" values as necessary
 	// The offset can be saved in the resulting permutation for the vertex weights
@@ -448,6 +455,10 @@ void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<
 		}
 	}
 	
+	// sort reducedIndicesWithID by the id
+	std::sort(reducedIndicesWithID.begin(), reducedIndicesWithID.end(), [](const std::pair<glm::u16vec4, uint16_t>& a, const std::pair<glm::u16vec4, uint16_t>& b) { return a.second < b.second; });
+
+
 	//DEBUG CHECK:
 	/*
 	for (size_t vid = 0; vid < vertex_count; vid++) {

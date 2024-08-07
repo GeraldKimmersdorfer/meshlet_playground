@@ -9,5 +9,16 @@
 
 #define _NOCOMP 0
 #define _LUT 1
-#define _MLTR 2
-#define _PC 3
+#define _PC 2
+#define _QPC 3
+#define _PDC8 4
+#define _PDC16 5
+#define _PDC32 6
+#define _DPDC16 7
+#define _OSS 10
+
+#define _DMLT 100 // not implemented
+
+
+
+

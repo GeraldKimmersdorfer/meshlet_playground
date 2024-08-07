@@ -4,9 +4,12 @@
 #include <mutex>
 #include <type_traits>
 #include "PropertyInterface.h"
+#include "propertyFormatters.h"
 
 template <typename T, typename AvgType = std::nullptr_t>
 class NumberProperty :public PropertyInterface {
+
+	using FormatterFunc = std::function<std::string(const T&)>;
 
 	static_assert(
 		std::is_same<T, float>::value ||
@@ -15,7 +18,10 @@ class NumberProperty :public PropertyInterface {
 		);
 
 public:
-	NumberProperty(const std::string& name, const std::string& unit = "") : PropertyInterface(name, unit) {};
+	NumberProperty(const std::string& name, FormatterFunc formatter = genericSiFormatter)
+		: PropertyInterface(name), m_formatter(formatter)
+	{}
+
 
 	void setValue(const T& newValue) {
 		std::lock_guard<std::mutex> lock(mtx_property); // Keeps the lock until the end of the block
@@ -27,12 +33,14 @@ public:
 		return m_property;
 	}
 
-	std::string getValueAsString() {
-		return std::to_string(getValue());
+	std::string getValueAsFormattedString() override {
+		return m_formatter(m_property);
 	}
 
-	std::string getFormatedString() {
-		return std::to_string(getValue()) + m_unit;
+	std::string getValueAsString() override {
+		std::ostringstream ss;
+		ss << std::scientific << m_property;
+		return ss.str();
 	}
 
 	void setFloat(float newValue) override {
@@ -44,7 +52,10 @@ public:
 	}
 
 private:
+
 	T m_property = T();
+
+	FormatterFunc m_formatter;
 
 	// Mutex for thread safety
 	std::mutex mtx_property;

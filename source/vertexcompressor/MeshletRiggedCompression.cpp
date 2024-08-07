@@ -9,7 +9,7 @@
 void MeshletRiggedCompression::doCompress(avk::queue* queue)
 {
 	std::vector<uint16_t> vertexLUIndexTable; std::vector<uint8_t> vertexLUPermutation;
-	createBoneIndexLUT(mWithShuffle, mWithMerge, mShared->mVertexData, mBoneLUTData, &vertexLUIndexTable, &vertexLUPermutation);
+	createBoneIndexLUT(mWithReuse, mWithShuffle, mWithMerge, mShared->mVertexData, mBoneLUTData, &vertexLUIndexTable, &vertexLUPermutation);
 
 	mVertexData.reserve(mShared->mVertexData.size());
 	for (uint32_t vid = 0; vid < mShared->mVertexData.size(); vid++) {
@@ -57,8 +57,9 @@ void MeshletRiggedCompression::doCompress(avk::queue* queue)
 			// for v1 lets just set mBoneIndicesLUID.z to the mbiluid value
 			//mVertexData[vid].mBoneIndicesLUID.z = mbiluid;
 			mVertexData[vid].mWeightsImbiluidPermutation = PermutationCodec::encode(
-				vert.mBoneWeights, 
-				packMbiluidAndPermutation(mbiluid, vertexLUPermutation[vid])
+				vert.mBoneWeights,
+				packMbiluidAndPermutation(mbiluid, vertexLUPermutation[vid]),
+				PermutationCodec::codec14bit
 			);
 		}
 		if (overflowedLuidCount > overflowedLuidCount_before) overflowedMeshletCount++;
@@ -91,7 +92,7 @@ void MeshletRiggedCompression::doCompress(avk::queue* queue)
 	mShared->mPropertyManager->get("lut_count")->setUint(mBoneLUTData.size());
 	mShared->mPropertyManager->get("lut_size")->setUint(mBoneLUTData.size() * sizeof(glm::u16vec4));
 	mShared->mPropertyManager->get("vb_size")->setUint(sizeof(vertex_data_meshlet_coding) * mVertexData.size());
-	mShared->mPropertyManager->get("amb_size")->setUint(sizeof(mrc_per_meshlet_data) * mAdditionalMeshletData.size());
+	mShared->mPropertyManager->get("emb_size")->setUint(sizeof(mrc_per_meshlet_data) * mAdditionalMeshletData.size());
 }
 
 void MeshletRiggedCompression::doDestroy()
@@ -106,6 +107,7 @@ void MeshletRiggedCompression::doDestroy()
 
 void MeshletRiggedCompression::hud_config(bool& config_has_changed)
 {
+	ImGui::Checkbox("LUT with Luid-Reuse", &mWithReuse);
 	ImGui::Checkbox("LUT with ID-Shuffle", &mWithShuffle);
 	if (mWithShuffle) {
 		ImGui::Checkbox("LUT with Merging", &mWithMerge);

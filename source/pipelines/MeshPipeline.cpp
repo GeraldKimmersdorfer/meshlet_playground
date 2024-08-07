@@ -20,8 +20,14 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 		mMeshletType.first = mMeshletType.second;
 		mShadersRecompiled = false;
 	}
+
+	// ToDo: Add time measuerement?
 	auto builder = mShared->getCurrentMeshletBuilder();
 	builder->generate();
+
+	auto vCompressor = mShared->getCurrentVertexCompressor();
+	vCompressor->compress(queue);
+
 	if (mMeshletType.first == _NATIVE) {
 		auto& meshletsNative = builder->getMeshletsNative();
 		mMeshletsBuffer = avk::context().create_buffer(avk::memory_usage::device, {}, avk::storage_buffer_meta::create_from_data(meshletsNative));
@@ -57,8 +63,6 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 	// Add shared pipeline configuration
 	mShared->attachSharedPipelineConfiguration(&sharedPipelineConfig, &mAdditionalStaticDescriptorBindings);
 
-	auto vCompressor = mShared->getCurrentVertexCompressor();
-	vCompressor->compress(queue);
 	auto vertexBindings = vCompressor->getBindings();
 	mAdditionalStaticDescriptorBindings.insert(mAdditionalStaticDescriptorBindings.end(), vertexBindings.begin(), vertexBindings.end());
 
@@ -67,6 +71,8 @@ void MeshPipeline::doInitialize(avk::queue* queue)
 		sharedPipelineConfig.mResourceBindings.push_back(std::move(db));
 	}
 	mPipeline = avk::context().create_graphics_pipeline(std::move(sharedPipelineConfig));
+
+	mShared->mPropertyManager->get("ib_size")->setUint(0); // No index buffer for meshlets
 }
 
 avk::command::action_type_command MeshPipeline::render(int64_t inFlightIndex)

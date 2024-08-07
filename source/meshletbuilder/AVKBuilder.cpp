@@ -26,5 +26,4 @@ void AVKBuilder::doGenerate()
 		}
 	}
 	mMeshletsNative = std::move(allMeshlets);
-	generateRedirectedMeshletsFromNative();
 }

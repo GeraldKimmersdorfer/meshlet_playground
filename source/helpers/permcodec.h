@@ -8,13 +8,17 @@ class PermutationCodec {
 
 public:
 
-	static uint32_t encode(glm::vec4 weights, uint32_t payload);
+	static uint32_t encode(glm::vec4 weights, uint32_t payload, blend_attribute_codec_t codec);
 
 	static void test();
+
+	static blend_attribute_codec_t codecDefault;
+	static blend_attribute_codec_t codec14bit; // 14 bit weights, 18 bit payload
+	static blend_attribute_codec_t codec16bit; // 16 bit weights, 16 bit payload
 
 
 private:
 
-	static blend_attribute_codec_t mCodecSettings;
+
 
 };

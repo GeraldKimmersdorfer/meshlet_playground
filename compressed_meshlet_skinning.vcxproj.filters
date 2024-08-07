@@ -47,6 +47,12 @@
     <Filter Include="source\statistics\properties">
       <UniqueIdentifier>{570a829f-acd4-4805-bb2f-91e05b1a3d32}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\thirdparty">
+      <UniqueIdentifier>{ec1d4534-f26e-4225-a4b3-addcfb35ee42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\fonts">
+      <UniqueIdentifier>{13f82ff3-67c6-4c06-bd38-eadf97b8c247}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\tools\glslangValidator.exe">
@@ -101,6 +107,12 @@
       <Filter>assets\shaders\include</Filter>
     </None>
     <None Include="shaders\include\permutation.glsl">
+      <Filter>assets\shaders\include</Filter>
+    </None>
+    <None Include="shaders\include\permutation_codec.glsl">
+      <Filter>assets\shaders\include</Filter>
+    </None>
+    <None Include="shaders\include\32OSS_ITS.fnc.glsl">
       <Filter>assets\shaders\include</Filter>
     </None>
   </ItemGroup>
@@ -159,7 +171,7 @@
     <ClCompile Include="source\meshletbuilder\BoneLUTDependentBuilder.cpp">
       <Filter>source\meshletbuilder</Filter>
     </ClCompile>
-    <ClCompile Include="source\vertexcompressor\DynamicMeshletVertexCodec.cpp">
+    <ClCompile Include="source\vertexcompressor\DPDifferenceCodec16.cpp">
       <Filter>source\vertexcompressor</Filter>
     </ClCompile>
     <ClCompile Include="source\statistics\CPUTimer.cpp">
@@ -203,6 +215,42 @@
     </ClCompile>
     <ClCompile Include="source\helpers\config_storage.cpp">
       <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\PDifferenceCodec16.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\thirdparty\loguru.cpp">
+      <Filter>source\thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\log.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\statistics\PropertyInterface.cpp">
+      <Filter>source\statistics\properties</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\QuickPermutationCoding.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\thirdparty\vbac_compression.c">
+      <Filter>thirdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\oss.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\helpers\util.cpp">
+      <Filter>source\helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\OptimalSimplexCoding.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\statistics\propertyFormatters.cpp">
+      <Filter>source\statistics\properties</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\PDifferenceCodec8.cpp">
+      <Filter>source\vertexcompressor</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vertexcompressor\PDifferenceCodec32.cpp">
+      <Filter>source\vertexcompressor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -270,7 +318,7 @@
       <Filter>source\meshletbuilder</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="source\vertexcompressor\DynamicMeshletVertexCodec.h">
+    <ClInclude Include="source\vertexcompressor\DPDifferenceCodec16.h">
       <Filter>source\vertexcompressor</Filter>
     </ClInclude>
     <ClInclude Include="source\statistics\CPUTimer.h">
@@ -318,6 +366,45 @@
     <ClInclude Include="source\helpers\config_storage.h">
       <Filter>source\helpers</Filter>
     </ClInclude>
+    <ClInclude Include="source\thirdparty\IconsFontAwesome5.h">
+      <Filter>source\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\PDifferenceCodec16.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\thirdparty\loguru.hpp">
+      <Filter>source\thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\log.h">
+      <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\propertyFormatters.h">
+      <Filter>source\statistics\properties</Filter>
+    </ClInclude>
+    <ClInclude Include="source\statistics\StringProperty.h">
+      <Filter>source\statistics\properties</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\QuickPermutationCoding.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\oss.h">
+      <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\thirdparty\vbac_compression.h">
+      <Filter>thirdparty</Filter>
+    </ClInclude>
+    <ClInclude Include="source\helpers\util.h">
+      <Filter>source\helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\OptimalSimplexCoding.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\PDifferenceCodec8.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
+    <ClInclude Include="source\vertexcompressor\PDifferenceCodec32.h">
+      <Filter>source\vertexcompressor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\icon_small.png">
@@ -329,5 +416,16 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="compressed_meshlet_skinning.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\fonts\fa-regular-400.ttf">
+      <Filter>assets\fonts</Filter>
+    </Font>
+    <Font Include="assets\fonts\fa-solid-900.ttf">
+      <Filter>assets\fonts</Filter>
+    </Font>
+    <Font Include="assets\fonts\lao-ui.ttf">
+      <Filter>assets\fonts</Filter>
+    </Font>
   </ItemGroup>
 </Project>

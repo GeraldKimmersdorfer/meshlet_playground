@@ -6,7 +6,7 @@
 
 void test();
 
-void createBoneIndexLUT(bool withShuffling, bool withMerging, const std::vector<vertex_data>& vertexData,
+void createBoneIndexLUT(bool withReuse, bool withShuffling, bool withMerging, const std::vector<vertex_data>& vertexData,
 	std::vector<glm::u16vec4>& lut, std::vector<uint16_t>* vertexLUIndexTable = nullptr, std::vector<uint8_t>* vertexLUPermutation = nullptr);
 
 template <class T>

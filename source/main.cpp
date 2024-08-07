@@ -8,15 +8,25 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "helpers/lut.h"
+#include "helpers/hud.h"
+#include "helpers/log.h"
+#include "helpers/oss.h"
+#include "helpers/permcodec.h"
 
-int main() // <== Starting point ==
+int main(int argc, char* argv[])
 {
+	initLogging(argc, argv);
+
+	//test_oss();
+	//PermutationCodec::test();
+	//return 0;
+
 	int result = EXIT_FAILURE;
 	try {
 		// Create a window and open it
 		auto mainWnd = avk::context().create_window("Skinned Meshlet Playground");
 
-		mainWnd->set_resolution({ 1600, 900 });
+		mainWnd->set_resolution({ 1920, 1080 });
 		mainWnd->enable_resizing(true);
 		mainWnd->set_additional_back_buffer_attachments({
 			avk::attachment::declare(vk::Format::eD32Sfloat, avk::on_load::clear.from_previous_layout(avk::layout::undefined), avk::usage::depth_stencil, avk::on_store::dont_care)
@@ -40,7 +50,9 @@ int main() // <== Starting point ==
 		// Create an instance of our main avk::element which contains all the functionality:
 		auto app = MeshletsApp(singleQueue);
 		// Create another element for drawing the UI with ImGui
-		auto ui = avk::imgui_manager(singleQueue);
+		auto ui = avk::imgui_manager(singleQueue, "imgui_manager", {}, [](float scale) {
+			setupImGuiFonts();
+			});
 
 		// Compile all the configuration parameters and the invokees into a "composition":
 		auto composition = configure_and_compose(

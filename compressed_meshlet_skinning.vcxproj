@@ -21,9 +21,12 @@
     <ClCompile Include="source\helpers\config_storage.cpp" />
     <ClCompile Include="source\helpers\csv.cpp" />
     <ClCompile Include="source\helpers\hud.cpp" />
+    <ClCompile Include="source\helpers\log.cpp" />
     <ClCompile Include="source\helpers\lut.cpp" />
+    <ClCompile Include="source\helpers\oss.cpp" />
     <ClCompile Include="source\helpers\packing.cpp" />
     <ClCompile Include="source\helpers\permcodec.cpp" />
+    <ClCompile Include="source\helpers\util.cpp" />
     <ClCompile Include="source\meshletbuilder\AVKBuilder.cpp" />
     <ClCompile Include="source\meshletbuilder\BoneLUTDependentBuilder.cpp" />
     <ClCompile Include="source\meshletbuilder\MeshletbuilderInterface.cpp" />
@@ -40,13 +43,22 @@
     <ClCompile Include="source\statistics\CPUTimer.cpp" />
     <ClCompile Include="source\statistics\AvkTimer.cpp" />
     <ClCompile Include="source\statistics\NumberProperty.cpp" />
+    <ClCompile Include="source\statistics\propertyFormatters.cpp" />
+    <ClCompile Include="source\statistics\PropertyInterface.cpp" />
     <ClCompile Include="source\statistics\PropertyManager.cpp" />
     <ClCompile Include="source\statistics\TimerInterface.cpp" />
+    <ClCompile Include="source\thirdparty\loguru.cpp" />
+    <ClCompile Include="source\thirdparty\vbac_compression.c" />
     <ClCompile Include="source\vertexcompressor\BoneLUTCompression.cpp" />
-    <ClCompile Include="source\vertexcompressor\DynamicMeshletVertexCodec.cpp" />
+    <ClCompile Include="source\vertexcompressor\DPDifferenceCodec16.cpp" />
     <ClCompile Include="source\vertexcompressor\MeshletRiggedCompression.cpp" />
     <ClCompile Include="source\vertexcompressor\NoCompression.cpp" />
+    <ClCompile Include="source\vertexcompressor\OptimalSimplexCoding.cpp" />
+    <ClCompile Include="source\vertexcompressor\PDifferenceCodec32.cpp" />
+    <ClCompile Include="source\vertexcompressor\PDifferenceCodec8.cpp" />
     <ClCompile Include="source\vertexcompressor\PermutationCodingCompression.cpp" />
+    <ClCompile Include="source\vertexcompressor\PDifferenceCodec16.cpp" />
+    <ClCompile Include="source\vertexcompressor\QuickPermutationCoding.cpp" />
     <ClCompile Include="source\vertexcompressor\VertexCompressionInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -56,9 +68,12 @@
     <ClInclude Include="source\helpers\config_storage.h" />
     <ClInclude Include="source\helpers\csv.h" />
     <ClInclude Include="source\helpers\hud.h" />
+    <ClInclude Include="source\helpers\log.h" />
     <ClInclude Include="source\helpers\lut.h" />
+    <ClInclude Include="source\helpers\oss.h" />
     <ClInclude Include="source\helpers\packing.h" />
     <ClInclude Include="source\helpers\permcodec.h" />
+    <ClInclude Include="source\helpers\util.h" />
     <ClInclude Include="source\meshletbuilder\AVKBuilder.h" />
     <ClInclude Include="source\meshletbuilder\BoneLUTDependentBuilder.h" />
     <ClInclude Include="source\meshletbuilder\MeshletbuilderInterface.h" />
@@ -77,16 +92,26 @@
     <ClInclude Include="source\statistics\CPUTimer.h" />
     <ClInclude Include="source\statistics\AvkTimer.h" />
     <ClInclude Include="source\statistics\NumberProperty.h" />
+    <ClInclude Include="source\statistics\propertyFormatters.h" />
     <ClInclude Include="source\statistics\PropertyInterface.h" />
     <ClInclude Include="source\statistics\PropertyManager.h" />
+    <ClInclude Include="source\statistics\StringProperty.h" />
     <ClInclude Include="source\statistics\TimerInterface.h" />
     <ClInclude Include="source\thirdparty\blend_attribute_codec.h" />
+    <ClInclude Include="source\thirdparty\IconsFontAwesome5.h" />
+    <ClInclude Include="source\thirdparty\loguru.hpp" />
     <ClInclude Include="source\thirdparty\permutation_coding.h" />
+    <ClInclude Include="source\thirdparty\vbac_compression.h" />
     <ClInclude Include="source\vertexcompressor\BoneLUTCompression.h" />
-    <ClInclude Include="source\vertexcompressor\DynamicMeshletVertexCodec.h" />
+    <ClInclude Include="source\vertexcompressor\DPDifferenceCodec16.h" />
     <ClInclude Include="source\vertexcompressor\MeshletRiggedCompression.h" />
     <ClInclude Include="source\vertexcompressor\NoCompression.h" />
+    <ClInclude Include="source\vertexcompressor\OptimalSimplexCoding.h" />
+    <ClInclude Include="source\vertexcompressor\PDifferenceCodec32.h" />
+    <ClInclude Include="source\vertexcompressor\PDifferenceCodec8.h" />
     <ClInclude Include="source\vertexcompressor\PermutationCodingCompression.h" />
+    <ClInclude Include="source\vertexcompressor\PDifferenceCodec16.h" />
+    <ClInclude Include="source\vertexcompressor\QuickPermutationCoding.h" />
     <ClInclude Include="source\vertexcompressor\VertexCompressionInterface.h" />
   </ItemGroup>
   <ItemGroup>
@@ -97,12 +122,14 @@
     <None Include="shaders\background\screen_pass.vert" />
     <None Include="shaders\background\solid_color.frag" />
     <None Include="shaders\diffuse_shading_fixed_lightsource.frag" />
+    <None Include="shaders\include\32OSS_ITS.fnc.glsl" />
     <None Include="shaders\include\bit_coding.glsl" />
     <None Include="shaders\include\blend_attribute_codec.glsl" />
     <None Include="shaders\include\blend_attribute_compression.glsl" />
     <None Include="shaders\include\glsl_helpers.glsl" />
     <None Include="shaders\include\mcc.glsl" />
     <None Include="shaders\include\permutation.glsl" />
+    <None Include="shaders\include\permutation_codec.glsl" />
     <None Include="shaders\include\shared_structs.glsl" />
     <None Include="shaders\include\vertex_reconstruction.glsl" />
     <None Include="shaders\meshlet.mesh" />
@@ -123,6 +150,11 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="compressed_meshlet_skinning.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\fonts\fa-regular-400.ttf" />
+    <Font Include="assets\fonts\fa-solid-900.ttf" />
+    <Font Include="assets\fonts\lao-ui.ttf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
