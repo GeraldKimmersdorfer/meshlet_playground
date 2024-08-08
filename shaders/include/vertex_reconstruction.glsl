@@ -13,7 +13,6 @@ layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data_no_compression ve
 
 vertex_data getVertexData(uint vid, uint mid) {
     vertex_data ret;
-    //ret.mPosition = vertices[vid].mPositionTxX.xyz + vertices[vid].mTxYNormal.yzw * 0.00005 * mid;
     ret.mPosition = vertices[vid].mPositionTxX.xyz;
     ret.mNormal = vertices[vid].mTxYNormal.yzw;
     ret.mTexCoord = vec2(vertices[vid].mPositionTxX.w, vertices[vid].mTxYNormal.x);
@@ -47,10 +46,6 @@ vertex_data getVertexData(uint vid, uint mid) {
 /*  DUAL PERMUTATION DIFFERENCE CODEC (_DPDC16)
 /* ======================================================================================= */
 
-// TODO pack everything in boneAttributes32
-//14 codec
-//5 permut
-//13 tuple
 #elif MCC_VERTEX_COMPRESSION == _DPDC16
 
 #extension GL_EXT_shader_16bit_storage   : require

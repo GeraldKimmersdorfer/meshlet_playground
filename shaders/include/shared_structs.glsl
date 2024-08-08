@@ -16,16 +16,12 @@ struct meshlet_redirected {
 };
 
 struct mesh_data {
-	mat4 mTransformationMatrix;
-	vec4 mPositionInvScale;
-	vec4 mPositionInvTranslation;
-	vec4 mTexCoordsInvTranslationScale;
-	uint mVertexOffset;		// Offset to first item in Positions Texel-Buffer
-	uint mVertexCount;
-	uint mIndexOffset;		// Offset to first item in Indices Texel-Buffer
-	uint mIndexCount;		// Amount if indices
-	uint mMaterialIndex;	// index of material for mesh
-	bool mAnimated;	// Index offset inside bone matrix buffer, -1 if not animated
+	mat4 transformationMatrix;
+	vec4 positionScale;
+	vec4 positionTranslation;
+	vec4 texCoordsTranslationScale;
+	uint materialIndex;	// index of material for mesh
+	bool animated;	// Index offset inside bone matrix buffer, -1 if not animated
 	int p1;int p2;
 };
 

@@ -74,7 +74,7 @@ void MeshletbuilderInterface::addVertexOffsetToMeshlets()
 		uint32_t meshIndex; uint8_t vertexCount; uint8_t triangleCount;
 		unpackMeshIdxVcTc(m.mMeshIdxVcTc, meshIndex, vertexCount, triangleCount);
 		for (int i = 0; i < vertexCount; i++) {
-			m.mVertices[i] += mShared->mMeshData[meshIndex].mVertexOffset;
+			m.mVertices[i] += mShared->mExtendedMeshData[meshIndex].vertexOffset;
 		}
 	}
 }

@@ -1,10 +1,5 @@
 
 
-struct Plane
-{
-	float a, b, c, d;
-};
-
 ivec2 spiral(uint n) {
     if (n == 0) return ivec2(0, 0);
 
@@ -27,7 +22,6 @@ ivec2 spiral(uint n) {
 vec4 sortVec4HighLow(vec4 a) {
     float temp;
     
-    // Bubble sort algorithm
     if (a.x < a.y) { temp = a.x; a.x = a.y; a.y = temp; }
     if (a.y < a.z) { temp = a.y; a.y = a.z; a.z = temp; }
     if (a.z < a.w) { temp = a.z; a.z = a.w; a.w = temp; }
@@ -36,57 +30,6 @@ vec4 sortVec4HighLow(vec4 a) {
     if (a.x < a.y) { temp = a.x; a.x = a.y; a.y = temp; }
     
     return a;
-}
-
-
-// < 0 ... pt lies on the negative halfspace
-//   0 ... pt lies on the plane
-// > 0 ... pt lies on the positive halfspace
-float ClassifyPoint(Plane plane, vec3 pt)
-{
-	float d;
-	d = plane.a * pt.x + plane.b * pt.y + plane.c * pt.z + plane.d;
-	return d;
-}
-
-struct bounding_box
-{
-	vec4 mMin;
-	vec4 mMax;
-};
-
-vec3[8] bounding_box_corners(bounding_box bb)
-{
-	vec3 corners[8] = vec3[8](
-		vec3(bb.mMin.x, bb.mMin.y, bb.mMin.z),
-		vec3(bb.mMin.x, bb.mMin.y, bb.mMax.z),
-		vec3(bb.mMin.x, bb.mMax.y, bb.mMin.z),
-		vec3(bb.mMin.x, bb.mMax.y, bb.mMax.z),
-		vec3(bb.mMax.x, bb.mMin.y, bb.mMin.z),
-		vec3(bb.mMax.x, bb.mMin.y, bb.mMax.z),
-		vec3(bb.mMax.x, bb.mMax.y, bb.mMin.z),
-		vec3(bb.mMax.x, bb.mMax.y, bb.mMax.z)
-	);
-	return corners;
-}
-
-bounding_box transform(bounding_box bbIn, mat4 M)
-{
-	vec3[8] corners = bounding_box_corners(bbIn);
-	// Transform all the corners:
-	for (int i = 0; i < 8; ++i) {
-		vec4 transformed = (M * vec4(corners[i], 1.0));
-		corners[i] = transformed.xyz / transformed.w;
-	}
-
-	bounding_box bbOut;
-	bbOut.mMin = vec4(corners[0], 0.0);
-	bbOut.mMax = vec4(corners[0], 0.0);
-	for (int i = 1; i < 8; ++i) {
-		bbOut.mMin.xyz = min(bbOut.mMin.xyz, corners[i]);
-		bbOut.mMax.xyz = max(bbOut.mMax.xyz, corners[i]);
-	}
-	return bbOut;
 }
 
 uint compute_hash(uint a)

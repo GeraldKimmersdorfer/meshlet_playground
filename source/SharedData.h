@@ -35,6 +35,8 @@ public:
 	avk::model mModel;
 
 	std::vector<mesh_data> mMeshData;
+	// Meshlet data for cpu only
+	std::vector<extended_mesh_data> mExtendedMeshData;
 	std::vector<vertex_data> mVertexData;
 	std::vector<uint32_t> mIndices;
 

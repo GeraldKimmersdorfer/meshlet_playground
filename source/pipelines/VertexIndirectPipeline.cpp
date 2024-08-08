@@ -57,10 +57,10 @@ void VertexIndirectPipeline::doInitialize(avk::queue* queue)
 	auto gpuDrawCommands = std::vector<VkDrawIndexedIndirectCommand>(mShared->mMeshData.size());
 	for (int i = 0; i < gpuDrawCommands.size(); i++) {
 		gpuDrawCommands[i] = VkDrawIndexedIndirectCommand{
-			.indexCount = mShared->mMeshData[i].mIndexCount,
+			.indexCount = mShared->mExtendedMeshData[i].indexCount,
 			.instanceCount = 1,
-			.firstIndex = mShared->mMeshData[i].mIndexOffset,
-			.vertexOffset = static_cast<int32_t>(mShared->mMeshData[i].mVertexOffset),
+			.firstIndex = mShared->mExtendedMeshData[i].indexOffset,
+			.vertexOffset = static_cast<int32_t>(mShared->mExtendedMeshData[i].vertexOffset),
 			.firstInstance = static_cast<uint32_t>(i),							// we missuse this property such that we know where to access the mesh array in the shader
 		};
 	}

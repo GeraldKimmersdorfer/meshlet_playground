@@ -40,9 +40,9 @@ void BoneLUTDependentBuilder::doGenerate()
 	for (const auto& value : vertexLUIndexTable) vertexLUIndexTable32.push_back(static_cast<uint32_t>(value));
 
 	for (uint32_t midx = 0; midx < mShared->mMeshData.size(); midx++) {
-		auto& mesh = mShared->mMeshData[midx];
-		std::span<uint32_t> indices{ &(mShared->mIndices[mesh.mIndexOffset]), mesh.mIndexCount };
-		std::span<vertex_data> vertices{ &(mShared->mVertexData[mesh.mVertexOffset]), mesh.mVertexCount };
+		auto& emesh = mShared->mExtendedMeshData[midx];
+		std::span<uint32_t> indices{ &(mShared->mIndices[emesh.indexOffset]), emesh.indexCount };
+		std::span<vertex_data> vertices{ &(mShared->mVertexData[emesh.vertexOffset]), emesh.vertexCount };
 
 #if CHECK_VERTEX_REUSE
 		// Check wether vertices are reused in indices

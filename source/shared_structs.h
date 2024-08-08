@@ -12,17 +12,20 @@ static constexpr size_t sNumPackedIndices = 95; //avk::div_ceil(sNumIndices, 4);
 
 
 struct mesh_data {
-	glm::mat4 mTransformationMatrix;
-	glm::vec4 mPositionInvScale;
-	glm::vec4 mPositionInvTranslation;
-	glm::vec4 mTexCoordsInvTranslationScale;
-	uint32_t mVertexOffset;			// Offset to first item in general Vertex-Buffer
-	uint32_t mVertexCount;			// Amount of vertices in general Vertex-Buffer
-	uint32_t mIndexOffset;			// Offset to first item in general Indices-Buffer
-	uint32_t mIndexCount;			// Amount if indices in general Indices-Buffer
-	uint32_t mMaterialIndex;		// Material index for given mesh 
-	int32_t mAnimated = false;
-	glm::vec2 padding;
+	glm::mat4 transformationMatrix;
+	glm::vec4 positionScale;
+	glm::vec4 positionTranslation;
+	glm::vec4 texCoordsTranslationScale;	// x,y = translation, z,w = scale
+	uint32_t materialIndex;				// Material index for given mesh 
+	uint32_t animated = false;				// 0 = static, 1 = animated
+	uint32_t p1; uint32_t p2;
+};
+
+struct extended_mesh_data {
+	uint32_t vertexOffset;
+	uint32_t vertexCount;
+	uint32_t indexOffset;
+	uint32_t indexCount;
 };
 
 struct vertex_data {

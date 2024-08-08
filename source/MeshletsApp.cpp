@@ -81,6 +81,7 @@ void MeshletsApp::reset()
 {
 	mIndices.clear();
 	mMeshData.clear();
+	mExtendedMeshData.clear();
 	mVertexData.clear();
 	mAnimations.clear();
 	mBoneTransformBuffers.clear();
@@ -218,18 +219,18 @@ void MeshletsApp::load(const std::string& filename)
 		std::string meshname = model->name_of_mesh(mpos);
 		auto* amesh = aScene->mMeshes[meshIndex];
 
-		auto& mesh = mMeshData.emplace_back(mesh_data{
-			.mTransformationMatrix = globalTransform * model->transformation_matrix_for_mesh(meshIndex),
-			.mVertexOffset = static_cast<uint32_t>(mVertexData.size()),
-			.mIndexOffset = static_cast<uint32_t>(mIndices.size()),
-			.mMaterialIndex = 0,
-			.mAnimated = static_cast<int32_t>(amesh->HasBones()),
-			});
+		auto& emesh = mExtendedMeshData.emplace_back(extended_mesh_data{});
+		emesh.vertexOffset = static_cast<uint32_t>(mVertexData.size());
+		emesh.indexOffset = static_cast<uint32_t>(mIndices.size());
+		auto& mesh = mMeshData.emplace_back(mesh_data{});
+		mesh.transformationMatrix = globalTransform * model->transformation_matrix_for_mesh(meshIndex);
+		mesh.materialIndex = 0;
+		mesh.animated = static_cast<int32_t>(amesh->HasBones());
 
 		// Find and assign the correct material in the allMatConfigs vector
 		for (auto pair : distinctMaterials) {
 			if (std::end(pair.second) != std::ranges::find(pair.second, meshIndex)) break;
-			mesh.mMaterialIndex++;
+			mesh.materialIndex++;
 		}
 
 		auto selection = avk::make_model_references_and_mesh_indices_selection(model, meshIndex);
@@ -245,18 +246,18 @@ void MeshletsApp::load(const std::string& filename)
 		// in the AVKToolkit and I don't intend on changing this. I use a workaround where the shader first has
 		// to undo the normalization as an extra step. For that purpose I could save the invTransform inside the
 		// Mesh-Struct, but I'll use scale and translation since it should be faster.
-		normalizePositions(meshPositions, mesh.mPositionInvTranslation, mesh.mPositionInvScale);
+		normalizePositions(meshPositions, mesh.positionTranslation, mesh.positionScale);
 
 		// Same thing as above, but for texture coordinates
-		normalizeTexCoords(meshTexCoords, mesh.mTexCoordsInvTranslationScale);
+		normalizeTexCoords(meshTexCoords, mesh.texCoordsTranslationScale);
 
 		// "NORMALIZE" bone weights, meaning there are a lot of bone weights that don't add up to one.
 		// I don't know where that is coming from, but i intend to fix this in the following lines of code
 		// which stretches the weights that are > BONE_WEIGHT_EPSILON in regards of their weight.
 		normalizeBoneWeights(meshBoneWeights, BONE_WEIGHT_EPSILON);
 
-		mesh.mIndexCount = meshIndices.size();
-		mesh.mVertexCount = meshPositions.size();
+		emesh.indexCount = meshIndices.size();
+		emesh.vertexCount = meshPositions.size();
 
 		std::vector<vertex_data> meshVertexData;
 		meshVertexData.reserve(meshPositions.size());

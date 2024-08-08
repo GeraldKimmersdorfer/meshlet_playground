@@ -62,13 +62,13 @@ void main() {
 #endif
 
 	uint meshIndex 			  = gl_InstanceIndex;
-	mat4 transformationMatrix = meshes[meshIndex].mTransformationMatrix;
-	bool isAnimated 		  = meshes[meshIndex].mAnimated;
-	uint materialIndex        = meshes[meshIndex].mMaterialIndex;
+	mat4 transformationMatrix = meshes[meshIndex].transformationMatrix;
+	bool isAnimated 		  = meshes[meshIndex].animated;
+	uint materialIndex        = meshes[meshIndex].materialIndex;
 
 	// Scale position and texcoord from [0,1] to the actual bounds
-	const vec3 posLocal = fma(vertex.mPosition, vec3(meshes[meshIndex].mPositionInvScale), vec3(meshes[meshIndex].mPositionInvTranslation));
-	const vec2 texCoord = fma(vertex.mTexCoord, meshes[meshIndex].mTexCoordsInvTranslationScale.zw, meshes[meshIndex].mTexCoordsInvTranslationScale.xy);
+	const vec3 posLocal = fma(vertex.mPosition, vec3(meshes[meshIndex].positionScale), vec3(meshes[meshIndex].positionTranslation));
+	const vec2 texCoord = fma(vertex.mTexCoord, meshes[meshIndex].texCoordsTranslationScale.zw, meshes[meshIndex].texCoordsTranslationScale.xy);
 
 	vec4 posMshSp = vec4(posLocal, 1.0);
 	vec3 nrmMshSp = vertex.mNormal;

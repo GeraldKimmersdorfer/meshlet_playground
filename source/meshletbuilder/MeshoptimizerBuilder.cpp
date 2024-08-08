@@ -16,9 +16,9 @@ void MeshoptimizerBuilder::doGenerate()
 
 	std::vector<meshlet_native> allMeshlets;
 	for (uint32_t midx = 0; midx < mShared->mMeshData.size(); midx++) {
-		auto& mesh = mShared->mMeshData[midx];
-		std::span<uint32_t> indices{ &(mShared->mIndices[mesh.mIndexOffset]), mesh.mIndexCount };
-		std::span<vertex_data> vertices{ &(mShared->mVertexData[mesh.mVertexOffset]), mesh.mVertexCount };
+		auto& emesh = mShared->mExtendedMeshData[midx];
+		std::span<uint32_t> indices{ &(mShared->mIndices[emesh.indexOffset]), emesh.indexCount };
+		std::span<vertex_data> vertices{ &(mShared->mVertexData[emesh.vertexOffset]), emesh.vertexCount };
 
 		// get the maximum number of meshlets that could be generated
 		size_t max_meshlets = meshopt_buildMeshletsBound(indices.size(), aMaxVertices, max_triangles);

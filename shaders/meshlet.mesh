@@ -4,20 +4,20 @@
 #extension GL_EXT_shader_8bit_storage    : require
 #extension GL_EXT_nonuniform_qualifier   : require
 #extension GL_EXT_scalar_block_layout 	 : enable
+#extension GL_EXT_control_flow_attributes : enable
 
 #include "include/mcc.glsl"
 
-#define MCC_MESHLET_EXTENSION _EXT 		// possible values: _NV,_EXT
-#define MCC_MESHLET_TYPE _NATIVE 		// possible values: _NATIVE, _REDIR
-#define MCC_VERTEX_COMPRESSION _NOCOMP 	// possible values: _NOCOMP, _LUT, _MLTR, _PC, _DMLT
+// for possible values see mcc.glsl
+#define MCC_MESHLET_EXTENSION _EXT 		
+#define MCC_MESHLET_TYPE _NATIVE 
+#define MCC_VERTEX_COMPRESSION _NOCOMP 
 
 #if MCC_MESHLET_EXTENSION == _EXT
 #extension GL_EXT_mesh_shader            : require
 #elif MCC_MESHLET_EXTENSION == _NV
 #extension GL_NV_mesh_shader             : require
 #endif
-
-//#extension GL_EXT_debug_printf : enable	//ToDo: Necessary?
 
 #include "include/glsl_helpers.glsl"
 #include "include/shared_structs.glsl"
@@ -26,6 +26,7 @@
 layout (constant_id = 0) const uint NUM_TASK_SHADER_INVOCATIONS = 1; // <- Expected to be set to 32 for Nvidia on host side.
 layout (constant_id = 1) const uint NUM_MESH_SHADER_INVOCATIONS = 1; // <- Expected to be set to 32 for Nvidia on host side.
 layout(local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
+
 // The max_vertices and max_primitives numbers have been recommended by Nvidia:
 layout(triangles, max_vertices = 64, max_primitives = 126) out;
 
@@ -67,12 +68,9 @@ layout(push_constant) uniform PushConstants {
 };
 
 #if MCC_MESHLET_EXTENSION == _EXT && MCC_MESHLET_TYPE == _NATIVE
-// NOTE: The uints are stored in big endian!!! (maybe platform dependent)
 uint getItemFromPackedIndexArray(uint u8index, uint meshletIndex) {
+	// NOTE: The uints are stored in big endian!!! (maybe platform dependent)
 	uint block = meshlets[meshletIndex].mIndicesPacked[int(u8index / 4.0)];
-	#if DEBUG
-		//debugPrintfEXT("requested block %u | u8index %u \n", block, u8index);
-	#endif
 	switch (u8index % 4) {
 		case 3: return (block >> 24u);
 		case 2: return (block >> 16u) & 0xFF;
@@ -82,9 +80,9 @@ uint getItemFromPackedIndexArray(uint u8index, uint meshletIndex) {
 }
 #endif
 
-// NOTE: This function is by far more performant than the ones in glsl_helper
 void boneTransform(in vec4 boneWeights, in uvec4 boneIndices, inout vec4 posMshSp, inout vec3 nrmMshSp) {
 	mat4 skinMatrix = mat4(0.0);
+	[[unroll]]
 	for (uint i = 0; i < 4; i++) {
 		if (boneWeights[i] > BONE_WEIGHT_EPSILON) {
 			skinMatrix += boneWeights[i] * bones[boneIndices[i]].transform;
@@ -97,38 +95,33 @@ void boneTransform(in vec4 boneWeights, in uvec4 boneIndices, inout vec4 posMshS
 
 void main() 
 {
-	uint meshletIndex = meshletIndices[gl_WorkGroupID.x];
-	uint invocationId = gl_LocalInvocationID.x;
+	const uint meshletIndex = meshletIndices[gl_WorkGroupID.x];
+	const uint invocationId = gl_LocalInvocationID.x;
 
 	// Get all the meshlet data:
-	uint meshIndex 			  = (meshlets[meshletIndex].mMeshIdxVcTc & 0xFFFFC000) >> 18u;
-	uint vertexCount          = (meshlets[meshletIndex].mMeshIdxVcTc & 0x00003F80) >> 7u;
-	uint triangleCount        = (meshlets[meshletIndex].mMeshIdxVcTc & 0x0000007F) >> 0u;
-	uint materialIndex        = meshes[meshIndex].mMaterialIndex;
-	mat4 transformationMatrix = meshes[meshIndex].mTransformationMatrix;
-	bool isAnimated 		  = meshes[meshIndex].mAnimated;
-	uint vertexOffset		  = meshes[meshIndex].mVertexOffset;
+	const uint meshIndex 			= (meshlets[meshletIndex].mMeshIdxVcTc & 0xFFFFC000) >> 18u;
+	const uint vertexCount          = (meshlets[meshletIndex].mMeshIdxVcTc & 0x00003F80) >> 7u;
+	const uint triangleCount        = (meshlets[meshletIndex].mMeshIdxVcTc & 0x0000007F) >> 0u;
+	const uint materialIndex        = meshes[meshIndex].materialIndex;
+	const mat4 transformationMatrix = meshes[meshIndex].transformationMatrix;
+	const bool isAnimated 		  	= meshes[meshIndex].animated;
 #if MCC_MESHLET_TYPE == _REDIR
-	uint indexDataOffset	  = meshlets[meshletIndex].mDataOffset;
+	const uint indexDataOffset	 	= meshlets[meshletIndex].mDataOffset;
 #endif
 
-	//if (gl_LocalInvocationID.x == 0 && gl_WorkGroupID.x == 0)
-	//	debugPrintfEXT("mli %u | mi %u | tc %u | vc %u | midxvctc %u \n", meshletIndex, meshIndex, triangleCount, vertexCount, meshlets[meshletIndex].mMeshIdxVcTc);
-	
 	// Step by NUM_MESH_SHADER_INVOCATIONS as we have that many threads but potentially more vertices to calculate:
 	for (uint i = invocationId; i < vertexCount; i += NUM_MESH_SHADER_INVOCATIONS)
 	{
-		// Get the vertex index:
 #if MCC_MESHLET_TYPE == _REDIR
-		uint vertexIndex = uint(mPackedIndices[int(indexDataOffset + i)]);	// buggy, I have to include vertexOffset in mPackedIndices
+		uint vertexIndex = uint(mPackedIndices[int(indexDataOffset + i)]);
 #elif MCC_MESHLET_TYPE == _NATIVE
 		uint vertexIndex = uint(meshlets[meshletIndex].mVertices[i]);
 #endif
 		vertex_data vertex = getVertexData(vertexIndex, meshletIndex);
 		
 		// Scale position and texcoord from [0,1] to the actual bounds
-		const vec3 posLocal = fma(vertex.mPosition, vec3(meshes[meshIndex].mPositionInvScale), vec3(meshes[meshIndex].mPositionInvTranslation));
-		const vec2 texCoord = fma(vertex.mTexCoord, meshes[meshIndex].mTexCoordsInvTranslationScale.zw, meshes[meshIndex].mTexCoordsInvTranslationScale.xy);
+		const vec3 posLocal = fma(vertex.mPosition, vec3(meshes[meshIndex].positionScale), vec3(meshes[meshIndex].positionTranslation));
+		const vec2 texCoord = fma(vertex.mTexCoord, meshes[meshIndex].texCoordsTranslationScale.zw, meshes[meshIndex].texCoordsTranslationScale.xy);
 
 		vec4 posMshSp = vec4(posLocal, 1.0);
 		vec3 nrmMshSp = vertex.mNormal;
@@ -191,7 +184,6 @@ void main()
 			getItemFromPackedIndexArray(i * 3 + 2, meshletIndex)
 		);
 		gl_PrimitiveTriangleIndicesEXT[i] = meshletPrimitiveIndexList;
-		//debugPrintfEXT("wrote %u | %u | %u \n", meshletPrimitiveIndexList.x, meshletPrimitiveIndexList.y, meshletPrimitiveIndexList.z);
 	}
 
 #elif MCC_MESHLET_EXTENSION == _EXT && MCC_MESHLET_TYPE == _REDIR
