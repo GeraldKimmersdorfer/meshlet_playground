@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2024, Gerald Kimmersdorfer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "csv.h"
 
 #include <fstream>
@@ -9,35 +26,35 @@ namespace fs = std::filesystem;
 uint32_t file_counter = 0;
 
 void createDirectoryIfNotExists(const fs::path& directoryPath) {
-    if (!fs::exists(directoryPath)) {
-        fs::create_directory(directoryPath);
-    }
-    else if (!fs::is_directory(directoryPath)) {
-        throw std::runtime_error("A file with the same name as temporary directory exists");
-    }
+	if (!fs::exists(directoryPath)) {
+		fs::create_directory(directoryPath);
+	}
+	else if (!fs::is_directory(directoryPath)) {
+		throw std::runtime_error("A file with the same name as temporary directory exists");
+	}
 }
 
 std::filesystem::path generateFilePath() {
-    fs::path tempfile = TEMP_FILE_FOLDER;
-    createDirectoryIfNotExists(tempfile);
-    return tempfile / (std::to_string(file_counter++) + ".csv");
+	fs::path tempfile = TEMP_FILE_FOLDER;
+	createDirectoryIfNotExists(tempfile);
+	return tempfile / (std::to_string(file_counter++) + ".csv");
 }
 
 void writeAndOpenCSV(std::vector<std::vector<std::string>> data)
 {
-    auto fileName = generateFilePath();
+	auto fileName = generateFilePath();
 	std::ofstream outputFile(fileName);
-    if (!outputFile.is_open()) throw std::runtime_error("Failed to open csv for writing!");
+	if (!outputFile.is_open()) throw std::runtime_error("Failed to open csv for writing!");
 
-    for (int row = 0; row < data.size(); row++) {
-        if (row > 0) outputFile << std::endl;
-        for (int column = 0; column < data[row].size(); column++) {
-            if (column > 0) outputFile << CSV_SEPARATOR;
-            outputFile << data[row][column];
-        }
-    }
-    outputFile.close();
+	for (int row = 0; row < data.size(); row++) {
+		if (row > 0) outputFile << std::endl;
+		for (int column = 0; column < data[row].size(); column++) {
+			if (column > 0) outputFile << CSV_SEPARATOR;
+			outputFile << data[row][column];
+		}
+	}
+	outputFile.close();
 
-    HINSTANCE result = ShellExecute(NULL, L"open", CSV_VIEWER_EXE, fileName.wstring().c_str(), NULL, SW_SHOWNORMAL);
-    if (!(reinterpret_cast<int>(result) > 32)) throw std::runtime_error("Failed to open the file using shell execute.");
+	HINSTANCE result = ShellExecute(NULL, L"open", CSV_VIEWER_EXE, fileName.wstring().c_str(), NULL, SW_SHOWNORMAL);
+	if (!(reinterpret_cast<int>(result) > 32)) throw std::runtime_error("Failed to open the file using shell execute.");
 }

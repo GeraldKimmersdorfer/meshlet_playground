@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2024, Gerald Kimmersdorfer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "ShaderFile.h"
 
 #include <fstream>
@@ -220,9 +237,9 @@ std::string ShaderFile::compile(const std::vector<ShaderMetaConstant>& constants
 		}
 	}
 	if (constantNotFound) throw std::runtime_error("At least one mcc constant specified for compilation was not found. Please check the log for more information.");
-	
+
 	std::string ufid = getUniqueFileIdentifier(replacementValues);
-	
+
 	auto spvFile = getSpvPathName(ufid);
 	if (mValidShaderVariants.contains(ufid) && std::filesystem::exists(spvFile)) {
 		return spvFile.string();	// use already compiled version
@@ -245,7 +262,7 @@ std::string ShaderFile::compile(const std::vector<ShaderMetaConstant>& constants
 		outputStream.close();
 
 		// remove old file, such that we can check wether compilation was actually successfull
-		std::filesystem::remove(spvFile);	
+		std::filesystem::remove(spvFile);
 
 		// Run glslangValidator
 		spirv_compile(tmpFile, spvFile);
@@ -262,13 +279,13 @@ void ShaderFile::extractConstants()
 {
 	mAllConstants.clear();
 
-    // Create a regex iterator
-    std::sregex_iterator it(mBaseCode.begin(), mBaseCode.end(), rConstantsSearch);
-    std::sregex_iterator end;
+	// Create a regex iterator
+	std::sregex_iterator it(mBaseCode.begin(), mBaseCode.end(), rConstantsSearch);
+	std::sregex_iterator end;
 
-    // Iterate over matches and their groups
-    while (it != end) {
-        std::smatch match = *it;
+	// Iterate over matches and their groups
+	while (it != end) {
+		std::smatch match = *it;
 
 		mAllConstants.push_back({
 			match[2].str(),
@@ -276,8 +293,8 @@ void ShaderFile::extractConstants()
 			match[1].str()
 			});
 
-        ++it;
-    }
+		++it;
+	}
 }
 
 void ShaderFile::loadDependencies(const std::filesystem::path& path)

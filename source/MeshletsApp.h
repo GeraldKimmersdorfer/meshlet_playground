@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2024, Gerald Kimmersdorfer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 
 #include "imgui.h"
@@ -22,8 +39,8 @@
 #include "helpers/camera_storage.h"
 
 #define STARTUP_FILE R"(assets/mixamo_single_no_texture.fbx)"
-//#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Mixamo-Group-No-Materials.fbx)"
-//#define STARTUP_FILE R"(assets/weight_meshlet_creation_test.fbx)"
+ //#define STARTUP_FILE R"(C:\Users\Vorto\OneDrive - TU Wien\Bachelor-Arbeit\Assets\Mixamo Group\Mixamo-Group-No-Materials.fbx)"
+ //#define STARTUP_FILE R"(assets/weight_meshlet_creation_test.fbx)"
 
 class PipelineInterface;
 

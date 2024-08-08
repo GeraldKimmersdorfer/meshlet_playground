@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2024, Gerald Kimmersdorfer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+ 
 // The following variables are used for overlays and therefore have global scope
 uint global_tuple_index = 0;
 uint global_bone_attribute_resolution = 0;
@@ -8,6 +25,13 @@ uint global_bone_permutation = 0;
 /*  NO COMPRESSION (NOCOMP)
 /* ======================================================================================= */
 #if MCC_VERTEX_COMPRESSION == _NOCOMP
+
+struct vertex_data_no_compression {
+	vec4 mPositionTxX;
+	vec4 mTxYNormal;
+	uvec4 mBoneIndices;
+	vec4 mBoneWeights;
+};
 
 layout(set = 3, binding = 0) buffer VertexBuffer { vertex_data_no_compression vertices[]; };
 

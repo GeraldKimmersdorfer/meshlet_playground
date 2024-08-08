@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2024, Gerald Kimmersdorfer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "lut.h"
 
 #include <glm/glm.hpp>
@@ -11,7 +28,7 @@
 
 #include "../helpers/csv.h"
 
-// Define a custom hash function for glm::uvec4
+ // Define a custom hash function for glm::uvec4
 struct UVec4Hash {
 	std::size_t operator()(const glm::u16vec4& v) const {
 		// You can use glm::hash or your own custom hash logic here
@@ -272,7 +289,7 @@ void createBoneIndexLUT(bool withReuse, bool withShuffling, bool withMerging, co
 	// STEP 3: Order indices and delete ones that can be used by others (optimization also done in paper permutation coding. see there for more details)
 	if (withReuse) {
 		std::sort(reducedIndicesWithID.begin(), reducedIndicesWithID.end(), cmpIndexVectorTupleForSort);
-	
+
 		// NOTE: Now it can (and will) happen that a luid is pointing to a luid thats actually not in the list anymore, because
 		// it was deleted in a successing step. Therefore we have to go temporarly save all the luids for this block and if a new better option
 		// is found we have to change all of the luid transfers in the change map within the block. (sounds more complicated than it is)
@@ -314,12 +331,12 @@ void createBoneIndexLUT(bool withReuse, bool withShuffling, bool withMerging, co
 	// The offset can be saved in the resulting permutation for the vertex weights
 	std::map<uint16_t, uint8_t> basePermutations;
 	if (withShuffling && withMerging) {
-		
+
 		std::vector<uint16_t> bins[3]; // helper arrays. bins[0] contains all ids to entries with 1 empty field, bin[1] with 2 empty fields, bin[2] with 3 empty fields
 		for (const auto& pair : reducedIndicesWithID) {
 			int freeSlots = 0;
 			for (int i = 0; i < 4; i++) if (pair.first[i] == UINT16_MAX) freeSlots++;
-			if (freeSlots > 0) bins[freeSlots-1].push_back(pair.second);
+			if (freeSlots > 0) bins[freeSlots - 1].push_back(pair.second);
 		}
 
 		for (int currentGroup = 2; currentGroup > 0; currentGroup--) {
@@ -454,7 +471,7 @@ void createBoneIndexLUT(bool withReuse, bool withShuffling, bool withMerging, co
 			}
 		}
 	}
-	
+
 	// sort reducedIndicesWithID by the id
 	std::sort(reducedIndicesWithID.begin(), reducedIndicesWithID.end(), [](const std::pair<glm::u16vec4, uint16_t>& a, const std::pair<glm::u16vec4, uint16_t>& b) { return a.second < b.second; });
 
