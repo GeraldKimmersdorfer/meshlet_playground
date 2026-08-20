@@ -1,7 +1,7 @@
 [submodule "auto_vk_toolkit"]
 	path = auto_vk_toolkit
 	url = https://github.com/GeraldKimmersdorfer/Auto-Vk-Toolkit
-	branch = main
+	branch = master
 [submodule "meshoptimizer"]
 	path = meshoptimizer
 	url = https://github.com/GeraldKimmersdorfer/meshoptimizer
