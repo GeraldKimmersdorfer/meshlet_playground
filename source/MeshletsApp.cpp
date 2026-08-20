@@ -363,7 +363,15 @@ void MeshletsApp::initGUI()
 				ImGui::SetWindowSize({ -1, io.DisplaySize.y }, ImGuiCond_Always);
 
 				if (ImGui::Button(ICON_FA_FOLDER_OPEN " Open File", ImVec2(ImGui::GetWindowSize().x * 0.96, 0.0f))) {
-					ImGuiFileDialog::Instance()->OpenDialogWithPane("open_file", "Choose File", "{.fbx,.obj,.dae,.ply,.gltf,.glb}", getBestAvailableAssetFolder(), "", std::bind(&openDialogOptionPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 300.0, 1, (IGFDUserDatas)nullptr, ImGuiFileDialogFlags_Modal);
+					IGFD::FileDialogConfig openFileDialogConfig;
+					openFileDialogConfig.path = getBestAvailableAssetFolder();
+					openFileDialogConfig.fileName = "";
+					openFileDialogConfig.countSelectionMax = 1;
+					openFileDialogConfig.userDatas = (IGFDUserDatas)nullptr;
+					openFileDialogConfig.flags = ImGuiFileDialogFlags_Modal;
+					openFileDialogConfig.sidePane = std::bind(&openDialogOptionPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+					openFileDialogConfig.sidePaneWidth = 300.0f;
+					ImGuiFileDialog::Instance()->OpenDialog("open_file", "Choose File", "{.fbx,.obj,.dae,.ply,.gltf,.glb}", openFileDialogConfig);
 				}
 
 				if (ImGui::BeginCombo("Animation", mCurrentlyPlayingAnimationId >= 0 ? mAnimations[mCurrentlyPlayingAnimationId].mName.c_str() : "None")) {
