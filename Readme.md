@@ -1,23 +1,12 @@
 # <img src="assets/icon_small.png" width="40" height="40" align="left" style="margin-right:8px" alt="Meshlet Playground icon"/> Meshlet Playground
 
-![License](https://img.shields.io/github/license/GeraldKimmersdorfer/meshlet_playground) [![Version](https://img.shields.io/badge/version-1.0-blue)](https://github.com/GeraldKimmersdorfer/meshlet_playground) [![Status](https://img.shields.io/badge/status-inactive-red)](https://github.com/GeraldKimmersdorfer/meshlet_playground)
+![License](https://img.shields.io/github/license/GeraldKimmersdorfer/meshlet_playground) [![Version](https://img.shields.io/badge/version-1.0-blue)](https://github.com/GeraldKimmersdorfer/meshlet_playground) [![Status](https://img.shields.io/badge/status-inactive-red)](https://github.com/GeraldKimmersdorfer/meshlet_playground) ![NoAi](https://img.shields.io/badge/NO-AI-orange)
 
 This repository contains a tool developed for my Bachelor thesis on compressing vertex attributes of skinned meshes for rendering with the mesh shading pipeline. It implements and benchmarks several state-of-the-art compression schemes for blend attributes (bone indices/weights) and other vertex data on top of meshlets. This project's own code is licensed under the MIT License.
 
 > Gerald Kimmersdorfer. *Vertex Compression with Mesh Shaders for Skinned Meshes*. Bachelor Thesis, Research Unit of Computer Graphics, Institute of Visual Computing and Human-Centered Technology, Faculty of Informatics, TU Wien, 2024. [[thesis page]](https://www.cg.tuwien.ac.at/research/publications/2024/kimmersdorfer-2024-vcpr/)
 
-```bibtex
-@bachelorsthesis{kimmersdorfer-2024-vcpr,
-  title   = "Vertex Compression with Mesh Shaders for Skinned Meshes",
-  author  = "Gerald Kimmersdorfer",
-  year    = "2024",
-  month   = oct,
-  address = "Favoritenstrasse 9-11/E193-02, A-1040 Vienna, Austria",
-  school  = "Research Unit of Computer Graphics, Institute of Visual
-             Computing and Human-Centered Technology, Faculty of
-             Informatics, TU Wien"
-}
-```
+A copy of this thesis is provided via the institutes website or available in the docs directory [`docs/kimmersdorfer-2024-vcpr-thesis.pdf`](docs/kimmersdorfer-2024-vcpr-thesis.pdf)
 
 ## Prerequisites
  - Windows 10 or 11
