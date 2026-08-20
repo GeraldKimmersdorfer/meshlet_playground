@@ -19,7 +19,7 @@
 
 #include <glm/glm.hpp>
 
-#define MAX_INSTANCE_COUNT 500
+#define MAX_INSTANCE_COUNT 1000
 #define BONE_WEIGHT_EPSILON 0.0000001
 
 static constexpr size_t sNumVertices = 64;

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include <string>
 
 enum WeightOrder {
 	WEIGHT_NO_ORDER,
@@ -27,3 +28,5 @@ enum WeightOrder {
 };
 
 std::vector<glm::vec4> generateRandomWeights(int n, WeightOrder order = WEIGHT_NO_ORDER, bool includeExtremeCases = false);
+
+void setClipboardText(const std::string& text);

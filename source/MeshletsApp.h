@@ -63,6 +63,15 @@ class MeshletsApp : public avk::invokee, public SharedData
 		avk::animation mAnimation;
 	};
 
+	struct benchmark_settings {
+		bool discardFragments = true;
+		bool hideGui = true;
+		bool resetTimer = true;
+		bool disableVSync = true;
+		int frameCount = 250;
+		int copyCount = 500;
+	};
+
 
 public:
 
@@ -93,6 +102,11 @@ private: // v== Member variables ==v
 	void executeWithFreeCommandBuffer();
 
 	void compileAndLoadNextPipeline();
+	void setVSync(bool enable); // based on mVSyncEnabled
+	void reportProperties();
+	void resetTimer();
+	void startBenchmark();
+	void endBenchmark();
 
 	void evaluateModelProperties(const std::string& filename);
 
@@ -134,6 +148,11 @@ private: // v== Member variables ==v
 
 	std::string mShowErrorMessage = "";
 
+	std::vector<std::string> mSelectedProperties = { "cpu_frame","gpu_frame" };
+	benchmark_settings mBenchmarkSettings;
+	benchmark_settings mBenchmarkSettingsSetback;
+	long mBenchmarkRestFrameCounter = -1; // > 0 means benchmark is running
 	bool mVSyncEnabled = true;
+	bool mShowGUI = true;
 
 };

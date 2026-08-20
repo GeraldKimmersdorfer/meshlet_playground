@@ -49,6 +49,7 @@
 #include "shadercompiler/ShaderMetaCompiler.h"
 #include "helpers/hud.h"
 #include "helpers/log.h"
+#include "helpers/util.h"
 
 #include "statistics/NumberProperty.h"
 #include "statistics/StringProperty.h"
@@ -352,6 +353,7 @@ void MeshletsApp::initGUI()
 		imguiManager->add_callback([
 			this, imguiManager
 		]() mutable {
+				if (!mShowGUI) return;
 				bool config_has_changed = false;
 				ImGuiIO& io = ImGui::GetIO();
 
@@ -519,6 +521,10 @@ void MeshletsApp::initGUI()
 					}
 
 					mPipelines[mPipelineID.second]->hud_setup(config_has_changed);
+
+					if (ImGui::Checkbox("Discard all fragments", (bool*)(void*)&mConfig.discardAllFragments)) {
+						config_has_changed = true;
+					}
 				}
 
 				bool highlight = mPipelineID.first != mPipelineID.second || mVertexCompressorID.first != mVertexCompressorID.second || mMeshletBuilderID.first != mMeshletBuilderID.second;
@@ -541,13 +547,11 @@ void MeshletsApp::initGUI()
 				ImGui::SetWindowPos(ImVec2(io.DisplaySize.x - ImGui::GetWindowWidth(), 0.0f), ImGuiCond_Always);
 				ImGui::Text("%.3f ms/frame", 1000.0f / io.Framerate);
 				ImGui::Text("%.1f FPS", io.Framerate);
-				if (ImGui::Checkbox("VSync (FIFO Presentation Mode)", &mVSyncEnabled)) {
-					if (mVSyncEnabled) avk::context().main_window()->set_presentaton_mode(avk::presentation_mode::fifo);
-					else avk::context().main_window()->set_presentaton_mode(avk::presentation_mode::mailbox);
-				}
+				static bool vSyncEnable = mVSyncEnabled;
+				if (ImGui::Checkbox("VSync (FIFO Presentation Mode)", &vSyncEnable)) setVSync(vSyncEnable);
 
 				ImGui::Separator();
-				static std::vector<std::string> selectedProperties = { "cpu_frame","gpu_frame" }; // Static vector to keep track of selected property names
+
 				{
 					// === PROPERTIES ===
 					auto rootProps = mPropertyManager->getRootProperties();
@@ -566,7 +570,7 @@ void MeshletsApp::initGUI()
 
 							if (level > 0) ImGui::Indent(level * ImGui::GetStyle().IndentSpacing);
 							if (current->getChildren().empty()) {
-								bool isSelected = std::find(selectedProperties.begin(), selectedProperties.end(), current->getName()) != selectedProperties.end();
+								bool isSelected = std::find(mSelectedProperties.begin(), mSelectedProperties.end(), current->getName()) != mSelectedProperties.end();
 
 								// Save the current font size and scale down for the checkbox
 								ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
@@ -575,10 +579,10 @@ void MeshletsApp::initGUI()
 								// Render the scaled checkbox
 								if (ImGui::Checkbox(current->getFormattedName().c_str(), &isSelected)) {
 									if (isSelected) {
-										selectedProperties.push_back(current->getName());
+										mSelectedProperties.push_back(current->getName());
 									}
 									else {
-										selectedProperties.erase(std::remove(selectedProperties.begin(), selectedProperties.end(), current->getName()), selectedProperties.end());
+										mSelectedProperties.erase(std::remove(mSelectedProperties.begin(), mSelectedProperties.end(), current->getName()), mSelectedProperties.end());
 									}
 								}
 
@@ -603,27 +607,27 @@ void MeshletsApp::initGUI()
 						ImGui::TextColored(ImVec4(1.0f, .0f, .0f, 1.f), "No property defined");
 					}
 
+					if (ImGui::Button("Reset Timer", ImVec2(200, 0))) resetTimer();
+					if (ImGui::Button("Report Properties", ImVec2(200, 0))) reportProperties();
+
 				}
 
 
 
 				if (ImGui::CollapsingHeader(ICON_FA_VIALS " Benchmark", ImGuiTreeNodeFlags_DefaultOpen)) {
-					if (ImGui::Button("Reset Timer")) {
-						mAvkFrameProperty->reset();
-						mCpuFrameProperty->reset();
-					}
-					if (ImGui::Checkbox("Discard all fragments", (bool*)(void*)&mConfig.discardAllFragments)) {
+
+					ImGui::Checkbox("Discard Fragments", &mBenchmarkSettings.discardFragments);
+					ImGui::Checkbox("Hide GUI", &mBenchmarkSettings.hideGui);
+					ImGui::Checkbox("Reset Timer", &mBenchmarkSettings.resetTimer);
+					ImGui::Checkbox("Disable VSync", &mBenchmarkSettings.disableVSync);
+					ImGui::InputInt("Frames to Render", &mBenchmarkSettings.frameCount);
+					ImGui::InputInt("Copy Count", &mBenchmarkSettings.copyCount);
+					if (ImGui::Button(ICON_FA_RECORD_VINYL " Start Benchmark", ImVec2(200, 0))) {
+						startBenchmark();
 						config_has_changed = true;
 					}
-					if (ImGui::Button("Report")) {
-						// Go through all selectedProperties
-						for (const auto& propName : selectedProperties) {
-							auto prop = mPropertyManager->get(propName);
-							if (prop) {
-								std::cout << prop->getName() << ": " << prop->getValueAsString() << std::endl;
-							}
-						}
-					}
+
+
 				}
 
 
@@ -874,11 +878,12 @@ void MeshletsApp::render()
 	//if (mPipelineID.first < 0) return;	// No pipeline selected
 	using namespace avk;
 
+	if (mBenchmarkRestFrameCounter-- == 0) endBenchmark();
+
 	mCpuFrameTimer->start();
 
 	auto mainWnd = context().main_window();
 	auto inFlightIndex = mainWnd->current_in_flight_index();
-
 
 
 	auto viewProjMat = mQuakeCam.is_enabled()
@@ -997,6 +1002,71 @@ void MeshletsApp::compileAndLoadNextPipeline()
 			.type = FreeCMDBufferExecutionData::CHANGE_PIPELINE
 			});
 	}
+}
+
+void MeshletsApp::setVSync(bool enable)
+{
+	if (mVSyncEnabled == enable) return;
+	mVSyncEnabled = enable;
+	if (mVSyncEnabled) avk::context().main_window()->set_presentaton_mode(avk::presentation_mode::fifo);
+	else avk::context().main_window()->set_presentaton_mode(avk::presentation_mode::mailbox);
+}
+
+void MeshletsApp::reportProperties()
+{
+	for (const auto& propName : mSelectedProperties) {
+		auto prop = mPropertyManager->get(propName);
+		if (prop) {
+			const std::string value = prop->getValueAsString();
+			if (mSelectedProperties.size() == 1) {
+				setClipboardText(prop->getValueAsString());
+				LOG_S(INFO) << prop->getName() << ": " << value << " (copied to clipboard)";
+			}
+			else {
+				LOG_S(INFO) << prop->getName() << ": " << value;
+			}
+		}
+	}
+}
+
+void MeshletsApp::resetTimer()
+{
+	mAvkFrameProperty->reset();
+	mCpuFrameProperty->reset();
+}
+
+void MeshletsApp::startBenchmark()
+{
+	const auto& conf = mBenchmarkSettings;
+	auto& confSetback = mBenchmarkSettingsSetback;
+	if (conf.disableVSync) {
+		confSetback.disableVSync = mVSyncEnabled;
+		setVSync(false);
+	}
+	if (conf.hideGui) {
+		confSetback.hideGui = mShowGUI;
+		mShowGUI = false;
+	}
+	if (conf.discardFragments) {
+		confSetback.discardFragments = mConfig.discardAllFragments;
+		mConfig.discardAllFragments = true;
+	}
+	if (conf.resetTimer) resetTimer();
+	confSetback.frameCount = mConfig.mCopyCount;
+	mConfig.mCopyCount = conf.copyCount;
+	mBenchmarkRestFrameCounter = mBenchmarkSettings.frameCount;
+}
+
+void MeshletsApp::endBenchmark()
+{
+	const auto& conf = mBenchmarkSettings;
+	const auto& confSetback = mBenchmarkSettingsSetback;
+	if (conf.disableVSync) setVSync(confSetback.disableVSync);
+	if (conf.hideGui) mShowGUI = confSetback.hideGui;
+	if (conf.discardFragments) mConfig.discardAllFragments = confSetback.discardFragments;
+	mConfig.mCopyCount = confSetback.frameCount;
+	reportProperties();
+	uploadConfig();
 }
 
 

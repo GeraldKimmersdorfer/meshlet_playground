@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <random>
 #include <unordered_set>
+#include <windows.h>
 
 struct Vec4Hash {
 	std::size_t operator()(const glm::vec4& vec) const {
@@ -105,4 +106,32 @@ std::vector<glm::vec4> generateRandomWeights(int n, WeightOrder order, bool incl
 	}
 
 	return weights;
+}
+
+void setClipboardText(const std::string& text)
+{
+	// Open the clipboard
+	if (!OpenClipboard(nullptr)) {
+		return;
+	}
+
+	// Empty the clipboard
+	EmptyClipboard();
+
+	// Allocate global memory for the text
+	HGLOBAL hGlob = GlobalAlloc(GMEM_FIXED, text.size() + 1);
+	if (!hGlob) {
+		CloseClipboard();
+		return;
+	}
+
+	// Copy the string into the allocated memory
+	memcpy(GlobalLock(hGlob), text.c_str(), text.size() + 1);
+	GlobalUnlock(hGlob);
+
+	// Set the clipboard data
+	SetClipboardData(CF_TEXT, hGlob);
+
+	// Close the clipboard
+	CloseClipboard();
 }
