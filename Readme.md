@@ -14,6 +14,16 @@ This repository contains a tool developed for my Bachelor thesis on compressing 
 
 This project's own code is licensed under the MIT License. Have fun with it.
 
+## Evaluation Assets
+
+All assets used in the evaluation for the paper are available for download. Please respect the individual licenses of the provided asset files.
+
+[![Models](https://img.shields.io/badge/Download_Evaluation_Models-blue?style=for-the-badge&logo=anycubic&logoColor=white)](https://github.com/GeraldKimmersdorfer/meshlet_playground/releases/download/v1.0/meshlet_playground_models.zip)
+
+> [!Important]
+> 1. After opening a file, for most models the **Animation** has to be selected in the Scene dropdown for the model to become visible.
+> 2. The first time you run the app, the rendering pipeline has to be **Compiled & Loaded** (`F1`) before anything will render.
+
 ## Development Setup
 
 ### Prerequisites
@@ -33,3 +43,4 @@ start compressed_meshlet_skinning.sln
 > - Make sure that the working directory of the `compressed_meshlet_skinning` project is set to *$(OutputPath)* (for all configurations!!)
 > - **If the first build is stuck** (usually on the *Post Build Helper* custom build step for several minutes with no progress), cancel it and start the build again. A second attempt with warm cache usually works.
 > - At the first build, the [_Post Build Helper_](auto_vk_toolkit/visual_studio/README.md#post-build-helper) tool (part of Auto-Vk-Toolkit) builds and then deploys assets/shaders to the output directory. Watch Visual Studio's *Output* tab for its progress and the popup in the tray icon
+
