@@ -5,7 +5,7 @@
 [submodule "meshoptimizer"]
 	path = meshoptimizer
 	url = https://github.com/GeraldKimmersdorfer/meshoptimizer
-	branch = main
+	branch = master
 [submodule "ImGuiFileDialog"]
 	path = ImGuiFileDialog
 	url = https://github.com/aiekick/ImGuiFileDialog.git
