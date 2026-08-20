@@ -41,6 +41,6 @@ start compressed_meshlet_skinning.sln
 ```
 > [!Important]
 > - Make sure that the working directory of the `compressed_meshlet_skinning` project is set to *$(OutputPath)* (for all configurations!!)
-> - **If the first build is stuck** (usually on the *Post Build Helper* custom build step for several minutes with no progress), cancel it and start the build again. A second attempt with warm cache usually works.
+> - **If the first build is stuck** (usually on the *Post Build Helper* custom build step for several minutes with no progress), cancel it and start the build again.
 > - At the first build, the [_Post Build Helper_](auto_vk_toolkit/visual_studio/README.md#post-build-helper) tool (part of Auto-Vk-Toolkit) builds and then deploys assets/shaders to the output directory. Watch Visual Studio's *Output* tab for its progress and the popup in the tray icon
 
