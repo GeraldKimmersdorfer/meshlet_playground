@@ -1,0 +1,62 @@
+Third-Party Notices
+================================================================================
+
+This project bundles and depends on third-party code and libraries, each
+under their own license. The MIT license in LICENSE applies only to this
+project's own code; it does not apply to the components listed below. See
+each dependency's own repository or file header for the authoritative
+license text.
+
+--------------------------------------------------------------------------------
+Auto-Vk-Toolkit and Auto-Vk (submodules: auto_vk_toolkit/, auto_vk_toolkit/auto_vk/)
+https://github.com/GeraldKimmersdorfer/Auto-Vk-Toolkit
+https://github.com/GeraldKimmersdorfer/Auto-Vk
+--------------------------------------------------------------------------------
+MIT License
+Copyright (c) 2020 Research Unit of Computer Graphics, TU Wien
+
+--------------------------------------------------------------------------------
+meshoptimizer (submodule: meshoptimizer/)
+https://github.com/GeraldKimmersdorfer/meshoptimizer
+--------------------------------------------------------------------------------
+MIT License
+Copyright (c) 2016-2023 Arseny Kapoulkine
+
+--------------------------------------------------------------------------------
+ImGuiFileDialog (submodule: ImGuiFileDialog/)
+https://github.com/aiekick/ImGuiFileDialog
+--------------------------------------------------------------------------------
+MIT License
+Copyright (c) 2018-2025 Stephane Cuillerdier (aka Aiekick)
+
+--------------------------------------------------------------------------------
+source/thirdparty/blend_attribute_codec.h
+source/thirdparty/permutation_coding.h
+shaders/include/blend_attribute_codec.glsl
+shaders/include/blend_attribute_compression.glsl
+--------------------------------------------------------------------------------
+Copyright (C) 2022, Christoph Peters, Karlsruhe Institute of Technology
+Dual-licensed under the three-clause BSD license and the GPLv3, at your
+option. See the files' own headers for the full license texts.
+
+--------------------------------------------------------------------------------
+source/thirdparty/vbac_compression.c
+source/thirdparty/vbac_compression.h
+--------------------------------------------------------------------------------
+MIT License
+Copyright 2021, Bastian Kuth and Quirin Meyer
+
+--------------------------------------------------------------------------------
+source/thirdparty/loguru.cpp
+source/thirdparty/loguru.hpp
+--------------------------------------------------------------------------------
+Loguru, https://github.com/emilk/loguru, by Emil Ernerfeldt
+Released into the public domain.
+
+--------------------------------------------------------------------------------
+source/thirdparty/IconsFontAwesome5.h
+assets/fonts/fa-regular-400.ttf
+assets/fonts/fa-solid-900.ttf
+--------------------------------------------------------------------------------
+Generated from/part of Font Awesome Free
+https://fontawesome.com/license/free

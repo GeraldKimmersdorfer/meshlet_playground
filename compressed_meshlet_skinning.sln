@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "compressed_meshlet_skinning
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "auto_vk_toolkit", "auto_vk_toolkit\visual_studio\auto_vk_toolkit\auto_vk_toolkit.vcxproj", "{602F842F-50C1-466D-8696-1707937D8AB9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meshoptimizer", "meshoptimizer\build\meshoptimizer.vcxproj", "{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meshoptimizer", "meshoptimizer\build\meshoptimizer.vcxproj", "{8101E03E-64C1-347D-B723-8E80C33356A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,20 +48,20 @@ Global
 		{602F842F-50C1-466D-8696-1707937D8AB9}.Release|x64.Build.0 = Release_Vulkan|x64
 		{602F842F-50C1-466D-8696-1707937D8AB9}.RelWithDebInfo|x64.ActiveCfg = Release_Vulkan|x64
 		{602F842F-50C1-466D-8696-1707937D8AB9}.RelWithDebInfo|x64.Build.0 = Release_Vulkan|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Debug_Vulkan|x64.ActiveCfg = Debug|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Debug_Vulkan|x64.Build.0 = Debug|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Debug|x64.ActiveCfg = Debug|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Debug|x64.Build.0 = Debug|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.MinSizeRel|x64.ActiveCfg = MinSizeRel|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.MinSizeRel|x64.Build.0 = MinSizeRel|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Publish_Vulkan|x64.ActiveCfg = RelWithDebInfo|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Publish_Vulkan|x64.Build.0 = RelWithDebInfo|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release_Vulkan|x64.ActiveCfg = Release|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release_Vulkan|x64.Build.0 = Release|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release|x64.ActiveCfg = Release|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.Release|x64.Build.0 = Release|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
-		{1AA77A78-5EAD-3ED7-B8DE-8F2FC0302C40}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Debug_Vulkan|x64.ActiveCfg = Debug|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Debug_Vulkan|x64.Build.0 = Debug|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Debug|x64.ActiveCfg = Debug|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Debug|x64.Build.0 = Debug|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.MinSizeRel|x64.ActiveCfg = MinSizeRel|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.MinSizeRel|x64.Build.0 = MinSizeRel|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Publish_Vulkan|x64.ActiveCfg = RelWithDebInfo|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Publish_Vulkan|x64.Build.0 = RelWithDebInfo|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Release_Vulkan|x64.ActiveCfg = Release|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Release_Vulkan|x64.Build.0 = Release|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Release|x64.ActiveCfg = Release|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.Release|x64.Build.0 = Release|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
+		{8101E03E-64C1-347D-B723-8E80C33356A6}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
