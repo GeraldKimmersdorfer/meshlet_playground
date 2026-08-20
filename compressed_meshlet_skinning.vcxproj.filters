@@ -418,14 +418,14 @@
     <ResourceCompile Include="compressed_meshlet_skinning.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Font Include="assets\fonts\fa-regular-400.ttf">
+    <None Include="assets\fonts\fa-regular-400.ttf">
       <Filter>assets\fonts</Filter>
-    </Font>
-    <Font Include="assets\fonts\fa-solid-900.ttf">
+    </None>
+    <None Include="assets\fonts\fa-solid-900.ttf">
       <Filter>assets\fonts</Filter>
-    </Font>
-    <Font Include="assets\fonts\lao-ui.ttf">
+    </None>
+    <None Include="assets\fonts\lao-ui.ttf">
       <Filter>assets\fonts</Filter>
-    </Font>
+    </None>
   </ItemGroup>
 </Project>

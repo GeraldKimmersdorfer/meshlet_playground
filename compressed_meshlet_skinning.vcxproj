@@ -152,9 +152,9 @@
     <ResourceCompile Include="compressed_meshlet_skinning.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Font Include="assets\fonts\fa-regular-400.ttf" />
-    <Font Include="assets\fonts\fa-solid-900.ttf" />
-    <Font Include="assets\fonts\lao-ui.ttf" />
+    <None Include="assets\fonts\fa-regular-400.ttf" />
+    <None Include="assets\fonts\fa-solid-900.ttf" />
+    <None Include="assets\fonts\lao-ui.ttf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
