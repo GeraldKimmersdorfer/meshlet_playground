@@ -1,6 +1,6 @@
 # <img src="assets/icon_small.png" width="40" height="40" align="left" style="margin-right:8px" alt="Meshlet Playground icon"/> Meshlet Playground
 
-![GitHub License](https://img.shields.io/github/license/GeraldKimmersdorfer/meshlet_playground) [![Version](https://img.shields.io/badge/version-1.0-blue)](https://github.com/GeraldKimmersdorfer/meshlet_playground) [![Status](https://img.shields.io/badge/status-inactive-red)](https://github.com/GeraldKimmersdorfer/meshlet_playground) ![NoAi](https://img.shields.io/badge/NO-AI-orange) 
+![GitHub License](https://img.shields.io/github/license/GeraldKimmersdorfer/meshlet_playground) [![Version](https://img.shields.io/badge/version-1.0-blue)](https://github.com/GeraldKimmersdorfer/meshlet_playground) [![Status](https://img.shields.io/badge/status-inactive-red)](https://github.com/GeraldKimmersdorfer/meshlet_playground)
 
 This repository contains a tool developed for my Bachelor thesis on compressing vertex attributes of skinned meshes for rendering with the mesh shading pipeline. It implements and benchmarks several state-of-the-art compression schemes for blend attributes (bone indices/weights) and other vertex data on top of meshlets.
 
